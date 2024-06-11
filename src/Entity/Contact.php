@@ -1,0 +1,155 @@
+<?php
+
+namespace App\Entity;
+
+use App\Repository\ContactRepository;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(repositoryClass: ContactRepository::class)]
+class Contact
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $nom = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $prenom = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $adressep_1 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $adressep_2 = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $cpostalp = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $villep = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $rib = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $contact_site = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $telephone = null;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(string $nom): static
+    {
+        $this->nom = $nom;
+
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(string $prenom): static
+    {
+        $this->prenom = $prenom;
+
+        return $this;
+    }
+
+    public function getAdressep1(): ?string
+    {
+        return $this->adressep_1;
+    }
+
+    public function setAdressep1(string $adressep_1): static
+    {
+        $this->adressep_1 = $adressep_1;
+
+        return $this;
+    }
+
+    public function getAdressep2(): ?string
+    {
+        return $this->adressep_2;
+    }
+
+    public function setAdressep2(?string $adressep_2): static
+    {
+        $this->adressep_2 = $adressep_2;
+
+        return $this;
+    }
+
+    public function getCpostalp(): ?string
+    {
+        return $this->cpostalp;
+    }
+
+    public function setCpostalp(string $cpostalp): static
+    {
+        $this->cpostalp = $cpostalp;
+
+        return $this;
+    }
+
+    public function getVillep(): ?string
+    {
+        return $this->villep;
+    }
+
+    public function setVillep(string $villep): static
+    {
+        $this->villep = $villep;
+
+        return $this;
+    }
+
+    public function getRib(): ?string
+    {
+        return $this->rib;
+    }
+
+    public function setRib(?string $rib): static
+    {
+        $this->rib = $rib;
+
+        return $this;
+    }
+
+    public function getContactSite(): ?string
+    {
+        return $this->contact_site;
+    }
+
+    public function setContactSite(string $contact_site): static
+    {
+        $this->contact_site = $contact_site;
+
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(string $telephone): static
+    {
+        $this->telephone = $telephone;
+
+        return $this;
+    }
+}
