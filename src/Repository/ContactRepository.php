@@ -5,39 +5,55 @@ namespace App\Repository;
 use App\Entity\Contact;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @extends ServiceEntityRepository<Contact>
  */
 class ContactRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry,  private HttpClientInterface $client,)
     {
         parent::__construct($registry, Contact::class);
     }
 
-//    /**
-//     * @return Contact[] Returns an array of Contact objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('c.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    // /**
+    //  * @return Returns an array of Contact objects splitted by : and |
+    //  */
+    // public function splitString($contentArray){
+    //     $contentArraySplitted = preg_split("/[:|]/", $contentArray);
 
-//    public function findOneBySomeField($value): ?Contact
-//    {
-//        return $this->createQueryBuilder('c')
-//            ->andWhere('c.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //     return $contentArraySplitted;
+    // }
+
+   /**
+    * @return Contact[] Returns an array of Contact objects
+    */
+   public function getContacts(): array
+   {
+        $contactsArray = [];
+        $contactsSplittedArray = [];
+
+        $response = $this->client->request(
+            'GET',
+            'https://forms.kizeo.com/rest/v3/lists/409466', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+            ]
+            )
+        ;
+        $content = $response->getContent();
+        $content = $response->toArray();
+        
+        $contactsArray = array_map(null, $content['list']['items']);
+        for ($i=0; $i < count($contactsArray) ; $i++) {
+            if (isset($contactsArray[$i])) {
+                array_push($contactsSplittedArray, array_unique(preg_split("/[:|]/", $contactsArray[$i])));
+            }
+        }
+
+        return $contactsSplittedArray;
+   }
 }
