@@ -12,7 +12,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 class ContactRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry,  private HttpClientInterface $client,)
+    public function __construct(ManagerRegistry $registry,  private HttpClientInterface $client)
     {
         parent::__construct($registry, Contact::class);
     }
@@ -34,6 +34,7 @@ class ContactRepository extends ServiceEntityRepository
         $contactsArray = [];
         $contactsSplittedArray = [];
 
+        // Request Liste clients 38
         $response = $this->client->request(
             'GET',
             'https://forms.kizeo.com/rest/v3/lists/409466', [
@@ -47,13 +48,13 @@ class ContactRepository extends ServiceEntityRepository
         $content = $response->getContent();
         $content = $response->toArray();
         
+        
         $contactsArray = array_map(null, $content['list']['items']);
         for ($i=0; $i < count($contactsArray) ; $i++) {
             if (isset($contactsArray[$i])) {
                 array_push($contactsSplittedArray, array_unique(preg_split("/[:|]/", $contactsArray[$i])));
             }
         }
-
         return $contactsSplittedArray;
    }
 }

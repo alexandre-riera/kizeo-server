@@ -19,10 +19,31 @@ class ContactController extends AbstractController
         $contactList  =  $contactRepository->getContacts();
         $jsonContactList = $serializer->serialize($contactList, 'json');
 
-        // Persist each contact in database
+        // Fetch all contacts in database
+        $allContactsInDatabase = $entityManager->getRepository(Contact::class)->findAll();
         
-        $contact = new Contact;
+        // Persist each contact in database
+        // Check before if contact exist in database
+        if (count($allContactsInDatabase) !== count($contactList)) {
+            $contactsArray = array_map(null, $contactList);
+            for ($i=0; $i < count($contactsArray) ; $i++) {
+                if (isset($contactsArray[$i]) && !in_array($contactsArray[$i],$allContactsInDatabase)) {
+                    $contact = new Contact;
+                    $contact->setNom($contactsArray[$i]['0']);
+                    $contact->setCpostalp($contactsArray[$i]['2']);
+                    $contact->setVillep($contactsArray[$i]['4']);
+                    $contact->setIdContact($contactsArray[$i]['6']);
 
-        return new JsonResponse($jsonContactList, Response::HTTP_OK, [], true);
+                    // tell Doctrine you want to (eventually) save the Product (no queries yet)
+                    $entityManager->persist($contact);
+
+                }
+            }
+            // actually executes the queries (i.e. the INSERT query)
+            $entityManager->flush();
+        }
+
+
+        return new JsonResponse("Contacts sur API KIZEO : " . count($contactList) . " | Contacts en BDD : " . count($allContactsInDatabase), Response::HTTP_OK, [], true);
     }
 }

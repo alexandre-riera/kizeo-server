@@ -14,71 +14,77 @@ class Equipement
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $numero_equipement = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $numero_equipement = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $nature = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $mode_fonctionnement = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $repere_site_client = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $mise_en_service = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $mise_en_service = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $numero_de_serie = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $marque = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $hauteur = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $largeur = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $plaque_signaletique = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $anomalies = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $etat = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dernière_visite = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $dernière_visite = null;
 
-    #[ORM\Column(length: 3)]
+    #[ORM\Column(length: 3, nullable: true)]
     private ?string $trigramme_tech = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $date_previsionnelle_visite_1 = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_previsionnelle_visite_1 = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $date_previsionnelle_visite_2 = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_previsionnelle_visite_2 = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $date_effective_1 = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_effective_1 = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $date_effective_2 = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_effective_2 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $id_contact = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $code_societe = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNumeroEquipement(): ?int
+    public function getNumeroEquipement(): ?string
     {
         return $this->numero_equipement;
     }
 
-    public function setNumeroEquipement(int $numero_equipement): static
+    public function setNumeroEquipement(string $numero_equipement): static
     {
         $this->numero_equipement = $numero_equipement;
 
@@ -121,12 +127,12 @@ class Equipement
         return $this;
     }
 
-    public function getMiseEnService(): ?\DateTimeInterface
+    public function getMiseEnService(): ?string
     {
         return $this->mise_en_service;
     }
 
-    public function setMiseEnService(\DateTimeInterface $mise_en_service): static
+    public function setMiseEnService(string $mise_en_service): static
     {
         $this->mise_en_service = $mise_en_service;
 
@@ -217,12 +223,12 @@ class Equipement
         return $this;
     }
 
-    public function getDernièreVisite(): ?\DateTimeInterface
+    public function getDernièreVisite(): ?string
     {
         return $this->dernière_visite;
     }
 
-    public function setDernièreVisite(?\DateTimeInterface $dernière_visite): static
+    public function setDernièreVisite(?string $dernière_visite): static
     {
         $this->dernière_visite = $dernière_visite;
 
@@ -253,38 +259,62 @@ class Equipement
         return $this;
     }
 
-    public function getDatePrevisionnelleVisite2(): ?\DateTimeInterface
+    public function getDatePrevisionnelleVisite2(): ?string
     {
         return $this->date_previsionnelle_visite_2;
     }
 
-    public function setDatePrevisionnelleVisite2(?\DateTimeInterface $date_previsionnelle_visite_2): static
+    public function setDatePrevisionnelleVisite2(?string $date_previsionnelle_visite_2): static
     {
         $this->date_previsionnelle_visite_2 = $date_previsionnelle_visite_2;
 
         return $this;
     }
 
-    public function getDateEffective1(): ?\DateTimeInterface
+    public function getDateEffective1(): ?string
     {
         return $this->date_effective_1;
     }
 
-    public function setDateEffective1(?\DateTimeInterface $date_effective_1): static
+    public function setDateEffective1(?string $date_effective_1): static
     {
         $this->date_effective_1 = $date_effective_1;
 
         return $this;
     }
 
-    public function getDateEffective2(): ?\DateTimeInterface
+    public function getDateEffective2(): ?string
     {
         return $this->date_effective_2;
     }
 
-    public function setDateEffective2(?\DateTimeInterface $date_effective_2): static
+    public function setDateEffective2(?string $date_effective_2): static
     {
         $this->date_effective_2 = $date_effective_2;
+
+        return $this;
+    }
+
+    public function getIdContact(): ?string
+    {
+        return $this->id_contact;
+    }
+
+    public function setIdContact(?string $id_contact): static
+    {
+        $this->id_contact = $id_contact;
+
+        return $this;
+    }
+
+    public function getCodeSociete(): ?string
+    {
+        return $this->code_societe;
+    }
+
+    public function setCodeSociete(?string $code_societe): static
+    {
+        $this->code_societe = $code_societe;
 
         return $this;
     }
