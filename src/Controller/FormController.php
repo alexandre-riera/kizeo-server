@@ -28,7 +28,7 @@ class FormController extends AbstractController
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList['data']) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/forms/update', name: 'app_api_form')]
+    #[Route('/api/forms/update', name: 'app_api_form_update')]
     public function getDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
     {
         $dataOfFormList  =  $formRepository->getDataOfForms(986403);
