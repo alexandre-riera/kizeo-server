@@ -37,12 +37,12 @@ class EquipementController extends AbstractController
                     if (isset($equipementsArray[$i]['8'])) {
                         $equiment->setNumeroDeSerie($equipementsArray[$i]['8']);
                     }else{
-                        $equiment->setNumeroDeSerie("Non renseigné");
+                        $equiment->setNumeroDeSerie("");
                     }
                     if (isset($equipementsArray[$i]['10'])) {
                         $equiment->setMarque($equipementsArray[$i]['10']);
                     }else{
-                        $equiment->setMarque("Non renseignée");
+                        $equiment->setMarque("");
                     }
                     $equiment->setIdContact($equipementsArray[$i]['18']);
 
@@ -56,7 +56,6 @@ class EquipementController extends AbstractController
         }
 
 
-        // return new JsonResponse("Contacts sur API KIZEO : " . count($equipementList) . " | Contacts en BDD : " . count($allEquipementsInDatabase), Response::HTTP_OK, [], true);
         return new JsonResponse("Equipements sur API KIZEO : " . count($equipementList), Response::HTTP_OK, [], true);
     }
 }

@@ -33,8 +33,8 @@ class EquipementRepository extends ServiceEntityRepository
                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                 ],
             ]
-            )
-        ;
+        );
+        
         $content = $response->getContent();
         $content = $response->toArray();
         

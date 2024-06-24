@@ -63,8 +63,8 @@ class FormController extends AbstractController
                         $equipement->setMiseEnService($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference2']['value']);
                         $equipement->setNumeroDeSerie($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference6']['value']);
                         $equipement->setMarque($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference5']['value']);
-                        $equipement->setHauteur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference3']['value']);
-                        $equipement->setLargeur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference1']['value']);
+                        $equipement->setLargeur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference3']['value']);
+                        $equipement->setHauteur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference1']['value']);
                         $equipement->setPlaqueSignaletique($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['plaque_signaletique']['value']);
 
                         //Anomalies en fonction de la nature de l'équipement
