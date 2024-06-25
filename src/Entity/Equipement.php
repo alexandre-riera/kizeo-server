@@ -74,6 +74,12 @@ class Equipement
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $code_societe = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $signature_tech = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $ifExistDB = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -315,6 +321,30 @@ class Equipement
     public function setCodeSociete(?string $code_societe): static
     {
         $this->code_societe = $code_societe;
+
+        return $this;
+    }
+
+    public function getSignatureTech(): ?string
+    {
+        return $this->signature_tech;
+    }
+
+    public function setSignatureTech(?string $signature_tech): static
+    {
+        $this->signature_tech = $signature_tech;
+
+        return $this;
+    }
+
+    public function getIfExistDB(): ?string
+    {
+        return $this->ifExistDB;
+    }
+
+    public function setIfExistDB(?string $ifExistDB): static
+    {
+        $this->ifExistDB = $ifExistDB;
 
         return $this;
     }
