@@ -41,6 +41,18 @@ class Contrat
     #[ORM\Column(length: 255)]
     private ?string $statut = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_previsionnelle_1 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_previsionnelle_2 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_effective_1 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $date_effective_2 = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -150,6 +162,54 @@ class Contrat
     public function setStatut(string $statut): static
     {
         $this->statut = $statut;
+
+        return $this;
+    }
+
+    public function getDatePrevisionnelle1(): ?string
+    {
+        return $this->date_previsionnelle_1;
+    }
+
+    public function setDatePrevisionnelle1(?string $date_previsionnelle_1): static
+    {
+        $this->date_previsionnelle_1 = $date_previsionnelle_1;
+
+        return $this;
+    }
+
+    public function getDatePrevisionnelle2(): ?string
+    {
+        return $this->date_previsionnelle_2;
+    }
+
+    public function setDatePrevisionnelle2(?string $date_previsionnelle_2): static
+    {
+        $this->date_previsionnelle_2 = $date_previsionnelle_2;
+
+        return $this;
+    }
+
+    public function getDateEffective1(): ?string
+    {
+        return $this->date_effective_1;
+    }
+
+    public function setDateEffective1(?string $date_effective_1): static
+    {
+        $this->date_effective_1 = $date_effective_1;
+
+        return $this;
+    }
+
+    public function getDateEffective2(): ?string
+    {
+        return $this->date_effective_2;
+    }
+
+    public function setDateEffective2(?string $date_effective_2): static
+    {
+        $this->date_effective_2 = $date_effective_2;
 
         return $this;
     }
