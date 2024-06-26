@@ -47,7 +47,7 @@ class ContactController extends AbstractController
         return new JsonResponse(
             "Contacts sur API KIZEO : " . count($contactList) .
             " | Contacts en BDD : " . count($allContactsInDatabase) . 
-            "La liste de contacts a bien été mise à jour, vous pouvez revenir en arrière"
+            "   \n La liste de contacts a bien été mise à jour, vous pouvez revenir en arrière"
             , Response::HTTP_OK, [], true);
     }
 }

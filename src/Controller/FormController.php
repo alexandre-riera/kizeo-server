@@ -139,12 +139,12 @@ class FormController extends AbstractController
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
                 }else{
-                    echo "All equipments are already in database ";
+                    echo "All equipments are already in database \n  Vous pouvez revenir en arrière";
                     die;
                 }
             }
         }
         // return new JsonResponse($dataOfFormList[1]['data'], Response::HTTP_OK, [], false);
-        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($dataOfFormList) . " | Equipements en BDD : " . count($allEquipementsInDatabase) . "\n", Response::HTTP_OK, [], true);
+        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($dataOfFormList) . " | Equipements en BDD : " . count($allEquipementsInDatabase) . "\n ", Response::HTTP_OK, [], true);
     }
 }
