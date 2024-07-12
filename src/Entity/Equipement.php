@@ -80,6 +80,9 @@ class Equipement
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $ifExistDB = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $code_agence = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -345,6 +348,18 @@ class Equipement
     public function setIfExistDB(?string $ifExistDB): static
     {
         $this->ifExistDB = $ifExistDB;
+
+        return $this;
+    }
+
+    public function getCodeAgence(): ?string
+    {
+        return $this->code_agence;
+    }
+
+    public function setCodeAgence(?string $code_agence): static
+    {
+        $this->code_agence = $code_agence;
 
         return $this;
     }

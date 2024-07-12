@@ -20,11 +20,11 @@ class FormRepository extends ServiceEntityRepository
    /**
     * @return Form[] Returns an array of Contact objects
     */
-   public function getForms(int $formId): array
+   public function getForms(): array
    {
         $response = $this->client->request(
-            'POST',
-            'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
+            'GET',
+            'https://forms.kizeo.com/rest/v3/forms', [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -38,27 +38,51 @@ class FormRepository extends ServiceEntityRepository
    }
 
    /**
-    * @return data of Form[] Returns an array of Contact objects
+    * @return Form[] Returns an array
     */
-   public function getDataOfForms(int $formId): array
+   public function getFormsAdvanced(): array
    {
-       $dataId = [];
-       $eachFormDataArray = [];
+        $allFormsArray = FormRepository::getForms();
+        $allFormsArray = $allFormsArray['forms'];
+        $allDataPortailsArray = [];
 
-        $allFormsArray = FormRepository::getForms(986403);
+        // dd($allFormsArray); // -----------------------------   Return all forms in an array
 
-        foreach ($allFormsArray['data'] as $key => $value) {
-            foreach ($allFormsArray['data'][$key] as $ids => $value) {
-                if ($ids === "_id" ) {
-                    array_push($dataId, $value);
+        foreach ($allFormsArray as $key => $value) {
+            if ($allFormsArray[$key]['class'] === 'PORTAILS') {
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $content = $response->getContent();
+                $content = $response->toArray();
+                foreach ($content['data'] as $key => $value) {
+                    array_push($allDataPortailsArray, $value);
                 }
             }
         }
+        return $allDataPortailsArray;
+   }
 
-        foreach ($dataId as $key => $value) {
+   /**
+    * @return data of Form[] Returns an array of Portails objects
+    */
+   public function getEtatDesLieuxPortailsDataOfForms(): array
+   {
+       $eachFormDataArray = [];
+       $allFormsPortailsArray = FormRepository::getFormsAdvanced();
+    //    dd($allFormsPortailsArray); // ------------------------      Return 24 arrays with portails in them from 8 forms with class PORTAILS
+
+        foreach ($allFormsPortailsArray as $key => $value) {
+            
             $responseDataOfForm = $this->client->request(
                 'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/' . $value, [
+                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/data/' . $allFormsPortailsArray[$key]['_id'], [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -68,8 +92,10 @@ class FormRepository extends ServiceEntityRepository
             $content = $responseDataOfForm->getContent();
             $content = $responseDataOfForm->toArray();
             array_push($eachFormDataArray, $content);
+            
         }
-        
+
+        // dd($eachFormDataArray[0]['data']['fields']['portails']);
         
         return $eachFormDataArray;
    }
