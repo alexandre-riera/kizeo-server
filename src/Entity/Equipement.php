@@ -83,6 +83,12 @@ class Equipement
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $code_agence = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $hauteur_nacelle = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $modele_nacelle = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -360,6 +366,30 @@ class Equipement
     public function setCodeAgence(?string $code_agence): static
     {
         $this->code_agence = $code_agence;
+
+        return $this;
+    }
+
+    public function getHauteurNacelle(): ?string
+    {
+        return $this->hauteur_nacelle;
+    }
+
+    public function setHauteurNacelle(?string $hauteur_nacelle): static
+    {
+        $this->hauteur_nacelle = $hauteur_nacelle;
+
+        return $this;
+    }
+
+    public function getModeleNacelle(): ?string
+    {
+        return $this->modele_nacelle;
+    }
+
+    public function setModeleNacelle(?string $modele_nacelle): static
+    {
+        $this->modele_nacelle = $modele_nacelle;
 
         return $this;
     }

@@ -18,7 +18,19 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class FormController extends AbstractController
 {
     /**
-     * Function to count how many parents forms are on Kizeo  
+     * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
+     */
+    #[Route('/api/lists/get', name: 'app_api_get_lists', methods: ['GET'])]
+    public function getLists(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $formList  =  $formRepository->getLists();
+        $jsonContactList = $serializer->serialize($formList, 'json');
+        
+        dd($formList);
+        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList), Response::HTTP_OK, [], true);
+    }
+    /**
+     * @return Form[]Function to list all forms on Kizeo with getForms() function from FormRepository  
      */
     #[Route('/api/forms/get', name: 'app_api_get_forms', methods: ['GET'])]
     public function getForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
@@ -33,7 +45,8 @@ class FormController extends AbstractController
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList['forms']) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
     /**
-     * Function to count how many parents forms are on Kizeo  
+     * 
+     * @return Form[] Returns an array of Formulaires with class PORTAILS 
      */
     #[Route('/api/forms/data', name: 'app_api_form_data', methods: ['GET'])]
     public function getFormsAdvanced(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
@@ -44,34 +57,21 @@ class FormController extends AbstractController
         // Fetch all contacts in database
         $allFormsInDatabase = $entityManager->getRepository(Form::class)->findAll();
         
-        // dump($formList['data']);
+        dump($formList);
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
 
     /**
-     * Function to ADD new equipments from technicians forms
+     * Function to ADD new equipments from technicians forms MAINTENANCE
      */
-    #[Route('/api/forms/update', name: 'app_api_form_update', methods: ['GET'])]
-    public function getDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    #[Route('/api/forms/update/maintenance', name: 'app_api_form_update', methods: ['GET'])]
+    public function getDataOfFormsMaintenance(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
     {
-        // GET all technicians forms from list class PORTAILS
-        $dataOfFormList  =  $formRepository->getDataOfForms();
+        // GET all technicians forms formulaire Visite maintenance Grenoble id = 986403
+        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
         $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
-        $equipementsData = [];
-        
+        // dd($dataOfFormList); // OK
         $allEquipementsInDatabase = $entityManager->getRepository(Equipement::class)->findAll();
-        
-        // dump($dataOfFormList);
-
-        // GET DATA field from all technicians forms from list ID 986403 on Kizeo
-        foreach ($dataOfFormList as $key => $value) {
-                array_push($equipementsData, $dataOfFormList[$key]['data']);
-        }
-        // List all equipements updated in technician forms in database
-        /**
-        * dump($allEquipementsInDatabase); // gettype() = Type array
-        * dump(gettype($equipementsData)); // Array of arrays. 1 array is 1 equipement
-        */
 
         /**
          * Store all equipments resumes stored in database to an array
@@ -80,14 +80,12 @@ class FormController extends AbstractController
         for ($i=0; $i < count($allEquipementsInDatabase); $i++) { 
             array_push($allEquipementsResumeInDatabase, $allEquipementsInDatabase[$i]->getIfexistDB());
         }
-        // dump(gettype($allEquipementsResumeInDatabase[0])); // gettype = string for each value in $allEquipmementsResumeInDatabase
 
-        foreach ($equipementsData as $equipement){
+        foreach ($dataOfFormList as $equipements){
             /**
-            * list all additional equipments stored in individual array
-            * dump($equipement['fields']['contrat_de_maintenance']['value']);
+            * List all additional equipments stored in individual array
             */
-            foreach ($equipement['fields']['contrat_de_maintenance']['value']  as $additionalEquipment){
+            foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
                 // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
                 $resume_equipement_supplementaire = $additionalEquipment['equipement']['columns'];
                 /**
@@ -97,62 +95,69 @@ class FormController extends AbstractController
                  */
                 if (!in_array($resume_equipement_supplementaire, $allEquipementsResumeInDatabase, TRUE)) {
                     
-
                     /**
                      * Persist each equipement in database
                      * Save a new contrat_de_maintenance equipement in database when a technician make an update
                     */
-                    
-                    foreach ($equipementsData as $id => $value) {
+                    $equipement = new Equipement;
+                    $equipement->setIdContact($equipements['id_client_']['value']);
+                    $equipement->setDernièreVisite($equipements['date_et_heure1']['value']);
+                    $equipement->setTrigrammeTech($equipements['trigramme']['value']);
+                    $equipement->setSignatureTech($equipements['signature3']['value']);
+
+                    $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
+                    $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
+                    $equipement->setNature(strtolower($additionalEquipment['reference7']['value']));
+                    $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
+                    $equipement->setRepereSiteClient($additionalEquipment['localisation_site_client']['value']);
+                    $equipement->setMiseEnService($additionalEquipment['reference2']['value']);
+                    $equipement->setNumeroDeSerie($additionalEquipment['reference6']['value']);
+                    $equipement->setMarque($additionalEquipment['reference5']['value']);
+                    $equipement->setLargeur($additionalEquipment['reference3']['value']);
+                    $equipement->setHauteur($additionalEquipment['reference1']['value']);
+                    $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
+
+                    //Anomalies en fonction de la nature de l'équipement
+                    switch($additionalEquipment['anomalie']['value']){
+                        case 'niveleur':
+                            $equipement->setAnomalies($additionalEquipment['anomalie_niveleur']['value']);
+                            break;
+                        case 'portail':
+                            $equipement->setAnomalies($additionalEquipment['anomalie_portail']['value']);
+                            break;
+                        case 'porte rapide':
+                            $equipement->setAnomalies($additionalEquipment['anomalie_porte_rapide']['value']);
+                            break;
+                        case 'porte pietonne':
+                            $equipement->setAnomalies($additionalEquipment['anomalie_porte_pietonne']['value']);
+                            break;
+                        case 'barriere':
+                            $equipement->setAnomalies($additionalEquipment['anomalie_barriere']['value']);
+                            break;
+                        case 'rideau':
+                            $equipement->setAnomalies($additionalEquipment['rid']['value']);
+                            break;
+                        default:
+                            $equipement->setAnomalies($additionalEquipment['anomalie']['value']);
                         
-                        foreach ($equipementsData[$id]['fields']['contrat_de_maintenance']['value'] as $idEquipement => $value) {
-                            $equipement = new Equipement;
-                            $equipement->setIdContact($equipementsData[$id]['fields']['id_client_']['value']);
-                            $equipement->setDernièreVisite($equipementsData[$id]['fields']['date_et_heure1']['value']);
-                            $equipement->setTrigrammeTech($equipementsData[$id]['fields']['trigramme']['value']);
-                            $equipement->setSignatureTech($equipementsData[$id]['fields']['signature3']['value']);
-                            $equipement->setNumeroEquipement($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['equipement']['value']);
-                            $equipement->setIfExistDB($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['equipement']['columns']);
-                            $equipement->setNature(strtolower($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference7']['value']));
-                            $equipement->setModeFonctionnement($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['mode_fonctionnement_2']['value']);
-                            $equipement->setRepereSiteClient($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['localisation_site_client']['value']);
-                            $equipement->setMiseEnService($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference2']['value']);
-                            $equipement->setNumeroDeSerie($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference6']['value']);
-                            $equipement->setMarque($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference5']['value']);
-                            $equipement->setLargeur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference3']['value']);
-                            $equipement->setHauteur($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference1']['value']);
-                            $equipement->setPlaqueSignaletique($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['plaque_signaletique']['value']);
-
-                            //Anomalies en fonction de la nature de l'équipement
-                            switch($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['reference7']['value']){
-                                case 'niveleur':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie_niveleur']['value']);
-                                    break;
-                                case 'portail':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie_portail']['value']);
-                                    break;
-                                case 'porte rapide':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie_porte_rapide']['value']);
-                                    break;
-                                case 'porte pietonne':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie_porte_pietonne']['value']);
-                                    break;
-                                case 'barriere':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie_barriere']['value']);
-                                    break;
-                                case 'rideau':
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['rid']['value']);
-                                    break;
-                                default:
-                                    $equipement->setAnomalies($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['anomalie']['value']);
-                                
-                            }
-                            $equipement->setEtat($equipementsData[$id]['fields']['contrat_de_maintenance']['value'][$idEquipement]['etat']['value']);
-
-                            // tell Doctrine you want to (eventually) save the Product (no queries yet)
-                            $entityManager->persist($equipement);
-                        }
                     }
+                    $equipement->setEtat($additionalEquipment['etat']['value']);
+                    if (isset($additionalEquipment['hauteur_de_nacelle_necessaire']['value'])) {
+                        $equipement->setHauteurNacelle($additionalEquipment['hauteur_de_nacelle_necessaire']['value']);
+                    }else{
+                        $equipement->setHauteurNacelle("");
+                    }
+                    
+                    if (isset($additionalEquipment['si_location_preciser_le_model']['value'])) {
+                        $equipement->setModeleNacelle($additionalEquipment['si_location_preciser_le_model']['value']);
+                    }else{
+                        $equipement->setModeleNacelle("");
+                    }
+
+                    // tell Doctrine you want to (eventually) save the Product (no queries yet)
+                    $entityManager->persist($equipement);
+                    
+                    
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
                     ?>
@@ -164,7 +169,6 @@ class FormController extends AbstractController
                 }
             }
         }
-        // return new JsonResponse($dataOfFormList[1]['data'], Response::HTTP_OK, [], false);
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($dataOfFormList) . " | Equipements en BDD : " . count($allEquipementsInDatabase) . "\n ", Response::HTTP_OK, [], true);
     }
 

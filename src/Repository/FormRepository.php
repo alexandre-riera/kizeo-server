@@ -20,6 +20,26 @@ class FormRepository extends ServiceEntityRepository
    /**
     * @return Form[] Returns an array of Contact objects
     */
+   public function getLists(): array
+   {
+        $response = $this->client->request(
+            'GET',
+            'https://forms.kizeo.com/rest/v3/lists', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+            ]
+        );
+        $content = $response->getContent();
+        $content = $response->toArray();
+
+        return $content;
+   }
+
+   /**
+    * @return Form[] Returns an array of Contact objects
+    */
    public function getForms(): array
    {
         $response = $this->client->request(
@@ -38,7 +58,56 @@ class FormRepository extends ServiceEntityRepository
    }
 
    /**
-    * @return Form[] Returns an array
+    * @return Form[] Returns an array of Formulaires with id 986403 wich is "Visite maintenance Grenoble"
+    */
+   public function getDataOfFormsMaintenance(): array
+   {
+        $allFormsArray = FormRepository::getForms();
+        $allFormsArray = $allFormsArray['forms'];
+        $allFormsMaintenanceArray = [];
+        $allFormsMaintenanceDataArray = [];
+
+        // dd($allFormsArray); // -----------------------------   Return all forms in an array
+
+        foreach ($allFormsArray as $key => $value) {
+            if ($allFormsArray[$key]['id'] === '986403') {
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $content = $response->getContent();
+                $content = $response->toArray();
+                foreach ($content['data'] as $key => $value) {
+                    array_push($allFormsMaintenanceArray, $value);
+                }
+            }
+        }
+
+        foreach ($allFormsMaintenanceArray as $key => $value) {
+            $responseDataOfForm = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/data/' . $allFormsMaintenanceArray[$key]['_id'], [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $content = $responseDataOfForm->getContent();
+            $content = $responseDataOfForm->toArray();
+            array_push($allFormsMaintenanceDataArray, $content['data']['fields']);
+        }
+        // dd($allFormsMaintenanceDataArray);
+        return $allFormsMaintenanceDataArray;
+   }
+
+   /**
+    * @return Form[] Returns an array of Formulaires with class PORTAILS
     */
    public function getFormsAdvanced(): array
    {
@@ -70,7 +139,7 @@ class FormRepository extends ServiceEntityRepository
    }
 
    /**
-    * @return data of Form[] Returns an array of Portails objects
+    * @return data of Form[] Returns an array of all Portails objects in all formulaires
     */
    public function getEtatDesLieuxPortailsDataOfForms(): array
    {
