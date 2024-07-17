@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Form;
 use App\Entity\Equipement;
 use App\Entity\Portail;
+use App\Entity\PortailAuto;
+use App\Entity\PortailEnvironement;
 use App\Repository\FormRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -188,23 +190,17 @@ class FormController extends AbstractController
             array_push($allportailsResumeInDatabase, $allPortailsInDatabase[$i]->getIfexistDB());
         }
 
-        foreach ($dataOfFormList as $formPortail) {
-            // dd($formPortail);
-            // array_push($equipementsData, $dataOfFormList[$key]['data']['fields']['portails']);
-            // foreach ($equipementsData as $equipement){
-            //     foreach ($equipement['value'] as $eachEquipement) {
-            //         array_push($eachEquipementsData,  $eachEquipement);
-            //     }
-            // }
-             
+        foreach ($dataOfFormList as $formPortail) { 
             /**
-            * Persist each portail in database
+            * Persist each portail, portail auto in database
             */
 
             foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
                 array_push($allNewPortailsResume, $formPortail['data']['fields']['liste_clients']['columns']);
                 if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsResumeInDatabase, TRUE)){
+
                     $equipement = new Portail;
+
                     $equipement->setTrigrammeTech($formPortail['data']['fields']['trigramme_de_la_personne_real']['value']);
                     $equipement->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
                     if (isset($formPortail['data']['fields']['id_societe_'])) {
@@ -232,7 +228,7 @@ class FormController extends AbstractController
                     $equipement->setHauteur($portail['dimension_hauteur_vantail']['value']);
                     
                     $equipement->setPresenceCarnetEntretien($portail['presence_carnet_entretien']['value']);
-                    $equipement->setPresenceNoticeFabricant($portail['presence_notice_fabriquant']['value']);
+                    $equipement->setPresenceNoticeFabricant($portail['presence_notice_fabricant']['value']);
                     $equipement->setPortillonSurVantail($portail['presence_portillon_sur_le_van']['value']);
                     $equipement->setTypeDeGuidage($portail['types_de_guidage']['value']);
                     $equipement->setTypePortail($portail['types_de_portails1']['value']);
@@ -249,6 +245,7 @@ class FormController extends AbstractController
                     $equipement->setPortailImmobileToutesPositionsEnManuel($portail['en_toute_position_a_arret_le_1']['value']);
                     $equipement->setDurMecaEnManuel($portail['absence_de_dur_mecanique_']['value']);
                     $equipement->setDistanceBarreauxCloture($portail['distance_entre_les_barreaux_d1']['value']);
+
                     // tell Doctrine you want to (eventually) save the Portail (no queries yet)
                     $entityManager->persist($equipement);
                 }
@@ -261,5 +258,171 @@ class FormController extends AbstractController
             $allPortailsInDatabase = $entityManager->getRepository(Portail::class)->findAll();
         }
         return new JsonResponse("Portails en BDD : " . count($allPortailsInDatabase) . "\n ", Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * Function to ADD new PORTAILS AUTO from technicians forms
+     */
+    #[Route('/api/forms/update/portails/auto', name: 'app_api_form_update_portails_auto', methods: ['GET'])]
+    public function getEtatDesLieuxPortailsAutoDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    {
+       // GET all technicians forms from list class PORTAILS
+       $dataOfFormList  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+       $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
+       $equipementsData = [];
+       $eachEquipementsData = [];
+       
+       $allPortailsAutoInDatabase = $entityManager->getRepository(PortailAuto::class)->findAll();
+       /**
+        * Store all equipments resumes stored in database to an array
+        */
+       $allportailsAutoResumeInDatabase = [];
+       $allNewPortailsResume = [];
+       for ($i=0; $i < count($allPortailsAutoInDatabase); $i++) { 
+           array_push($allportailsAutoResumeInDatabase, $allPortailsAutoInDatabase[$i]->getIfexistDB());
+       }
+
+       foreach ($dataOfFormList as $formPortail) { 
+           /**
+           * Persist each portail, portail auto in database
+           */
+
+           foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
+               array_push($allNewPortailsResume, $formPortail['data']['fields']['liste_clients']['columns']);
+               if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsAutoResumeInDatabase, TRUE)){
+
+                   $portailAuto = new PortailAuto;
+
+                   $portailAuto->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
+                   if (isset($formPortail['data']['fields']['id_societe_'])) {
+                       $portailAuto->setIdSociete($formPortail['data']['fields']['id_societe_']['value']);
+                   }else{
+                       $portailAuto->setIdSociete("");
+                   }
+                   $portailAuto->setContactSecuritePortillon($portail['contact_securite_sur_portillo']['value']);
+                   $portailAuto->setPresenceBoitierPompiers($portail['presence_boitier_pompiers']['value']);
+                   $portailAuto->setProtectionPignonMoteur($portail['protection_pignon_moteur']['value']);
+                   $portailAuto->setEspaceProtectionPignonCremaillereInfEgal8mm($portail['espace_entre_la_protection_du']['value']);
+                   $portailAuto->setManipulableManuelCoupureCourant($portail['portail_manipulable_manuellem1']['value']);
+                   $portailAuto->setManoeuvreDepannage($portail['man_uvre_de_depannage']['value']);
+                   $portailAuto->setInstructionManoeuvreDepannage($portail['presence_instruction_manoeuvr']['value']);
+                   $portailAuto->setDispositifCoupureElecProximite($portail['presence_dispositif_de_coupur']['value']);
+                   $portailAuto->setRaccordementTerre($portail['raccordement_a_la_terre']['value']);
+                   $portailAuto->setMesureTensionPhaseEtTerre($portail['mesure_tension_entre_phase_et1']['value']);
+                   $portailAuto->setEclairageZoneDebattement($portail['presence_eclairage_de_zone_de']['value']);
+                   $portailAuto->setFonctionnementEclairageZone($portail['fonctionnement_eclairage_zone']['value']);
+                   $portailAuto->setPresenceFeuClignotantOrange($portail['presence_feu_clignotant_orang']['value']);
+                   $portailAuto->setVisibiliteClignotant2Cotes($portail['visibilite_clignotant_des_2_c1']['value']);
+                   $portailAuto->setPreavisClignotantMin2Sec($portail['preavis_feu_clignotant_2_sec']['value']);
+                   $portailAuto->setMarquageAuSol($portail['presence_marquage_au_sol']['value']);
+                   $portailAuto->setMarquageZoneRefoulement($portail['marquage_zone_de_refoulement']['value']);
+                   $portailAuto->setEtatMarquage($portail['etat_du_marquage']['value']);
+                   $portailAuto->setConformiteMarquageSolBandesJaunesNoirs45Deg($portail['conformite_marquage_au_sol']['value']);
+                   $portailAuto->setFonctionnementCellules($portail['fonctionnement_cellules']['value']);
+                   $portailAuto->setCoteEnAMm($portail['distance_entre_l_axe_cellule_']['value']);
+                   $portailAuto->setCoteEnBMm($portail['cote_en_b']['value']);
+                   $portailAuto->setCoteEnCMm($portail['cote_en_c']['value']);
+                   $portailAuto->setCoteEnDMm($portail['cote_en_d']['value']);
+                   $portailAuto->setCoteEnAPrimeMm($portail['cote_en_a_']['value']);
+                   $portailAuto->setCoteEnBPrimeMm($portail['cote_en_b_']['value']);
+                   $portailAuto->setCoteEnCPrimeMm($portail['cote_en_c_']['value']);
+                   $portailAuto->setCoteEnDPrimeMm($portail['cote_en_d_']['value']);
+                   $portailAuto->setProtectionBordPrimaire($portail['protection_bord_primaire']['value']);
+                   $portailAuto->setProtectionBordSecondaire($portail['protection_bord_secondaire']['value']);
+                   $portailAuto->setProtectionSurfaceVantail($portail['types_de_refoulement']['value']);
+                   $portailAuto->setProtectionAirRefoulement($portail['protection_aire_de_refoulemen1']['value']);
+                   $portailAuto->setPositionDesPoteaux($portail['position_des_poteaux']['value']);
+                   $portailAuto->setProtectionCisaillementA($portail['protection_des_zones_de_cisai']['value']);
+                   $portailAuto->setProtectionCisaillementA1($portail['protection_des_zones_de_cisai2']['value']);
+                   $portailAuto->setProtectionCisaillementB($portail['protection_des_zones_de_cisai3']['value']);
+                   $portailAuto->setProtectionCisaillementB1($portail['protection_des_zones_de_cisai4']['value']);
+                   $portailAuto->setProtectionCisaillementC($portail['protection_des_zones_de_cisai5']['value']);
+                   $portailAuto->setProtectionCisaillementC1($portail['protection_des_zones_de_cisai6']['value']);
+                   $portailAuto->setProtectionCisaillementM($portail['protection_des_zones_de_cisai7']['value']);
+                   $portailAuto->setZoneEcrasementFinOuvertureInf500Mm($portail['zone_d_ecrasement_fin_d_ouver']['value']);
+                   $portailAuto->setDistanceZoneFinOuverture($portail['distance_de_la_zone_en_fin_d_']['value']);
+                   $portailAuto->setIfExistDb($formPortail['data']['fields']['liste_clients']['columns']);
+
+                   // tell Doctrine you want to (eventually) save the Portail (no queries yet)
+                   $entityManager->persist($portailAuto);
+               }
+           }    
+           // actually executes the queries (i.e. the INSERT query)
+           $entityManager->flush();
+           ?>
+           We have a new portail auto or we have updated an equipment !
+           <?php
+           $allPortailsAutoInDatabase = $entityManager->getRepository(PortailAuto::class)->findAll();
+       }
+       return new JsonResponse("Portails auto en BDD : " . count($allPortailsAutoInDatabase) . "\n ", Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * Function to ADD new PORTAILS ENVIRONEMENT from technicians forms
+     */
+    #[Route('/api/forms/update/portails/environement', name: 'app_api_form_update_portails_environement', methods: ['GET'])]
+    public function getEtatDesLieuxPortailsEnvironementDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    {
+       // GET all technicians forms from list class PORTAILS
+       $dataOfFormList  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+       $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
+       $equipementsData = [];
+       $eachEquipementsData = [];
+       
+       $allPortailsEnvironementInDatabase = $entityManager->getRepository(PortailEnvironement::class)->findAll();
+       /**
+        * Store all equipments resumes stored in database to an array
+        */
+       $allportailsEnvironementResumeInDatabase = [];
+       $allNewPortailsEnvironementResume = [];
+       for ($i=0; $i < count($allPortailsEnvironementInDatabase); $i++) { 
+           array_push($allportailsEnvironementResumeInDatabase, $allPortailsEnvironementInDatabase[$i]->getIfexistDB());
+       }
+
+       foreach ($dataOfFormList as $formPortail) { 
+           /**
+           * Persist each portail, portail auto in database
+           */
+
+           foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
+               array_push($allNewPortailsEnvironementResume, $formPortail['data']['fields']['liste_clients']['columns']);
+               if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsEnvironementResumeInDatabase, TRUE)){
+
+                   $portailEnvironement = new PortailEnvironement;
+
+                   $portailEnvironement->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
+                   if (isset($formPortail['data']['fields']['id_societe_'])) {
+                       $portailEnvironement->setIdSociete($formPortail['data']['fields']['id_societe_']['value']);
+                   }else{
+                       $portailEnvironement->setIdSociete("");
+                   }
+                   $portailEnvironement->setNumeroEquipement($portail['reference_equipement']['value']);
+                   $portailEnvironement->setDistanceClotureExtEtVantailD1Mm($portail['distance_entre_grillage_et_va']['value']);
+                   $portailEnvironement->setDimensionsMaillesGrillageExtMm($portail['dimensions_mailles_du_grillag1']['value']);
+                   $portailEnvironement->setDistanceGrillageEtVantailIntD2Mm($portail['distance_entre_grillage_et_va2']['value']);
+                   $portailEnvironement->setDimensionsMaillesGrillageIntMm($portail['dimensions_mailles_du_grillag2']['value']);
+                   $portailEnvironement->setDimensionsMaillesTablierMm($portail['dimensions_maille_tablier_en']['value']);
+                   $portailEnvironement->setDistanceBarreauxVantailMm($portail['distance_entre_les_barreaux_d']['value']);
+                   $portailEnvironement->setValeursMesureesPoint1($portail['valeurs_mesurees_au_point_1']['value']);
+                   $portailEnvironement->setValeursMesureesPoint2($portail['valeurs_mesurees_au_point_2']['value']);
+                   $portailEnvironement->setValeursMesureesPoint3($portail['valeurs_mesurees_au_point_3']['value']);
+                   $portailEnvironement->setValeursMesureesPoint4($portail['valeurs_mesurees_au_point_4']['value']);
+                   $portailEnvironement->setValeursMesureesPoint5($portail['valeurs_mesurees_au_point_5']['value']);
+                   $portailEnvironement->setCommentaireSuppSiNecessaire($portail['commentaire_supplementaire']['value']);
+                   $portailEnvironement->setPhotoSupSiNecessaire($portail['photo4']['value']);
+                   $portailEnvironement->setIfExistDb($formPortail['data']['fields']['liste_clients']['columns']);
+
+                   // tell Doctrine you want to (eventually) save the Portail (no queries yet)
+                   $entityManager->persist($portailEnvironement);
+               }
+           }    
+           // actually executes the queries (i.e. the INSERT query)
+           $entityManager->flush();
+           ?>
+           We have a new portail environement or we have updated an equipment !
+           <?php
+           $allPortailsEnvironementInDatabase = $entityManager->getRepository(PortailEnvironement::class)->findAll();
+       }
+       return new JsonResponse("Portails environement en BDD : " . count($allPortailsEnvironementInDatabase) . "\n ", Response::HTTP_OK, [], true);
     }
 }
