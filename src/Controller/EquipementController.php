@@ -89,6 +89,16 @@ class EquipementController extends AbstractController
 
         return new JsonResponse("Equipements sur API KIZEO : " . count($equipementList), Response::HTTP_OK, [], true);
     }
+    
+    #[Route('/api/equipements/grenoble', name: 'app_equipement_grenoble', methods: ['GET'])]
+    public function getEquipementsGrenoble(EquipementRepository $equipementRepository): JsonResponse
+    {
+        // Equipements on Kizeo for every agence equipments list managed by EquipementRepository.php
+        $equipementsGrenoble  =  $equipementRepository->getEquipementsGrenoble();
+
+        
+        return new JsonResponse($equipementsGrenoble, Response::HTTP_OK, [], true);
+    }
 
 // ---------------------------------------------- ROUTE POUR LES PORTAILS NE SERVANT PAS POUR L'INSTANT --------------------------------------
     // #[Route('/api/portails', name: 'app_portails', methods: ['GET'])]

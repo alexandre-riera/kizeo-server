@@ -18,7 +18,7 @@ class EquipementRepository extends ServiceEntityRepository
     }
 
     /**
-    * @return Equipement[] Returns an array of Contact objects
+    * @return Equipement[] Returns an array of ONLY "EQUIPEMENT CONTRAT 38"
     */
    public function getEquipements(): array
    {
@@ -43,8 +43,8 @@ class EquipementRepository extends ServiceEntityRepository
         foreach ($contentAllLists as $key => $value) {
             // ------------------------------------------------------TO REQUEST ONLY "EQUIPEMENT CONTRAT 38"-------------------------
             if ($contentAllLists[$key]['class'] === 'Maintenance' && $contentAllLists[$key]['id'] != '409466') {
-                dump("Liste d'ID équipements contrat 38");
-                dump($contentAllLists[$key]['id']);
+                // dump("Liste d'ID équipements contrat 38");
+                // dump($contentAllLists[$key]['id']);
                 $response = $this->client->request(
                     'GET',
                     'https://forms.kizeo.com/rest/v3/lists/' . $contentAllLists[$key]['id'], [
@@ -68,6 +68,25 @@ class EquipementRepository extends ServiceEntityRepository
             }
         }
         return $equipementsSplittedArray;
+   }
+   public function getEquipementsGrenoble(): array
+   {
+
+        // ----------------------------------------------------  Requête des equipements au contrat Grenoble sur Kizeo
+        $reqlistEquipementsContratGrenoble = $this->client->request(
+            'GET',
+            'https://forms.kizeo.com/rest/v3/lists/414025', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+            ]
+        );
+        $EquipementsGrenoble = $reqlistEquipementsContratGrenoble->getContent();
+        $EquipementsGrenoble = $reqlistEquipementsContratGrenoble->toArray();
+        // ------------------------------------------------------  Mettre la boucle for des ids ici
+        
+        return $EquipementsGrenoble;
    }
    // ---------------------------------------------- ROUTE POUR LES PORTAILS NE SERVANT PAS POUR L'INSTANT --------------------------------------
 //     /**
