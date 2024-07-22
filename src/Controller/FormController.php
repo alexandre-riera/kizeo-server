@@ -101,6 +101,17 @@ class FormController extends AbstractController
                     */
                     $equipement = new Equipement;
                     $equipement->setIdContact($equipements['id_client_']['value']);
+                    if (isset($equipements['id_societe']['value'])) {
+                        $equipement->setCodeSociete($equipements['id_societe']['value']);
+                    }else{
+                        $equipement->setCodeSociete("");
+                    }
+                    if (isset($equipements['id_agence']['value'])) {
+                        $equipement->setCodeAgence($equipements['id_agence']['value']);
+                    }else{
+                        $equipement->setCodeAgence("");
+                    }
+                    
                     $equipement->setDernièreVisite($equipements['date_et_heure1']['value']);
                     $equipement->setTrigrammeTech($equipements['trigramme']['value']);
                     $equipement->setSignatureTech($equipements['signature3']['value']);
@@ -113,8 +124,16 @@ class FormController extends AbstractController
                     $equipement->setMiseEnService($additionalEquipment['reference2']['value']);
                     $equipement->setNumeroDeSerie($additionalEquipment['reference6']['value']);
                     $equipement->setMarque($additionalEquipment['reference5']['value']);
-                    $equipement->setLargeur($additionalEquipment['reference3']['value']);
-                    $equipement->setHauteur($additionalEquipment['reference1']['value']);
+                    if (isset($additionalEquipment['reference3']['value'])) {
+                        $equipement->setLargeur($additionalEquipment['reference3']['value']);
+                    }else{
+                        $equipement->setLargeur("");
+                    }
+                    if (isset($additionalEquipment['reference1']['value'])) {
+                        $equipement->setHauteur($additionalEquipment['reference1']['value']);
+                    }else{
+                        $equipement->setHauteur("");
+                    }
                     $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
 
                     //Anomalies en fonction de la nature de l'équipement
