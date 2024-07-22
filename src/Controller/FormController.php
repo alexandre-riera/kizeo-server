@@ -251,7 +251,11 @@ class FormController extends AbstractController
                     $equipement->setHauteur($portail['dimension_hauteur_vantail']['value']);
                     
                     $equipement->setPresenceCarnetEntretien($portail['presence_carnet_entretien']['value']);
-                    $equipement->setPresenceNoticeFabricant($portail['presence_notice_fabricant']['value']);
+                    if (isset($portail['presence_notice_fabricant']['value'])) {
+                        $equipement->setPresenceNoticeFabricant($portail['presence_notice_fabricant']['value']);
+                    }else{
+                        $equipement->setPresenceNoticeFabricant("");
+                    }
                     $equipement->setPortillonSurVantail($portail['presence_portillon_sur_le_van']['value']);
                     $equipement->setTypeDeGuidage($portail['types_de_guidage']['value']);
                     $equipement->setTypePortail($portail['types_de_portails1']['value']);
