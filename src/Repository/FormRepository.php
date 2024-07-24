@@ -70,7 +70,7 @@ class FormRepository extends ServiceEntityRepository
         // dd($allFormsArray); // -----------------------------   Return all forms in an array
 
         foreach ($allFormsArray as $key => $value) {
-            if ($allFormsArray[$key]['id'] === '986403') {
+            if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
                 $response = $this->client->request(
                     'POST',
                     'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
