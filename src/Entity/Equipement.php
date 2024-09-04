@@ -89,6 +89,12 @@ class Equipement
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $modele_nacelle = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $raison_sociale = null;
+
+    #[ORM\Column(length: 15)]
+    private ?string $test = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -390,6 +396,30 @@ class Equipement
     public function setModeleNacelle(?string $modele_nacelle): static
     {
         $this->modele_nacelle = $modele_nacelle;
+
+        return $this;
+    }
+
+    public function getRaisonSociale(): ?string
+    {
+        return $this->raison_sociale;
+    }
+
+    public function setRaisonSociale(?string $raison_sociale): static
+    {
+        $this->raison_sociale = $raison_sociale;
+
+        return $this;
+    }
+
+    public function getTest(): ?string
+    {
+        return $this->test;
+    }
+
+    public function setTest(string $test): static
+    {
+        $this->test = $test;
 
         return $this;
     }

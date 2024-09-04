@@ -3,20 +3,44 @@
 namespace App\Controller;
 
 use App\Entity\Form;
-use App\Entity\Equipement;
+use GuzzleHttp\Client;
 use App\Entity\Portail;
+use App\Entity\Equipement;
 use App\Entity\PortailAuto;
-use App\Entity\PortailEnvironement;
 use App\Repository\FormRepository;
+use App\Entity\PortailEnvironement;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class FormController extends AbstractController
 {
+    /**
+     * A REMETTRE A LA RENTRÉE BISOUS
+     * 
+     */
+    #[Route('/', name: 'home', methods: ['GET'])]
+    public function home(){
+        return new JsonResponse("L'application API KIZEO est lancée !", Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
+     */
+    #[Route('/api/lists/get/equipements-contrat-38', name: 'app_api_get_lists_equipements_contrat_38', methods: ['GET'])]
+    public function getListsEquipementsContrat38(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $formList  =  $formRepository->getListsEquipementsContrats38();
+        
+        dump($formList);
+
+        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList), Response::HTTP_OK, [], true);
+    }
     /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
      */
@@ -62,45 +86,57 @@ class FormController extends AbstractController
     }
 
     /**
-     * Function to ADD new equipments from technicians forms MAINTENANCE
+     * Function to ADD new equipments from technicians forms MAINTENANCE forms formulaire Visite maintenance Grenoble ID = 1004962
      */
     #[Route('/api/forms/update/maintenance', name: 'app_api_form_update', methods: ['GET'])]
     public function getDataOfFormsMaintenance(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
     {
-        // GET all technicians forms formulaire Visite maintenance Grenoble id = 986403
+        // GET all technicians forms formulaire Visite maintenance Grenoble id = 1004962
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
-        $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
-        // dd($dataOfFormList); // OK
+        dd($dataOfFormList);
         $allEquipementsInDatabase = $entityManager->getRepository(Equipement::class)->findAll();
-
         /**
-         * Store all equipments resumes stored in database to an array
+         * Store all equipments split resumes stored in database to $allEquipementsResumeInDatabase array
          */
         $allEquipementsResumeInDatabase = [];
         for ($i=0; $i < count($allEquipementsInDatabase); $i++) { 
-            array_push($allEquipementsResumeInDatabase, $allEquipementsInDatabase[$i]->getIfexistDB());
+            array_push($allEquipementsResumeInDatabase, array_unique(preg_split("/[:|]/", $allEquipementsInDatabase[$i]->getIfexistDB())));
+            // dump(array_unique(preg_split("/[:|]/", $allEquipementsInDatabase[$i]->getIfexistDB())));
+            // dump($allEquipementsInDatabase[$i]->getNumeroEquipement());
+            // dump($allEquipementsInDatabase[$i]);
         }
-
+        // --------------------------- RPRENDRE LUNDI A PARTIR D'ICI
         foreach ($dataOfFormList as $equipements){
+            dump("Je recupere les formulaires maintenance Grenoble et Paris du repository dans $ dataofFormList");
+            // dump($dataOfFormList);
             /**
             * List all additional equipments stored in individual array
             */
+            // dump($equipements['contrat_de_maintenance']['value']);
             foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
                 // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
-                $resume_equipement_supplementaire = $additionalEquipment['equipement']['columns'];
+                $resume_equipement_supplementaire = array_unique(preg_split("/[:|]/", $additionalEquipment['equipement']['columns']));
+                dump("--------------------------------------------------------------------------------------------------------------------");
+                dump("Je recupere les équipements supplémentaires Grenoble et Paris dans $ additionalEquipment de la boucle sur $ dataofFormList");
+                // dd($equipements['contrat_de_maintenance']['value'][19]);
                 /**
                  * If resume_equipement_supplementaire value is NOT in  $allEquipementsResumeInDatabase array
                  * Method used : in_array(search, inThisArray, type) 
                  * type Optional. If this parameter is set to TRUE, the in_array() function searches for the search-string and specific type in the array
                  */
+                // if (!in_array($resume_equipement_supplementaire, $allEquipementsResumeInDatabase, TRUE) && $equipements['test_']['value'] != 'oui' ) {
                 if (!in_array($resume_equipement_supplementaire, $allEquipementsResumeInDatabase, TRUE)) {
                     
                     /**
                      * Persist each equipement in database
                      * Save a new contrat_de_maintenance equipement in database when a technician make an update
-                    */
+                     */
+                    // dd($equipements);
                     $equipement = new Equipement;
                     $equipement->setIdContact($equipements['id_client_']['value']);
+                    $equipement->setRaisonSociale($equipements['nom_client']['value']);
+                    $equipement->setTest($equipements['test_']['value']);
+
                     if (isset($equipements['id_societe']['value'])) {
                         $equipement->setCodeSociete($equipements['id_societe']['value']);
                     }else{
@@ -179,11 +215,10 @@ class FormController extends AbstractController
                     
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
-                    ?>
-                    We have a new equipment or we have updated an equipment !
-                    <?php
+                    
+                    echo nl2br("We have a new equipment or we have updated an equipment !");
                 }else{
-                    echo "All equipments are already in database \n  Vous pouvez revenir en arrière";
+                    echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
                     die;
                 }
             }
@@ -451,5 +486,69 @@ class FormController extends AbstractController
            $allPortailsEnvironementInDatabase = $entityManager->getRepository(PortailEnvironement::class)->findAll();
        }
        return new JsonResponse("Portails environement en BDD : " . count($allPortailsEnvironementInDatabase) . "\n ", Response::HTTP_OK, [], true);
+    }
+
+    /**
+     * A REMETTRE A LA RENTRÉE BISOUS
+     * 
+     */
+    #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
+    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository){
+        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
+        $equipmentsGrenoble = $formRepository->getListsEquipementsContrats38();
+        
+        foreach($dataOfFormList as $key=>$value){
+            dump($dataOfFormList[$key]['code_agence']['value']);
+            // $compteurEquipementsCheckes += count($dataOfFormList[$key]['contrat_de_maintenance']['value']);
+            // dump($dataOfFormList[$key]['contrat_de_maintenance']['value']);
+
+            switch ($dataOfFormList[$key]['code_agence']['value']) {
+                case 'S50':
+                    foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+                        // dd($equipment);
+                        $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
+                        if (!in_array($theEquipment, $equipmentsGrenoble, true)) {
+                            array_push($equipmentsGrenoble,  $theEquipment);
+                        }
+                    }
+                    Request::enableHttpMethodParameterOverride(); // <-- add this line
+                    $client = new Client();
+                    $response = $client->request(
+                        'PUT',
+                        'https://forms.kizeo.com/rest/v3/lists/421883', [
+                        // 'https://www.kizeoforms.com/lists/421883', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json'=>[
+                                'items' => $equipmentsGrenoble,
+                            ]
+                        ]
+                    );
+
+                    // $response = $client->request(
+                    //     'PUT',
+                    //     'https://forms.kizeo.com/rest/v3/lists/421883', [
+                    //         'headers'=>[
+                    //             'Accept'=>'application/json',
+                    //             'Authorization'=>$_ENV['KIZEO_API_TOKEN'],
+                    //         ],
+                    //         'body'=>[
+                    //             'items'=>$equipmentsGrenoble
+                    //         ]
+                    //     ]
+                    // );
+                    // $content = $response->getContent();
+                    // $content = $response->toArray();
+                    break;
+                
+                default:
+                    return new JsonResponse('this not for our agencies', Response::HTTP_OK, [], true);
+                    break;
+            }
+        }
+
+        return new JsonResponse('ggggg', Response::HTTP_OK, [], true);
     }
 }
