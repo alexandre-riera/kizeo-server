@@ -18,13 +18,13 @@ class FormRepository extends ServiceEntityRepository
     }
 
    /**
-    * @return Form[] Returns an array with all items from "Equipements Contrat 38" with ID 414025 || La liste test a l'ID 421883
+    * @return Form[] Returns an array with all items from all agencies equipments lists 
     */
-   public function getListsEquipementsContrats38(): array
+   public function getAgencyListEquipementsFromKizeoByListId($list_id): array
    {
         $response = $this->client->request(
             'GET',
-            'https://forms.kizeo.com/rest/v3/lists/414025', [
+            'https://forms.kizeo.com/rest/v3/lists/' . $list_id, [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -201,64 +201,4 @@ class FormRepository extends ServiceEntityRepository
         
         return $eachFormDataArray;
    }
-
-   /**
-    * PUT Update form from Kizeo formulaires and then update the list "Test equipement 38" with id  421883
-    * @return $ items  to put to Kizeo
-    */
-    public function PutDataOfFormsForUpdateListEquipementsOnKizeo(): array{
-        $compteurEquipementsCheckes = 0;
-        $compteurFormulaireMaintenanceEnregistres = 0;
-        $responseRequest = [];
-        $equipmentsGrenoble = $this->getListsEquipementsContrats38();
-        $theEquipment =  "";
-
-        // $AllLists = $this -> getLists();
-        // ['contrat_de_maintenance']['value'][0]['equipement']['columns']
-
-        // @return  an array of Formulaires with class "MAINTENANCE" wich is all maintenance visits 
-        // $dataOfFormList  = $this -> getDataOfFormsMaintenance();
-        // dd($dataOfFormList[16]);
-        // $compteurFormulaireMaintenanceEnregistres += count($dataOfFormList);
-
-
-        // foreach($dataOfFormList as $key=>$value){
-        //     dump($dataOfFormList[$key]['code_agence']['value']);
-        //     $compteurEquipementsCheckes += count($dataOfFormList[$key]['contrat_de_maintenance']['value']);
-        //     // dump($dataOfFormList[$key]['contrat_de_maintenance']['value']);
-
-        //     switch ($dataOfFormList[$key]['code_agence']['value']) {
-        //         case 'S50':
-        //             foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
-        //                 // dd($equipment);
-        //                 $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
-        //                 if (!in_array($theEquipment, $equipmentsGrenoble, true)) {
-        //                     array_push($equipmentsGrenoble,  $theEquipment);
-        //                 }
-        //             }
-        //             $response = $this->client->request(
-        //                 'PUT',
-        //                 'https://forms.kizeo.com/rest/v3/lists/421883', [
-        //                     'headers'=>[
-        //                         'Accept'=>'application/json',
-        //                         'Authorization'=>$_ENV['KIZEO_API_TOKEN'],
-        //                     ],
-        //                     'body'=>[
-        //                         'items'=>$equipmentsGrenoble
-        //                     ]
-        //                 ]
-        //             );
-        //             $content = $response->getContent();
-        //             $content = $response->toArray();
-        //             array_push($responseRequest, $content);
-        //             break;
-                
-        //         default:
-        //             # code...
-        //             break;
-        //     }
-        // }
-        // dump('Il y a ' . $compteurEquipementsCheckes . ' équipements en maintenance checkés par les techniciens dans ' . $compteurFormulaireMaintenanceEnregistres . ' formulaires de maintenance');
-        return $dataOfFormList;
-    }
 }

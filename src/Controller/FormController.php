@@ -35,7 +35,7 @@ class FormController extends AbstractController
     #[Route('/api/lists/get/equipements-contrat-38', name: 'app_api_get_lists_equipements_contrat_38', methods: ['GET'])]
     public function getListsEquipementsContrat38(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
-        $formList  =  $formRepository->getListsEquipementsContrats38();
+        $formList  =  $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
         
         dump($formList);
 
@@ -66,7 +66,7 @@ class FormController extends AbstractController
         $allFormsInDatabase = $entityManager->getRepository(Form::class)->findAll();
         
         dump($formList['forms']);
-        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList['forms']) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
+        return new JsonResponse("Formulaires parc client sur API KIZEO : "  . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
     /**
      * 
@@ -93,7 +93,7 @@ class FormController extends AbstractController
     {
         // GET all technicians forms formulaire Visite maintenance Grenoble id = 1004962
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
-        dd($dataOfFormList);
+        // dd($dataOfFormList);
         $allEquipementsInDatabase = $entityManager->getRepository(Equipement::class)->findAll();
         /**
          * Store all equipments split resumes stored in database to $allEquipementsResumeInDatabase array
@@ -489,18 +489,20 @@ class FormController extends AbstractController
     }
 
     /**
-     * A REMETTRE A LA RENTRÉE BISOUS
+     * UPDATE LIST OF EQUIPMENTS ON KIZEO
      * 
      */
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
     public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository){
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
-        $equipmentsGrenoble = $formRepository->getListsEquipementsContrats38();
+
+        // GET equipments des agences de Grenoble, Bordeaux et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
+        $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
+        $equipmentsParis = $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
+        $equipmentsMontpellier = $formRepository->getAgencyListEquipementsFromKizeoByListId(423852);
         
         foreach($dataOfFormList as $key=>$value){
             dump($dataOfFormList[$key]['code_agence']['value']);
-            // $compteurEquipementsCheckes += count($dataOfFormList[$key]['contrat_de_maintenance']['value']);
-            // dump($dataOfFormList[$key]['contrat_de_maintenance']['value']);
 
             switch ($dataOfFormList[$key]['code_agence']['value']) {
                 case 'S50':
@@ -515,8 +517,7 @@ class FormController extends AbstractController
                     $client = new Client();
                     $response = $client->request(
                         'PUT',
-                        'https://forms.kizeo.com/rest/v3/lists/421883', [
-                        // 'https://www.kizeoforms.com/lists/421883', [
+                        'https://forms.kizeo.com/rest/v3/lists/414025', [
                             'headers' => [
                                 'Accept' => 'application/json',
                                 'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -526,21 +527,56 @@ class FormController extends AbstractController
                             ]
                         ]
                     );
-
-                    // $response = $client->request(
-                    //     'PUT',
-                    //     'https://forms.kizeo.com/rest/v3/lists/421883', [
-                    //         'headers'=>[
-                    //             'Accept'=>'application/json',
-                    //             'Authorization'=>$_ENV['KIZEO_API_TOKEN'],
-                    //         ],
-                    //         'body'=>[
-                    //             'items'=>$equipmentsGrenoble
-                    //         ]
-                    //     ]
-                    // );
-                    // $content = $response->getContent();
-                    // $content = $response->toArray();
+                    dump('Uploads S50 OK');
+                    break;
+                
+                case 'S80':
+                    foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+                        $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
+                        if (!in_array($theEquipment, $equipmentsParis, true)) {
+                            array_push($equipmentsParis,  $theEquipment);
+                        }
+                    }
+                    Request::enableHttpMethodParameterOverride(); // <-- add this line
+                    $client = new Client();
+                    $response = $client->request(
+                        'PUT',
+                        'https://forms.kizeo.com/rest/v3/lists/421993', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json'=>[
+                                'items' => $equipmentsParis,
+                            ]
+                        ]
+                    );
+                    dump('Uploads for S80 OK');
+                    break;
+                
+                case 'S100':
+                    foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+                        $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
+                        if (!in_array($theEquipment, $equipmentsMontpellier, true)) {
+                            array_push($equipmentsMontpellier,  $theEquipment);
+                        }
+                    }
+                    Request::enableHttpMethodParameterOverride(); // <-- add this line
+                    $client = new Client();
+                    $response = $client->request(
+                        'PUT',
+                        'https://forms.kizeo.com/rest/v3/lists/423852', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json'=>[
+                                'items' => $equipmentsMontpellier,
+                            ]
+                        ]
+                    );
+                    
+                    dump('Uploads for S100 OK');
                     break;
                 
                 default:
@@ -549,6 +585,6 @@ class FormController extends AbstractController
             }
         }
 
-        return new JsonResponse('ggggg', Response::HTTP_OK, [], true);
+        return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
     }
 }
