@@ -21,7 +21,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class FormController extends AbstractController
 {
     /**
-     * A REMETTRE A LA RENTRÉE BISOUS
+     * HomePage route to avoid Symfony loading default page
      * 
      */
     #[Route('/', name: 'home', methods: ['GET'])]
@@ -86,12 +86,12 @@ class FormController extends AbstractController
     }
 
     /**
-     * Function to ADD new equipments from technicians forms MAINTENANCE forms formulaire Visite maintenance Grenoble ID = 1004962
+     * Function to ADD new equipments from technicians forms MAINTENANCE from formulaire Visite maintenance
      */
     #[Route('/api/forms/update/maintenance', name: 'app_api_form_update', methods: ['GET'])]
-    public function getDataOfFormsMaintenance(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    public function getDataOfFormsMaintenance(FormRepository $formRepository, EntityManagerInterface $entityManager)
     {
-        // GET all technicians forms formulaire Visite maintenance Grenoble id = 1004962
+        // GET all technicians forms formulaire Visite maintenance
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
         // dd($dataOfFormList);
         $allEquipementsInDatabase = $entityManager->getRepository(Equipement::class)->findAll();
@@ -101,13 +101,10 @@ class FormController extends AbstractController
         $allEquipementsResumeInDatabase = [];
         for ($i=0; $i < count($allEquipementsInDatabase); $i++) { 
             array_push($allEquipementsResumeInDatabase, array_unique(preg_split("/[:|]/", $allEquipementsInDatabase[$i]->getIfexistDB())));
-            // dump(array_unique(preg_split("/[:|]/", $allEquipementsInDatabase[$i]->getIfexistDB())));
-            // dump($allEquipementsInDatabase[$i]->getNumeroEquipement());
-            // dump($allEquipementsInDatabase[$i]);
         }
-        // --------------------------- RPRENDRE LUNDI A PARTIR D'ICI
+        
         foreach ($dataOfFormList as $equipements){
-            dump("Je recupere les formulaires maintenance Grenoble et Paris du repository dans $ dataofFormList");
+            dump("Je recupere les formulaires maintenance du repository dans $ dataofFormList");
             // dump($dataOfFormList);
             /**
             * List all additional equipments stored in individual array
@@ -489,7 +486,7 @@ class FormController extends AbstractController
     }
 
     /**
-     * UPDATE LIST OF EQUIPMENTS ON KIZEO
+     * UPDATE LIST OF EQUIPMENTS ON KIZEO AND FLUSH NEW EQUIPMENTS IN LOCAL DATABASE
      * 
      */
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
@@ -499,7 +496,7 @@ class FormController extends AbstractController
         // GET equipments des agences de Grenoble, Bordeaux et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
         $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
         $equipmentsParis = $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
-        $equipmentsMontpellier = $formRepository->getAgencyListEquipementsFromKizeoByListId(423852);
+        $equipmentsMontpellier = $formRepository->getAgencyListEquipementsFromKizeoByListId(423853);
         
         foreach($dataOfFormList as $key=>$value){
             dump($dataOfFormList[$key]['code_agence']['value']);
@@ -585,6 +582,132 @@ class FormController extends AbstractController
             }
         }
 
-        return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+        // ----------------------                 Save new equipements in database from all agencies
+        
+
+        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_update');
+    }
+
+    
+    /**
+     * UPDATE LIST OF EQUIPMENTS IN LOCAL DATABASE --------  JUST ONE TIME AT THE BEGGINING FOR EACH LIST
+     * 
+     */
+    #[Route('/api/upload/list/equipements/grenoble', name: 'app_api_upload_list_equipements_grenoble', methods: ['GET'])]
+    public function saveAllGrenobleListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
+        $listGrenoble  =  $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
+        $listGrenobleSplitted = [];
+        
+        foreach ($listGrenoble as $equipement) {
+            array_push($listGrenobleSplitted, preg_split("/[:|]/", $equipement));
+        }
+
+        foreach ($listGrenobleSplitted as $equipements){
+            $equipement = new Equipement;
+            $equipement->setTest("Non");
+            $equipement->setIdContact($equipements[18]);
+            $equipement->setRaisonSociale($equipements[0]);
+            $equipement->setCodeSociete($equipements[20]);
+            $equipement->setCodeAgence($equipements[22]);
+
+            $equipement->setNumeroEquipement($equipements[3]);
+            $equipement->setNature(strtolower($equipements[4]));
+            $equipement->setRepereSiteClient($equipements[2]);
+            $equipement->setMiseEnService($equipements[6]);
+            $equipement->setNumeroDeSerie($equipements[8]);
+            $equipement->setMarque($equipements[10]);
+
+            // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            $entityManager->persist($equipement);
+            
+            // actually executes the queries (i.e. the INSERT query)
+            $entityManager->flush();
+            
+        }
+
+        return $this->redirectToRoute('app_api_upload_list_equipements_paris');
+    }
+    #[Route('/api/upload/list/equipements/paris', name: 'app_api_upload_list_equipements_paris', methods: ['GET'])]
+    public function saveAllParisListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
+        $listParis  =  $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
+        $listParisSplitted = [];
+        
+        foreach ($listParis as $equipement) {
+            array_push($listParisSplitted, preg_split("/[:|]/", $equipement));
+        }
+
+        foreach ($listParisSplitted as $equipements){
+            $equipement = new Equipement;
+            $equipement->setTest("Non");
+            $equipement->setIdContact($equipements[18]);
+            $equipement->setRaisonSociale($equipements[0]);
+            $equipement->setCodeSociete($equipements[20]);
+            $equipement->setCodeAgence($equipements[22]);
+
+            $equipement->setNumeroEquipement($equipements[3]);
+            $equipement->setNature(strtolower($equipements[4]));
+            $equipement->setRepereSiteClient($equipements[2]);
+            $equipement->setMiseEnService($equipements[6]);
+            $equipement->setNumeroDeSerie($equipements[8]);
+            $equipement->setMarque($equipements[10]);
+
+            // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            $entityManager->persist($equipement);
+            
+            
+            // actually executes the queries (i.e. the INSERT query)
+            $entityManager->flush();
+            
+        }
+
+        return $this->redirectToRoute('app_api_upload_list_equipements_montpellier');
+    }
+    #[Route('/api/upload/list/equipements/montpellier', name: 'app_api_upload_list_equipements_montpellier', methods: ['GET'])]
+    public function saveAllMontpellierListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
+        $listMontpellier  =  $formRepository->getAgencyListEquipementsFromKizeoByListId(423853);
+        $listMontpellierSplitted = [];
+        
+        foreach ($listMontpellier as $equipement) {
+            array_push($listMontpellierSplitted, preg_split("/[:|]/", $equipement));
+        }
+
+        foreach ($listMontpellierSplitted as $equipements){
+            $equipement = new Equipement;
+            $equipement->setTest("Non");
+            if (isset($equipements[18])) {
+                $equipement->setIdContact($equipements[18]);
+            }else{
+                $equipement->setIdContact("");
+            }
+            $equipement->setRaisonSociale($equipements[0]);
+            if (isset($equipements[20])) {
+                $equipement->setCodeSociete($equipements[20]);
+            }else{
+                $equipement->setCodeSociete("");
+            }
+            if (isset($equipements[22])) {
+                $equipement->setCodeAgence($equipements[22]);
+            }else{
+                $equipement->setCodeAgence("");
+            }
+
+            $equipement->setNumeroEquipement($equipements[3]);
+            $equipement->setNature(strtolower($equipements[4]));
+            $equipement->setRepereSiteClient($equipements[2]);
+            $equipement->setMiseEnService($equipements[6]);
+            $equipement->setNumeroDeSerie($equipements[8]);
+            $equipement->setMarque($equipements[10]);
+
+            // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            $entityManager->persist($equipement);
+            
+            
+            // actually executes the queries (i.e. the INSERT query)
+            $entityManager->flush();
+            
+        }
+
+        return new JsonResponse("All lists have been uploaded !", Response::HTTP_OK, [], true);
     }
 }
