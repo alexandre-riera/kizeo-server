@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
-use App\Repository\EquipementRepository;
+use App\Repository\EquipementS170Repository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: EquipementRepository::class)]
-class Equipement
+#[ORM\Entity(repositoryClass: EquipementS170Repository::class)]
+class EquipementS170
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
