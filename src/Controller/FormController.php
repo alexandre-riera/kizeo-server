@@ -49,8 +49,6 @@ class FormController extends AbstractController
     public function getListsEquipementsContrat38(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
         $formList  =  $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
-        
-        dump($formList);
 
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList), Response::HTTP_OK, [], true);
     }
@@ -63,7 +61,6 @@ class FormController extends AbstractController
         $formList  =  $formRepository->getLists();
         $jsonContactList = $serializer->serialize($formList, 'json');
         
-        dd($formList);
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList), Response::HTTP_OK, [], true);
     }
     /**
@@ -78,7 +75,6 @@ class FormController extends AbstractController
         // Fetch all contacts in database
         $allFormsInDatabase = $entityManager->getRepository(Form::class)->findAll();
         
-        dump($formList['forms']);
         return new JsonResponse("Formulaires parc client sur API KIZEO : "  . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
     /**
@@ -94,7 +90,6 @@ class FormController extends AbstractController
         // Fetch all contacts in database
         $allFormsInDatabase = $entityManager->getRepository(Form::class)->findAll();
         
-        dump($formList);
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
 
@@ -120,9 +115,10 @@ class FormController extends AbstractController
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
 
+        $formRepository->savePdfOnO2switch();
+        
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
-        // dd($dataOfFormList[27]);
         
         // --------------------------------------                       Call function iterate by list equipments -------------------------------------------
         $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS10::class)->findAll());
@@ -155,7 +151,6 @@ class FormController extends AbstractController
         
         foreach ($dataOfFormList as $equipements){
             dump("Je recupere les nouveaux formulaires maintenance de toutes les agences du repository dans $ dataofFormList");
-            // dd($equipements);
             // ----------------------------------------------------------   
             // IF code_agence d'$equipements = S50 ou S100 ou etc... on boucle sur ses équipements supplémentaires
             // ----------------------------------------------------------
@@ -502,7 +497,6 @@ class FormController extends AbstractController
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
     public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository){
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
-
         // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
         // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
@@ -597,7 +591,7 @@ class FormController extends AbstractController
 
     
     /**
-     * UPDATE LIST OF EQUIPMENTS IN LOCAL DATABASE --------  JUST ONE TIME AT THE BEGGINING FOR EACH LIST  --------- IT TAKE 24 MINUTES --- About 8 or 10 minutes by equipments list
+     * SAVE LISTS OF EQUIPMENTS IN LOCAL DATABASE BY AGENCY LIST --------  JUST ONE TIME AT THE BEGGINING FOR EACH LIST  --------- IT TAKE 24 MINUTES --- About 8 or 10 minutes by equipments list
      * Prefer uploads excel list equipments in database by phpmyadmin
      */
     #[Route('/api/upload/list/equipements/grenoble', name: 'app_api_upload_list_equipements_grenoble', methods: ['GET'])]
