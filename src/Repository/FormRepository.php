@@ -227,8 +227,10 @@ class FormRepository extends ServiceEntityRepository
         * List all additional equipments stored in individual array
         */
         foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
+            dump($additionalEquipment['etat']['value']);
             // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
             $resume_equipement_supplementaire = array_unique(preg_split("/[:|]/", $additionalEquipment['equipement']['columns']));
+            
             dump("--------------------------------------------------------------------------------------------------------------------");
             dump("Je recupere les équipements supplémentaires des agences dans $ additionalEquipment de la boucle sur $ dataofFormList");
             // dd($equipements['contrat_de_maintenance']['value'][19]);
@@ -238,7 +240,7 @@ class FormRepository extends ServiceEntityRepository
              * type Optional. If this parameter is set to TRUE, the in_array() function searches for the search-string and specific type in the array
              */
             // if (!in_array($resume_equipement_supplementaire, $allEquipementsResumeInDatabase, TRUE) && $equipements['test_']['value'] != 'oui' ) {
-            if (!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
+            // if (!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
                 
                 /**
                  * Persist each equipement in database
@@ -478,6 +480,36 @@ class FormRepository extends ServiceEntityRepository
                 }else{
                     $equipement->setPhotoMarquageAuSolPortail("");
                 }
+
+                if (isset($additionalEquipment['etat']['value'])) {
+                    switch ($additionalEquipment['etat']['value']) {
+                        case "Rien à signaler le jour de la visite. Fonctionnement ok":
+                            $equipement->setStatutDeMaintenance("Vert");
+                            break;
+                        case "Travaux à prévoir":
+                            $equipement->setStatutDeMaintenance("Orange");
+                            break;
+                        case "Travaux obligatoires":
+                            $equipement->setStatutDeMaintenance("Rouge");
+                            break;
+                        case "Equipement inaccessible le jour de la visite":
+                            $equipement->setStatutDeMaintenance("Inaccessible");
+                            break;
+                        case "Equipement à l'arrêt le jour de la visite":
+                            $equipement->setStatutDeMaintenance("A l'arrêt");
+                            break;
+                        case "Equipement mis à l'arrêt lors de l'intervention":
+                            $equipement->setStatutDeMaintenance("Rouge");
+                            break;
+                        case "Equipement non présent sur site":
+                            $equipement->setStatutDeMaintenance("Non présent");
+                            break;
+                        default:
+                            $equipement->setStatutDeMaintenance("NC");
+                            break;
+                            
+                    }
+                }
                 
 
 
@@ -489,10 +521,10 @@ class FormRepository extends ServiceEntityRepository
                 $entityManager->flush();
                 
                 echo nl2br("We have a new equipment or we have updated an equipment !");
-            }else{
-                echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
-                die;
-            }
+            // }else{
+            //     echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
+            //     die;
+            // }
         }
     }
 
@@ -558,7 +590,7 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * Function to save PDF with and without pictures in directories on O2switch
+     * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
      */
     public function savePdfOnO2switch(){
         // Récupérer les fichiers PDF dans un tableau

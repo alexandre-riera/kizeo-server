@@ -116,7 +116,7 @@ class FormController extends AbstractController
         $entiteEquipementS170 = new EquipementS170;
 
         $formRepository->savePdfOnO2switch();
-        
+
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
         
@@ -252,7 +252,7 @@ class FormController extends AbstractController
 
         foreach ($dataOfFormList as $formPortail) { 
             /**
-            * Persist each portail, portail auto in database
+            * Persist each portail in database
             */
 
             foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
