@@ -84,7 +84,7 @@ class FormController extends AbstractController
     #[Route('/api/forms/data', name: 'app_api_form_data', methods: ['GET'])]
     public function getFormsAdvanced(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
-        $formList  =  $formRepository->getFormsAdvanced();
+        $formList  =  $formRepository->getFormsAdvancedPortails();
         $jsonContactList = $serializer->serialize($formList, 'json');
        
         // Fetch all contacts in database
@@ -96,7 +96,9 @@ class FormController extends AbstractController
     
 
     /**
-     * Function to ADD new equipments from technicians forms MAINTENANCE from formulaires Visite maintenance --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
+     * Function to SAVE new equipments from technicians forms MAINTENANCE from formulaires Visite maintenance To local BDD
+     * then call route to save portails at  #[Route('/api/forms/update/portails', name: 'app_api_form_update_portails', methods: ['GET'])]
+     * --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
     #[Route('/api/forms/update/maintenance', name: 'app_api_form_update', methods: ['GET'])]
     public function getDataOfFormsMaintenance(FormRepository $formRepository,EntityManagerInterface $entityManager)
@@ -115,10 +117,10 @@ class FormController extends AbstractController
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
 
-        $formRepository->savePdfOnO2switch();
+        // $formRepository->saveEquipementPdfInPublicFolder();
 
         // GET all technicians forms formulaire Visite maintenance
-        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
+        $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();
         
         // --------------------------------------                       Call function iterate by list equipments -------------------------------------------
         $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS10::class)->findAll());
@@ -134,23 +136,9 @@ class FormController extends AbstractController
         $allResumesSogefiEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS150::class)->findAll());
         $allResumesRouenEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS160::class)->findAll());
         $allResumesRennesEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS170::class)->findAll());
-
-        // -------------------------------------- REPRENDRE A CODER A PARTIR DE LA -- Tous les Resumes des equipements des agences au dessus sont bons ----------------
-
-        // $allEquipementsInDatabase = [];
-        /**
-         * Store all equipments split resumes stored in database to $allEquipementsResumeInDatabase array
-         * 
-
-         * Créer une fonction pour push les resume des equipements selon leur agence  --------------    CA C'EST BON, FONCTION CRÉÉ AU DESSUS FONCTIONELLE ---------------
-         */
-        // $allEquipementsResumeInDatabase = [];
-        // for ($i=0; $i < count($allEquipementsInDatabase); $i++) { 
-        //     array_push($allEquipementsResumeInDatabase, array_unique(preg_split("/[:|]/", $allEquipementsInDatabase[$i]->getIfexistDB())));
-        // }
         
-        foreach ($dataOfFormList as $equipements){
-            dump("Je recupere les nouveaux formulaires maintenance de toutes les agences du repository dans $ dataofFormList");
+        foreach ($dataOfFormMaintenance as $equipements){
+            
             // ----------------------------------------------------------   
             // IF code_agence d'$equipements = S50 ou S100 ou etc... on boucle sur ses équipements supplémentaires
             // ----------------------------------------------------------
@@ -225,36 +213,157 @@ class FormController extends AbstractController
             }
             
         }
-        return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($dataOfFormList) . " | Equipements en BDD : " , Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_update_portails');
     }
 
     /**
      * Function to ADD new PORTAILS from technicians forms
      */
     #[Route('/api/forms/update/portails', name: 'app_api_form_update_portails', methods: ['GET'])]
-    public function getEtatDesLieuxPortailsDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    public function getEtatDesLieuxPortailsDataOfForms(FormRepository $formRepository, EntityManagerInterface $entityManager)
     {
-        // GET all technicians forms from list class PORTAILS
-        $dataOfFormList  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
-        $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
-        $equipementsData = [];
-        $eachEquipementsData = [];
+
+        $entiteEquipementS10 = new EquipementS10;
+        $entiteEquipementS40 = new EquipementS40;
+        $entiteEquipementS50 = new EquipementS50;
+        $entiteEquipementS60 = new EquipementS60;
+        $entiteEquipementS70 = new EquipementS70;
+        $entiteEquipementS80 = new EquipementS80;
+        $entiteEquipementS100 = new EquipementS100;
+        $entiteEquipementS120 = new EquipementS120;
+        $entiteEquipementS130 = new EquipementS130;
+        $entiteEquipementS140 = new EquipementS140;
+        $entiteEquipementS150 = new EquipementS150;
+        $entiteEquipementS160 = new EquipementS160;
+        $entiteEquipementS170 = new EquipementS170;
+
+        //Changer l'appel à la fonction saveEquipementPdfInPublicFolder() pour enregistrer les PDF standard des état des lieux portail
+        // $formRepository->saveEquipementPdfInPublicFolder();
         
-        $allPortailsInDatabase = $entityManager->getRepository(Portail::class)->findAll();
+        // -------------------------------------------
+        // ----------------Call function iterate by list equipments to get ONLY Portails in Equipement_numeroAgence list 
+        // --------------  OK for this function
+        // -------------------------------------------
+        
+        $allGroupPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS10::class)->findAll());
+        $allStEtiennePortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS40::class)->findAll());
+        $allGrenoblePortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS50::class)->findAll());
+        $allLyonPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS60::class)->findAll());
+        $allBordeauxPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS70::class)->findAll());
+        $allParisNordPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS80::class)->findAll());
+        $allMontpellierPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS100::class)->findAll());
+        $allHautsDeFrancePortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS120::class)->findAll());
+        $allToulousePortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS130::class)->findAll());
+        $allSmpPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS140::class)->findAll());
+        $allSogefiPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS150::class)->findAll());
+        $allRouenPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS160::class)->findAll());
+        $allRennesPortailsInDatabase = $formRepository->getOneTypeOfEquipementInListEquipements("portail", $entityManager->getRepository(EquipementS170::class)->findAll());
+
+        
+        // -------------------------------------------
+        // --------------------------------------     Call function iterate by list of portails to get resumes in if_exist_db 
+        // ----------------------------------  OK for this function
+        // -------------------------------------------
+        $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGroupPortailsInDatabase);
+        $allResumesStEtienneEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes( $allStEtiennePortailsInDatabase);
+        $allResumesGrenobleEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGrenoblePortailsInDatabase);
+        $allResumesLyonEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allLyonPortailsInDatabase);
+        $allResumesBordeauxEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allBordeauxPortailsInDatabase);
+        $allResumesParisNordEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allParisNordPortailsInDatabase);
+        $allResumesMontpellierEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allMontpellierPortailsInDatabase);
+        $allResumesHautsDeFranceEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allHautsDeFrancePortailsInDatabase);
+        $allResumesToulouseEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allToulousePortailsInDatabase);
+        $allResumesSmpEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSmpPortailsInDatabase);
+        $allResumesSogefiEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSogefiPortailsInDatabase);
+        $allResumesRouenEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRouenPortailsInDatabase);
+        $allResumesRennesEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRennesPortailsInDatabase);
+
+        // GET all technicians forms from list class PORTAILS
+        $dataOfFormPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+        
+        dd($dataOfFormPortails[0]);
         /**
          * Store all equipments resumes stored in database to an array
          */
-        $allportailsResumeInDatabase = [];
-        $allNewPortailsResume = [];
-        for ($i=0; $i < count($allPortailsInDatabase); $i++) { 
-            array_push($allportailsResumeInDatabase, $allPortailsInDatabase[$i]->getIfexistDB());
-        }
+        // $allportailsResumeInDatabase = [];
+        // $allNewPortailsResume = [];
+        // for ($i=0; $i < count($allPortailsInDatabase); $i++) { 
+        //     array_push($allportailsResumeInDatabase, $allPortailsInDatabase[$i]->getIfexistDB());
+        // }
 
-        foreach ($dataOfFormList as $formPortail) { 
+        foreach ($dataOfFormPortails as $formPortail) { 
+            // dd($formPortail);
             /**
             * Persist each portail in database
             */
-
+            // dd($formPortail['data']['fields']['portails']['value'][0]);
+            switch($formPortail['data']['fields']['n_agence']['value']){
+                case 'S10':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesGroupEquipementsInDatabase, $entiteEquipementS10, $entityManager);
+                    break;
+                
+                case 'S40':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesStEtienneEquipementsInDatabase, $entiteEquipementS40, $entityManager);
+                    break;
+                
+                case 'S50':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesGrenobleEquipementsInDatabase, $entiteEquipementS50, $entityManager);
+                    break;
+                
+                
+                case 'S60':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesLyonEquipementsInDatabase, $entiteEquipementS60, $entityManager);
+                    break;
+                
+                
+                case 'S70':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
+                    break;
+                
+                
+                case 'S80':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesParisNordEquipementsInDatabase, $entiteEquipementS80, $entityManager);
+                    break;
+                
+                
+                case 'S100':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesMontpellierEquipementsInDatabase, $entiteEquipementS100, $entityManager);
+                    break;
+                
+                
+                case 'S120':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
+                    break;
+                
+                
+                case 'S130':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
+                    break;
+                
+                
+                case 'S140':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesSmpEquipementsInDatabase, $entiteEquipementS140, $entityManager);
+                    break;
+                
+                
+                case 'S150':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
+                    break;
+                
+                
+                case 'S160':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
+                    break;
+                
+                
+                case 'S170':
+                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesRennesEquipementsInDatabase, $entiteEquipementS170, $entityManager);
+                    break;
+                
+                default:
+                    dump('Le code agence n\'est pas prévu dans le code');
+                    break;
+            }
             foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
                 array_push($allNewPortailsResume, $formPortail['data']['fields']['liste_clients']['columns']);
                 if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsResumeInDatabase, TRUE)){
@@ -280,7 +389,7 @@ class FormController extends AbstractController
                     $equipement->setNumeroDeSerie($portail['numero_serie']['value']);
                     $equipement->setModele($portail['modele']['value']);
                     $equipement->setMiseEnService($portail['date_installation']['value']);
-                    $equipement->setnature($portail['types_de_portails']['value']);
+                    $equipement->setLibelleEquipement($portail['types_de_portails']['value']);
                     $equipement->setNombresVantaux($portail['nombres_vantaux']['value']);
                     $equipement->setModeFonctionnement($portail['types_de_fonctionnement']['value']);
                     $equipement->setLargeur($portail['dimension_largeur_passage_uti']['value']);
@@ -288,206 +397,16 @@ class FormController extends AbstractController
                     $equipement->setHauteur($portail['dimension_hauteur_vantail']['value']);
                     
                     $equipement->setPresenceCarnetEntretien($portail['presence_carnet_entretien']['value']);
-                    if (isset($portail['presence_notice_fabricant']['value'])) {
-                        $equipement->setPresenceNoticeFabricant($portail['presence_notice_fabricant']['value']);
-                    }else{
-                        $equipement->setPresenceNoticeFabricant("");
-                    }
-                    $equipement->setPortillonSurVantail($portail['presence_portillon_sur_le_van']['value']);
-                    $equipement->setTypeDeGuidage($portail['types_de_guidage']['value']);
-                    $equipement->setTypePortail($portail['types_de_portails1']['value']);
-                    $equipement->setEspaceInf8mmRailProtectionGalets($portail['espace_inferieur_ou_egal_a_8_']['value']);
-                    $equipement->setDistanceBasPortailRailInferieurSol($portail['distance_entre_le_bas_du_port']['value']);
-                    $equipement->setEspaceHautPortailPlatineGaletsGuidage($portail['espace_entre_la_protection_du']['value']);
-                    $equipement->setEspaceVantailGaletsGuidageInf8($portail['espace_entre_le_vantail_et_le']['value']);
-                    $equipement->setButeeMecaAvantSurVantail($portail['butees_mecaniques_sur_vantail']['value']);
-                    $equipement->setButeeMecaArriereSurVantail($portail['presence_de_la_butee_mecaniq']['value']);
-                    $equipement->setEfficaciteButeesEnManuel($portail['verification_de_l_efficacite_']['value']);
-                    $equipement->setSystemeAntiChutes($portail['presence_systeme_anti_chutes']['value']);
-                    $equipement->setSeuilSurelSupA5($portail['absence_de_seuil_ou_surelevat']['value']);
-                    $equipement->setMarquagePartiesSureleveesNonVisibles($portail['marquage_des_parties_sureleve']['value']);
-                    $equipement->setPortailImmobileToutesPositionsEnManuel($portail['en_toute_position_a_arret_le_1']['value']);
-                    $equipement->setDurMecaEnManuel($portail['absence_de_dur_mecanique_']['value']);
-                    $equipement->setDistanceBarreauxCloture($portail['distance_entre_les_barreaux_d1']['value']);
-
+                    
                     // tell Doctrine you want to (eventually) save the Portail (no queries yet)
                     $entityManager->persist($equipement);
                 }
             }    
             // actually executes the queries (i.e. the INSERT query)
             $entityManager->flush();
-            ?>
-            We have a new portail or we have updated an equipment !
-            <?php
-            $allPortailsInDatabase = $entityManager->getRepository(Portail::class)->findAll();
         }
-        return new JsonResponse("Portails en BDD : " . count($allPortailsInDatabase) . "\n ", Response::HTTP_OK, [], true);
-    }
-
-    /**
-     * Function to ADD new PORTAILS AUTO from technicians forms
-     */
-    #[Route('/api/forms/update/portails/auto', name: 'app_api_form_update_portails_auto', methods: ['GET'])]
-    public function getEtatDesLieuxPortailsAutoDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
-    {
-       // GET all technicians forms from list class PORTAILS
-       $dataOfFormList  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
-       $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
-       $equipementsData = [];
-       $eachEquipementsData = [];
-       
-       $allPortailsAutoInDatabase = $entityManager->getRepository(PortailAuto::class)->findAll();
-       /**
-        * Store all equipments resumes stored in database to an array
-        */
-       $allportailsAutoResumeInDatabase = [];
-       $allNewPortailsResume = [];
-       for ($i=0; $i < count($allPortailsAutoInDatabase); $i++) { 
-           array_push($allportailsAutoResumeInDatabase, $allPortailsAutoInDatabase[$i]->getIfexistDB());
-       }
-
-       foreach ($dataOfFormList as $formPortail) { 
-           /**
-           * Persist each portail, portail auto in database
-           */
-
-           foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
-               array_push($allNewPortailsResume, $formPortail['data']['fields']['liste_clients']['columns']);
-               if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsAutoResumeInDatabase, TRUE)){
-
-                   $portailAuto = new PortailAuto;
-
-                   $portailAuto->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
-                   if (isset($formPortail['data']['fields']['id_societe_'])) {
-                       $portailAuto->setIdSociete($formPortail['data']['fields']['id_societe_']['value']);
-                   }else{
-                       $portailAuto->setIdSociete("");
-                   }
-                   $portailAuto->setContactSecuritePortillon($portail['contact_securite_sur_portillo']['value']);
-                   $portailAuto->setPresenceBoitierPompiers($portail['presence_boitier_pompiers']['value']);
-                   $portailAuto->setProtectionPignonMoteur($portail['protection_pignon_moteur']['value']);
-                   $portailAuto->setEspaceProtectionPignonCremaillereInfEgal8mm($portail['espace_entre_la_protection_du']['value']);
-                   $portailAuto->setManipulableManuelCoupureCourant($portail['portail_manipulable_manuellem1']['value']);
-                   $portailAuto->setManoeuvreDepannage($portail['man_uvre_de_depannage']['value']);
-                   $portailAuto->setInstructionManoeuvreDepannage($portail['presence_instruction_manoeuvr']['value']);
-                   $portailAuto->setDispositifCoupureElecProximite($portail['presence_dispositif_de_coupur']['value']);
-                   $portailAuto->setRaccordementTerre($portail['raccordement_a_la_terre']['value']);
-                   $portailAuto->setMesureTensionPhaseEtTerre($portail['mesure_tension_entre_phase_et1']['value']);
-                   $portailAuto->setEclairageZoneDebattement($portail['presence_eclairage_de_zone_de']['value']);
-                   $portailAuto->setFonctionnementEclairageZone($portail['fonctionnement_eclairage_zone']['value']);
-                   $portailAuto->setPresenceFeuClignotantOrange($portail['presence_feu_clignotant_orang']['value']);
-                   $portailAuto->setVisibiliteClignotant2Cotes($portail['visibilite_clignotant_des_2_c1']['value']);
-                   $portailAuto->setPreavisClignotantMin2Sec($portail['preavis_feu_clignotant_2_sec']['value']);
-                   $portailAuto->setMarquageAuSol($portail['presence_marquage_au_sol']['value']);
-                   $portailAuto->setMarquageZoneRefoulement($portail['marquage_zone_de_refoulement']['value']);
-                   $portailAuto->setEtatMarquage($portail['etat_du_marquage']['value']);
-                   $portailAuto->setConformiteMarquageSolBandesJaunesNoirs45Deg($portail['conformite_marquage_au_sol']['value']);
-                   $portailAuto->setFonctionnementCellules($portail['fonctionnement_cellules']['value']);
-                   $portailAuto->setCoteEnAMm($portail['distance_entre_l_axe_cellule_']['value']);
-                   $portailAuto->setCoteEnBMm($portail['cote_en_b']['value']);
-                   $portailAuto->setCoteEnCMm($portail['cote_en_c']['value']);
-                   $portailAuto->setCoteEnDMm($portail['cote_en_d']['value']);
-                   $portailAuto->setCoteEnAPrimeMm($portail['cote_en_a_']['value']);
-                   $portailAuto->setCoteEnBPrimeMm($portail['cote_en_b_']['value']);
-                   $portailAuto->setCoteEnCPrimeMm($portail['cote_en_c_']['value']);
-                   $portailAuto->setCoteEnDPrimeMm($portail['cote_en_d_']['value']);
-                   $portailAuto->setProtectionBordPrimaire($portail['protection_bord_primaire']['value']);
-                   $portailAuto->setProtectionBordSecondaire($portail['protection_bord_secondaire']['value']);
-                   $portailAuto->setProtectionSurfaceVantail($portail['types_de_refoulement']['value']);
-                   $portailAuto->setProtectionAirRefoulement($portail['protection_aire_de_refoulemen1']['value']);
-                   $portailAuto->setPositionDesPoteaux($portail['position_des_poteaux']['value']);
-                   $portailAuto->setProtectionCisaillementA($portail['protection_des_zones_de_cisai']['value']);
-                   $portailAuto->setProtectionCisaillementA1($portail['protection_des_zones_de_cisai2']['value']);
-                   $portailAuto->setProtectionCisaillementB($portail['protection_des_zones_de_cisai3']['value']);
-                   $portailAuto->setProtectionCisaillementB1($portail['protection_des_zones_de_cisai4']['value']);
-                   $portailAuto->setProtectionCisaillementC($portail['protection_des_zones_de_cisai5']['value']);
-                   $portailAuto->setProtectionCisaillementC1($portail['protection_des_zones_de_cisai6']['value']);
-                   $portailAuto->setProtectionCisaillementM($portail['protection_des_zones_de_cisai7']['value']);
-                   $portailAuto->setZoneEcrasementFinOuvertureInf500Mm($portail['zone_d_ecrasement_fin_d_ouver']['value']);
-                   $portailAuto->setDistanceZoneFinOuverture($portail['distance_de_la_zone_en_fin_d_']['value']);
-                   $portailAuto->setIfExistDb($formPortail['data']['fields']['liste_clients']['columns']);
-
-                   // tell Doctrine you want to (eventually) save the Portail (no queries yet)
-                   $entityManager->persist($portailAuto);
-               }
-           }    
-           // actually executes the queries (i.e. the INSERT query)
-           $entityManager->flush();
-           ?>
-           We have a new portail auto or we have updated an equipment !
-           <?php
-           $allPortailsAutoInDatabase = $entityManager->getRepository(PortailAuto::class)->findAll();
-       }
-       return new JsonResponse("Portails auto en BDD : " . count($allPortailsAutoInDatabase) . "\n ", Response::HTTP_OK, [], true);
-    }
-
-    /**
-     * Function to ADD new PORTAILS ENVIRONEMENT from technicians forms
-     */
-    #[Route('/api/forms/update/portails/environement', name: 'app_api_form_update_portails_environement', methods: ['GET'])]
-    public function getEtatDesLieuxPortailsEnvironementDataOfForms(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
-    {
-       // GET all technicians forms from list class PORTAILS
-       $dataOfFormList  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
-       $jsonDataOfFormList  = $serializer->serialize($dataOfFormList, 'json');
-       $equipementsData = [];
-       $eachEquipementsData = [];
-       
-       $allPortailsEnvironementInDatabase = $entityManager->getRepository(PortailEnvironement::class)->findAll();
-       /**
-        * Store all equipments resumes stored in database to an array
-        */
-       $allportailsEnvironementResumeInDatabase = [];
-       $allNewPortailsEnvironementResume = [];
-       for ($i=0; $i < count($allPortailsEnvironementInDatabase); $i++) { 
-           array_push($allportailsEnvironementResumeInDatabase, $allPortailsEnvironementInDatabase[$i]->getIfexistDB());
-       }
-
-       foreach ($dataOfFormList as $formPortail) { 
-           /**
-           * Persist each portail, portail auto in database
-           */
-
-           foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
-               array_push($allNewPortailsEnvironementResume, $formPortail['data']['fields']['liste_clients']['columns']);
-               if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsEnvironementResumeInDatabase, TRUE)){
-
-                   $portailEnvironement = new PortailEnvironement;
-
-                   $portailEnvironement->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
-                   if (isset($formPortail['data']['fields']['id_societe_'])) {
-                       $portailEnvironement->setIdSociete($formPortail['data']['fields']['id_societe_']['value']);
-                   }else{
-                       $portailEnvironement->setIdSociete("");
-                   }
-                   $portailEnvironement->setNumeroEquipement($portail['reference_equipement']['value']);
-                   $portailEnvironement->setDistanceClotureExtEtVantailD1Mm($portail['distance_entre_grillage_et_va']['value']);
-                   $portailEnvironement->setDimensionsMaillesGrillageExtMm($portail['dimensions_mailles_du_grillag1']['value']);
-                   $portailEnvironement->setDistanceGrillageEtVantailIntD2Mm($portail['distance_entre_grillage_et_va2']['value']);
-                   $portailEnvironement->setDimensionsMaillesGrillageIntMm($portail['dimensions_mailles_du_grillag2']['value']);
-                   $portailEnvironement->setDimensionsMaillesTablierMm($portail['dimensions_maille_tablier_en']['value']);
-                   $portailEnvironement->setDistanceBarreauxVantailMm($portail['distance_entre_les_barreaux_d']['value']);
-                   $portailEnvironement->setValeursMesureesPoint1($portail['valeurs_mesurees_au_point_1']['value']);
-                   $portailEnvironement->setValeursMesureesPoint2($portail['valeurs_mesurees_au_point_2']['value']);
-                   $portailEnvironement->setValeursMesureesPoint3($portail['valeurs_mesurees_au_point_3']['value']);
-                   $portailEnvironement->setValeursMesureesPoint4($portail['valeurs_mesurees_au_point_4']['value']);
-                   $portailEnvironement->setValeursMesureesPoint5($portail['valeurs_mesurees_au_point_5']['value']);
-                   $portailEnvironement->setCommentaireSuppSiNecessaire($portail['commentaire_supplementaire']['value']);
-                   $portailEnvironement->setPhotoSupSiNecessaire($portail['photo4']['value']);
-                   $portailEnvironement->setIfExistDb($formPortail['data']['fields']['liste_clients']['columns']);
-
-                   // tell Doctrine you want to (eventually) save the Portail (no queries yet)
-                   $entityManager->persist($portailEnvironement);
-               }
-           }    
-           // actually executes the queries (i.e. the INSERT query)
-           $entityManager->flush();
-           ?>
-           We have a new portail environement or we have updated an equipment !
-           <?php
-           $allPortailsEnvironementInDatabase = $entityManager->getRepository(PortailEnvironement::class)->findAll();
-       }
-       return new JsonResponse("Portails environement en BDD : " . count($allPortailsEnvironementInDatabase) . "\n ", Response::HTTP_OK, [], true);
+        // return $this->redirectToRoute('app_api_form_update_portails_auto');
+        return new JsonResponse("Portails OK en BDD : " . "\n ", Response::HTTP_OK, [], true);
     }
 
     /**
@@ -497,6 +416,7 @@ class FormController extends AbstractController
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
     public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository){
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
+
         // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
         // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
@@ -542,7 +462,7 @@ class FormController extends AbstractController
                     break;
                 
                 case 'S100':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsMontpellier, 423852);
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsMontpellier, 423853);
                     dump('Uploads for S100 OK');
                     break;
                 
@@ -624,7 +544,7 @@ class FormController extends AbstractController
     #[Route('/api/upload/list/equipements/montpellier', name: 'app_api_upload_list_equipements_montpellier', methods: ['GET'])]
     public function saveAllMontpellierListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
         $entiteEquipementS100 = new EquipementS100;
-        $formRepository->saveEquipmentsListByAgencyOnLocalDatabase($formRepository->getAgencyListEquipementsFromKizeoByListId(423852), $entiteEquipementS100, $entityManager);
+        $formRepository->saveEquipmentsListByAgencyOnLocalDatabase($formRepository->getAgencyListEquipementsFromKizeoByListId(423853), $entiteEquipementS100, $entityManager);
        
         return new JsonResponse("All lists have been uploaded !", Response::HTTP_OK, [], true);
     }

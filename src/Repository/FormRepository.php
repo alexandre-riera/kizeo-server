@@ -54,7 +54,7 @@ class FormRepository extends ServiceEntityRepository
         return $equipementsArray;
    }
    /**
-    * @return Form[] Returns an array of Contact objects
+    * @return Form[] Returns an array of lists from Kizeo
     */
    public function getLists(): array
    {
@@ -74,7 +74,7 @@ class FormRepository extends ServiceEntityRepository
    }
 
    /**
-    * @return Form[] Returns an array of Contact objects
+    * @return Form[] Returns an array of forms from Kizeo
     */
    public function getForms(): array
    {
@@ -142,10 +142,11 @@ class FormRepository extends ServiceEntityRepository
         return $allFormsMaintenanceDataArray;
    }
 
+            //    ----------------------- LES PORTAILS  -----------------------------------  
    /**
     * @return Form[] Returns an array of Formulaires with class PORTAILS
     */
-   public function getFormsAdvanced(): array
+   public function getFormsAdvancedPortails(): array
    {
         $allFormsArray = FormRepository::getForms();
         $allFormsArray = $allFormsArray['forms'];
@@ -179,9 +180,9 @@ class FormRepository extends ServiceEntityRepository
     */
    public function getEtatDesLieuxPortailsDataOfForms(): array
    {
-       $eachFormDataArray = [];
-       $allFormsPortailsArray = FormRepository::getFormsAdvanced();
-    //    dd($allFormsPortailsArray); // ------------------------      Return 24 arrays with portails in them from 8 forms with class PORTAILS
+        $eachFormDataArray = [];
+        $allFormsPortailsArray = FormRepository::getFormsAdvancedPortails();
+        // ------------------------      Return 24 arrays with portails in them from 8 forms with class PORTAILS
 
         foreach ($allFormsPortailsArray as $key => $value) {
             
@@ -199,8 +200,6 @@ class FormRepository extends ServiceEntityRepository
             array_push($eachFormDataArray, $content);
             
         }
-
-        // dd($eachFormDataArray[0]['data']['fields']['portails']);
         
         return $eachFormDataArray;
    }
@@ -212,10 +211,28 @@ class FormRepository extends ServiceEntityRepository
 
         $arrayResumesOfTheList = [];
 
-        for ($i=0; $i < count($theList); $i++) { 
+        for ($i=0; $i < count($theList); $i++) {
             array_push($arrayResumesOfTheList, array_unique(preg_split("/[:|]/", $theList[$i]->getIfexistDB())));
         }
         return $arrayResumesOfTheList;
+    }
+
+    /**
+     * Function to iterate through list equipements to get unique PORTAILS and return them in an array
+     *  OK ! Return an array of portails by agency in local database
+     */
+    public function getOneTypeOfEquipementInListEquipements($equipementType, $theList){
+
+        $arrayPortailsInTheList = [];
+
+        for ($i=0; $i < count($theList); $i++) { 
+            if ($theList[$i]->getLibelleEquipement() === $equipementType) {
+                if (!in_array($theList[$i], $arrayPortailsInTheList)) {
+                    array_push($arrayPortailsInTheList, $theList[$i]);
+                }
+            }
+        }
+        return $arrayPortailsInTheList;
     }
 
     /**
@@ -227,20 +244,16 @@ class FormRepository extends ServiceEntityRepository
         * List all additional equipments stored in individual array
         */
         foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
-            dump($additionalEquipment['etat']['value']);
             // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
             $resume_equipement_supplementaire = array_unique(preg_split("/[:|]/", $additionalEquipment['equipement']['columns']));
             
-            dump("--------------------------------------------------------------------------------------------------------------------");
-            dump("Je recupere les équipements supplémentaires des agences dans $ additionalEquipment de la boucle sur $ dataofFormList");
-            // dd($equipements['contrat_de_maintenance']['value'][19]);
             /**
              * If resume_equipement_supplementaire value is NOT in  $allEquipementsResumeInDatabase array
              * Method used : in_array(search, inThisArray, type) 
              * type Optional. If this parameter is set to TRUE, the in_array() function searches for the search-string and specific type in the array
              */
             // if (!in_array($resume_equipement_supplementaire, $allEquipementsResumeInDatabase, TRUE) && $equipements['test_']['value'] != 'oui' ) {
-            // if (!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
+            if (!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
                 
                 /**
                  * Persist each equipement in database
@@ -269,7 +282,7 @@ class FormRepository extends ServiceEntityRepository
 
                 $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
                 $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
-                $equipement->setNature(strtolower($additionalEquipment['reference7']['value']));
+                $equipement->setLibelleEquipement(strtolower($additionalEquipment['reference7']['value']));
                 $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
                 $equipement->setRepereSiteClient($additionalEquipment['localisation_site_client']['value']);
                 $equipement->setMiseEnService($additionalEquipment['reference2']['value']);
@@ -285,9 +298,14 @@ class FormRepository extends ServiceEntityRepository
                 }else{
                     $equipement->setHauteur("");
                 }
+                if (isset($additionalEquipment['longueur']['value'])) {
+                    $equipement->setLongueur($additionalEquipment['longueur']['value']);
+                }else{
+                    $equipement->setLongueur("NC");
+                }
                 $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
 
-                //Anomalies en fonction de la nature de l'équipement
+                //Anomalies en fonction du libellé de l'équipement
                 switch($additionalEquipment['anomalie']['value']){
                     case 'niveleur':
                         $equipement->setAnomalies($additionalEquipment['anomalie_niveleur']['value']);
@@ -511,8 +529,6 @@ class FormRepository extends ServiceEntityRepository
                     }
                 }
                 
-
-
                 // tell Doctrine you want to (eventually) save the Product (no queries yet)
                 $entityManager->persist($equipement);
                 
@@ -521,10 +537,116 @@ class FormRepository extends ServiceEntityRepository
                 $entityManager->flush();
                 
                 echo nl2br("We have a new equipment or we have updated an equipment !");
-            // }else{
-            //     echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
-            //     die;
-            // }
+            }else{
+                echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
+                die;
+            }
+        }
+    }
+    /**
+     * Function to create and save new PORTAILS from ETAT DES LIEUX PORTAILS in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170 --- MAJ IMAGES OK
+     */
+    public function createAndSavePortailsInDatabaseByAgency($equipements, $arrayResumesEquipments, $entityAgency, $entityManager){
+        // Passer à la fonction les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
+        /**
+        * List all additional equipments stored in individual array
+        */
+        foreach ($equipements['data']['fields']['portails']['value']  as $additionalEquipment){
+            // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
+            $resume_equipement_supplementaire = 
+            $equipements['data']['fields']['liste_clients']['value'] . 
+            "\\" . 
+            $additionalEquipment['reference_equipement']['value'] . 
+            "|portail|" . 
+            $additionalEquipment['annee_installation_portail_']['value'] . 
+            "|" . 
+            $additionalEquipment['numero_serie']['value'] . 
+            "|" . 
+            $additionalEquipment['marques1']['value'] . 
+            "|" . 
+            $additionalEquipment['dimension_hauteur_vantail']['value'] . 
+            "|" . 
+            $additionalEquipment['dimension_largeur_passage_uti']['value'] . 
+            "|" . 
+            $additionalEquipment['dimension_longueur_vantail']['value'] . 
+            "|" . 
+            $additionalEquipment['ref_interne_client']['value'] . 
+            "|" . 
+            $additionalEquipment['id_societe_']['value'] . 
+            "|" . 
+            $additionalEquipment['n_agence']['value'];
+
+            
+            /**
+             * If resume_equipement_supplementaire value is NOT in  $allEquipementsResumeInDatabase array
+             * Method used : in_array(search, inThisArray, type) 
+             * type Optional. If this parameter is set to TRUE, the in_array() function searches for the search-string and specific type in the array
+             */
+            
+            if(!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
+                
+                /**
+                 * Persist each equipement in database
+                 * Save a new contrat_de_maintenance equipement in database when a technician make an update
+                 */
+                $equipement = new $entityAgency;
+                $equipement->setIdContact($equipements['id_client_']['value']);
+                $equipement->setRaisonSociale($equipements['nom_client']['value']);
+                $equipement->setTest($equipements['test_']['value']);
+                $equipement->setDateEnregistrement($equipements['date_et_heure1']['value']);
+
+                if (isset($equipements['id_societe']['value'])) {
+                    $equipement->setCodeSociete($equipements['id_societe']['value']);
+                }else{
+                    $equipement->setCodeSociete("");
+                }
+                if (isset($equipements['id_agence']['value'])) {
+                    $equipement->setCodeAgence($equipements['id_agence']['value']);
+                }else{
+                    $equipement->setCodeAgence("");
+                }
+                
+                $equipement->setDernièreVisite($equipements['date_et_heure1']['value']);
+                $equipement->setTrigrammeTech($equipements['trigramme']['value']);
+                $equipement->setSignatureTech($equipements['signature3']['value']);
+
+                $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
+                $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
+                $equipement->setLibelleEquipement(strtolower($additionalEquipment['reference7']['value']));
+                $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
+                $equipement->setRepereSiteClient($additionalEquipment['localisation_site_client']['value']);
+                $equipement->setMiseEnService($additionalEquipment['reference2']['value']);
+                $equipement->setNumeroDeSerie($additionalEquipment['reference6']['value']);
+                $equipement->setMarque($additionalEquipment['reference5']['value']);
+                if (isset($additionalEquipment['reference3']['value'])) {
+                    $equipement->setLargeur($additionalEquipment['reference3']['value']);
+                }else{
+                    $equipement->setLargeur("");
+                }
+                if (isset($additionalEquipment['reference1']['value'])) {
+                    $equipement->setHauteur($additionalEquipment['reference1']['value']);
+                }else{
+                    $equipement->setHauteur("");
+                }
+                if (isset($additionalEquipment['longueur']['value'])) {
+                    $equipement->setLongueur($additionalEquipment['longueur']['value']);
+                }else{
+                    $equipement->setLongueur("NC");
+                }
+                $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
+                
+                // tell Doctrine you want to (eventually) save the Product (no queries yet)
+                $entityManager->persist($equipement);
+                
+                
+                // actually executes the queries (i.e. the INSERT query)
+                $entityManager->flush();
+                
+                echo nl2br("We have a new equipment or we have updated an equipment !");
+            }else{
+                echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
+                die;
+            }
         }
     }
 
@@ -574,7 +696,7 @@ class FormRepository extends ServiceEntityRepository
             $equipement->setCodeAgence($equipements[22]);
 
             $equipement->setNumeroEquipement($equipements[3]);
-            $equipement->setNature(strtolower($equipements[4]));
+            $equipement->setLibelleEquipement(strtolower($equipements[4]));
             $equipement->setRepereSiteClient($equipements[2]);
             $equipement->setMiseEnService($equipements[6]);
             $equipement->setNumeroDeSerie($equipements[8]);
@@ -592,7 +714,7 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
      */
-    public function savePdfOnO2switch(){
+    public function saveEquipementPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau
         // -----------------------------   Return all forms in an array
         $allFormsArray = FormRepository::getForms();

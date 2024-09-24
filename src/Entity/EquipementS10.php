@@ -18,7 +18,7 @@ class EquipementS10
     private ?string $numero_equipement = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $nature = null;
+    private ?string $libelle_equipement = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $mode_fonctionnement = null;
@@ -42,6 +42,9 @@ class EquipementS10
     private ?string $largeur = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    private ?string $longueur = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $plaque_signaletique = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -61,6 +64,9 @@ class EquipementS10
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $code_societe = null;
+    
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $raison_sociale = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $signature_tech = null;
@@ -77,110 +83,23 @@ class EquipementS10
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $modele_nacelle = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $raison_sociale = null;
-
     #[ORM\Column(length: 15)]
     private ?string $test = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_plaque = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_choc = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_choc_montant = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_panneau_intermediaire = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_panneau_bas_inter_ext = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_lame_basse_int_ext = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_lame_intermediaire_int = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_environnement_equipement = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_bache = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_marquage_au_sol = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_environnement_eclairage = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_coffret_de_commande = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_carte = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_rail = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_equerre_rail = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_fixation_coulisse = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_moteur = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_deformation_plateau = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_deformation_plaque = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_deformation_structure = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_deformation_chassis = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_deformation_levre = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_fissure_cordon = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_joue = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_butoir = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_vantail = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_linteau = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_bariere = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_tourniquet = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_sas = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo_marquage_au_sol_portail = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $statut_de_maintenance = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $date_enregistrement = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $presenceCarnetEntretien = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $statutConformite = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $dateMiseEnConformite = null;
 
 
     public function getId(): ?int
@@ -200,14 +119,14 @@ class EquipementS10
         return $this;
     }
 
-    public function getNature(): ?string
+    public function getLibelleEquipement(): ?string
     {
-        return $this->nature;
+        return $this->libelle_equipement;
     }
 
-    public function setNature(string $nature): static
+    public function setLibelleEquipement(string $libelle_equipement): static
     {
-        $this->nature = $nature;
+        $this->libelle_equipement = $libelle_equipement;
 
         return $this;
     }
@@ -464,378 +383,6 @@ class EquipementS10
         return $this;
     }
 
-    public function getPhotoPlaque(): ?string
-    {
-        return $this->photo_plaque;
-    }
-
-    public function setPhotoPlaque(?string $photo_plaque): static
-    {
-        $this->photo_plaque = $photo_plaque;
-
-        return $this;
-    }
-
-    public function getPhotoChoc(): ?string
-    {
-        return $this->photo_choc;
-    }
-
-    public function setPhotoChoc(?string $photo_choc): static
-    {
-        $this->photo_choc = $photo_choc;
-
-        return $this;
-    }
-
-    public function getPhotoChocMontant(): ?string
-    {
-        return $this->photo_choc_montant;
-    }
-
-    public function setPhotoChocMontant(?string $photo_choc_montant): static
-    {
-        $this->photo_choc_montant = $photo_choc_montant;
-
-        return $this;
-    }
-
-    public function getPhotoPanneauIntermediaire(): ?string
-    {
-        return $this->photo_panneau_intermediaire;
-    }
-
-    public function setPhotoPanneauIntermediaire(?string $photo_panneau_intermediaire): static
-    {
-        $this->photo_panneau_intermediaire = $photo_panneau_intermediaire;
-
-        return $this;
-    }
-
-    public function getPhotoPanneauBasInterExt(): ?string
-    {
-        return $this->photo_panneau_bas_inter_ext;
-    }
-
-    public function setPhotoPanneauBasInterExt(?string $photo_panneau_bas_inter_ext): static
-    {
-        $this->photo_panneau_bas_inter_ext = $photo_panneau_bas_inter_ext;
-
-        return $this;
-    }
-
-    public function getPhotoLameBasseIntExt(): ?string
-    {
-        return $this->photo_lame_basse_int_ext;
-    }
-
-    public function setPhotoLameBasseIntExt(?string $photo_lame_basse_int_ext): static
-    {
-        $this->photo_lame_basse_int_ext = $photo_lame_basse_int_ext;
-
-        return $this;
-    }
-
-    public function getPhotoLameIntermediaireInt(): ?string
-    {
-        return $this->photo_lame_intermediaire_int;
-    }
-
-    public function setPhotoLameIntermediaireInt(?string $photo_lame_intermediaire_int): static
-    {
-        $this->photo_lame_intermediaire_int = $photo_lame_intermediaire_int;
-
-        return $this;
-    }
-
-    public function getPhotoEnvironnementEquipement(): ?string
-    {
-        return $this->photo_environnement_equipement;
-    }
-
-    public function setPhotoEnvironnementEquipement(?string $photo_environnement_equipement): static
-    {
-        $this->photo_environnement_equipement = $photo_environnement_equipement;
-
-        return $this;
-    }
-
-    public function getPhotoBache(): ?string
-    {
-        return $this->photo_bache;
-    }
-
-    public function setPhotoBache(?string $photo_bache): static
-    {
-        $this->photo_bache = $photo_bache;
-
-        return $this;
-    }
-
-    public function getPhotoMarquageAuSol(): ?string
-    {
-        return $this->photo_marquage_au_sol;
-    }
-
-    public function setPhotoMarquageAuSol(?string $photo_marquage_au_sol): static
-    {
-        $this->photo_marquage_au_sol = $photo_marquage_au_sol;
-
-        return $this;
-    }
-
-    public function getPhotoEnvironnementEclairage(): ?string
-    {
-        return $this->photo_environnement_eclairage;
-    }
-
-    public function setPhotoEnvironnementEclairage(?string $photo_environnement_eclairage): static
-    {
-        $this->photo_environnement_eclairage = $photo_environnement_eclairage;
-
-        return $this;
-    }
-
-    public function getPhotoCoffretDeCommande(): ?string
-    {
-        return $this->photo_coffret_de_commande;
-    }
-
-    public function setPhotoCoffretDeCommande(?string $photo_coffret_de_commande): static
-    {
-        $this->photo_coffret_de_commande = $photo_coffret_de_commande;
-
-        return $this;
-    }
-
-    public function getPhotoCarte(): ?string
-    {
-        return $this->photo_carte;
-    }
-
-    public function setPhotoCarte(?string $photo_carte): static
-    {
-        $this->photo_carte = $photo_carte;
-
-        return $this;
-    }
-
-    public function getPhotoRail(): ?string
-    {
-        return $this->photo_rail;
-    }
-
-    public function setPhotoRail(?string $photo_rail): static
-    {
-        $this->photo_rail = $photo_rail;
-
-        return $this;
-    }
-
-    public function getPhotoEquerreRail(): ?string
-    {
-        return $this->photo_equerre_rail;
-    }
-
-    public function setPhotoEquerreRail(?string $photo_equerre_rail): static
-    {
-        $this->photo_equerre_rail = $photo_equerre_rail;
-
-        return $this;
-    }
-
-    public function getPhotoFixationCoulisse(): ?string
-    {
-        return $this->photo_fixation_coulisse;
-    }
-
-    public function setPhotoFixationCoulisse(?string $photo_fixation_coulisse): static
-    {
-        $this->photo_fixation_coulisse = $photo_fixation_coulisse;
-
-        return $this;
-    }
-
-    public function getPhotoMoteur(): ?string
-    {
-        return $this->photo_moteur;
-    }
-
-    public function setPhotoMoteur(?string $photo_moteur): static
-    {
-        $this->photo_moteur = $photo_moteur;
-
-        return $this;
-    }
-
-    public function getPhotoDeformationPlateau(): ?string
-    {
-        return $this->photo_deformation_plateau;
-    }
-
-    public function setPhotoDeformationPlateau(?string $photo_deformation_plateau): static
-    {
-        $this->photo_deformation_plateau = $photo_deformation_plateau;
-
-        return $this;
-    }
-
-    public function getPhotoDeformationPlaque(): ?string
-    {
-        return $this->photo_deformation_plaque;
-    }
-
-    public function setPhotoDeformationPlaque(?string $photo_deformation_plaque): static
-    {
-        $this->photo_deformation_plaque = $photo_deformation_plaque;
-
-        return $this;
-    }
-
-    public function getPhotoDeformationStructure(): ?string
-    {
-        return $this->photo_deformation_structure;
-    }
-
-    public function setPhotoDeformationStructure(?string $photo_deformation_structure): static
-    {
-        $this->photo_deformation_structure = $photo_deformation_structure;
-
-        return $this;
-    }
-
-    public function getPhotoDeformationChassis(): ?string
-    {
-        return $this->photo_deformation_chassis;
-    }
-
-    public function setPhotoDeformationChassis(?string $photo_deformation_chassis): static
-    {
-        $this->photo_deformation_chassis = $photo_deformation_chassis;
-
-        return $this;
-    }
-
-    public function getPhotoDeformationLevre(): ?string
-    {
-        return $this->photo_deformation_levre;
-    }
-
-    public function setPhotoDeformationLevre(?string $photo_deformation_levre): static
-    {
-        $this->photo_deformation_levre = $photo_deformation_levre;
-
-        return $this;
-    }
-
-    public function getPhotoFissureCordon(): ?string
-    {
-        return $this->photo_fissure_cordon;
-    }
-
-    public function setPhotoFissureCordon(?string $photo_fissure_cordon): static
-    {
-        $this->photo_fissure_cordon = $photo_fissure_cordon;
-
-        return $this;
-    }
-
-    public function getPhotoJoue(): ?string
-    {
-        return $this->photo_joue;
-    }
-
-    public function setPhotoJoue(?string $photo_joue): static
-    {
-        $this->photo_joue = $photo_joue;
-
-        return $this;
-    }
-
-    public function getPhotoButoir(): ?string
-    {
-        return $this->photo_butoir;
-    }
-
-    public function setPhotoButoir(?string $photo_butoir): static
-    {
-        $this->photo_butoir = $photo_butoir;
-
-        return $this;
-    }
-
-    public function getPhotoVantail(): ?string
-    {
-        return $this->photo_vantail;
-    }
-
-    public function setPhotoVantail(?string $photo_vantail): static
-    {
-        $this->photo_vantail = $photo_vantail;
-
-        return $this;
-    }
-
-    public function getPhotoLinteau(): ?string
-    {
-        return $this->photo_linteau;
-    }
-
-    public function setPhotoLinteau(?string $photo_linteau): static
-    {
-        $this->photo_linteau = $photo_linteau;
-
-        return $this;
-    }
-
-    public function getPhotoBariere(): ?string
-    {
-        return $this->photo_bariere;
-    }
-
-    public function setPhotoBariere(?string $photo_bariere): static
-    {
-        $this->photo_bariere = $photo_bariere;
-
-        return $this;
-    }
-
-    public function getPhotoTourniquet(): ?string
-    {
-        return $this->photo_tourniquet;
-    }
-
-    public function setPhotoTourniquet(?string $photo_tourniquet): static
-    {
-        $this->photo_tourniquet = $photo_tourniquet;
-
-        return $this;
-    }
-
-    public function getPhotoSas(): ?string
-    {
-        return $this->photo_sas;
-    }
-
-    public function setPhotoSas(?string $photo_sas): static
-    {
-        $this->photo_sas = $photo_sas;
-
-        return $this;
-    }
-
-    public function getPhotoMarquageAuSolPortail(): ?string
-    {
-        return $this->photo_marquage_au_sol_portail;
-    }
-
-    public function setPhotoMarquageAuSolPortail(?string $photo_marquage_au_sol_portail): static
-    {
-        $this->photo_marquage_au_sol_portail = $photo_marquage_au_sol_portail;
-
-        return $this;
-    }
-
     public function getStatutDeMaintenance(): ?string
     {
         return $this->statut_de_maintenance;
@@ -856,6 +403,54 @@ class EquipementS10
     public function setDateEnregistrement(?string $date_enregistrement): static
     {
         $this->date_enregistrement = $date_enregistrement;
+
+        return $this;
+    }
+
+    public function getPresenceCarnetEntretien(): ?string
+    {
+        return $this->presenceCarnetEntretien;
+    }
+
+    public function setPresenceCarnetEntretien(?string $presenceCarnetEntretien): static
+    {
+        $this->presenceCarnetEntretien = $presenceCarnetEntretien;
+
+        return $this;
+    }
+
+    public function getStatutConformite(): ?string
+    {
+        return $this->statutConformite;
+    }
+
+    public function setStatutConformite(?string $statutConformite): static
+    {
+        $this->statutConformite = $statutConformite;
+
+        return $this;
+    }
+
+    public function getDateMiseEnConformite(): ?string
+    {
+        return $this->dateMiseEnConformite;
+    }
+
+    public function setDateMiseEnConformite(?string $dateMiseEnConformite): static
+    {
+        $this->dateMiseEnConformite = $dateMiseEnConformite;
+
+        return $this;
+    }
+
+    public function getLongueur(): ?string
+    {
+        return $this->longueur;
+    }
+
+    public function setLongueur(?string $longueur): static
+    {
+        $this->longueur = $longueur;
 
         return $this;
     }
