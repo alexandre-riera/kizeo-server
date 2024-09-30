@@ -458,110 +458,110 @@ class FormController extends AbstractController
         // ----------------------                 Save new equipements in database from all agencies
         
 
-        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
-        return $this->redirectToRoute('app_api_form_update');
+        return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+        // return $this->redirectToRoute('app_api_form_update');
     }
 
     /**
      * UPDATE LIST OF PORTAILS ON KIZEO AND FLUSH NEW PORTAILS IN LOCAL DATABASE    --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
      * 
      */
-    #[Route('/api/forms/update/lists/portails', name: 'app_api_form_update_lists_portails', methods: ['GET','PUT'])]
-    public function putUpdatesListsPortailsFromKizeoForms(FormRepository $formRepository){
-        $dataOfFormListPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
-        dd($dataOfFormListPortails);
-        // GET portails des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
-        // $portailsGroup = $formRepository->getAgencyListPortailsFromKizeoByListId();
-        // $portailsStEtienne = $formRepository->getAgencyListPortailsFromKizeoByListId(418520);
-        $portailsGrenoble = $formRepository->getAgencyListPortailsFromKizeoByListId(418507);
-        // $portailsLyon = $formRepository->getAgencyListPortailsFromKizeoByListId(418519);
-        // $portailsBordeaux = $formRepository->getAgencyListPortailsFromKizeoByListId(419394);
-        $portailsParis = $formRepository->getAgencyListPortailsFromKizeoByListId(417773);
-        $portailsMontpellier = $formRepository->getAgencyListPortailsFromKizeoByListId(419710);
-        // $portailsHautsDeFrance = $formRepository->getAgencyListPortailsFromKizeoByListId(417950);
-        // $portailsToulouse = $formRepository->getAgencyListPortailsFromKizeoByListId(419424);
-        // $portailsSmp = $formRepository->getAgencyListPortailsFromKizeoByListId();
-        // $portailsSogefi = $formRepository->getAgencyListPortailsFromKizeoByListId(422539);
-        // $portailsRouen = $formRepository->getAgencyListPortailsFromKizeoByListId();
-        // $portailsRennes = $formRepository->getAgencyListPortailsFromKizeoByListId();
+    // #[Route('/api/forms/update/lists/portails', name: 'app_api_form_update_lists_portails', methods: ['GET','PUT'])]
+    // public function putUpdatesListsPortailsFromKizeoForms(FormRepository $formRepository){
+    //     $dataOfFormListPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+    //     dd($dataOfFormListPortails);
+    //     // GET portails des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
+    //     // $portailsGroup = $formRepository->getAgencyListPortailsFromKizeoByListId();
+    //     // $portailsStEtienne = $formRepository->getAgencyListPortailsFromKizeoByListId(418520);
+    //     $portailsGrenoble = $formRepository->getAgencyListPortailsFromKizeoByListId(418507);
+    //     // $portailsLyon = $formRepository->getAgencyListPortailsFromKizeoByListId(418519);
+    //     // $portailsBordeaux = $formRepository->getAgencyListPortailsFromKizeoByListId(419394);
+    //     $portailsParis = $formRepository->getAgencyListPortailsFromKizeoByListId(417773);
+    //     $portailsMontpellier = $formRepository->getAgencyListPortailsFromKizeoByListId(419710);
+    //     // $portailsHautsDeFrance = $formRepository->getAgencyListPortailsFromKizeoByListId(417950);
+    //     // $portailsToulouse = $formRepository->getAgencyListPortailsFromKizeoByListId(419424);
+    //     // $portailsSmp = $formRepository->getAgencyListPortailsFromKizeoByListId();
+    //     // $portailsSogefi = $formRepository->getAgencyListPortailsFromKizeoByListId(422539);
+    //     // $portailsRouen = $formRepository->getAgencyListPortailsFromKizeoByListId();
+    //     // $portailsRennes = $formRepository->getAgencyListPortailsFromKizeoByListId();
         
-        foreach($dataOfFormListPortails as $key=>$value){
+    //     foreach($dataOfFormListPortails as $key=>$value){
 
-            switch ($dataOfFormListPortails[$key]['code_agence']['value']) {
-                // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails,$key,$agencyEquipments,$agencyListId)
-                // case 'S10':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGroup, );
-                //     dump('Uploads S10 OK');
-                //     break;
-                // case 'S40':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsStEtienne, );
-                //     dump('Uploads S40 OK');
-                //     break;
-                case 'S50':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGrenoble, 414025);
-                    dump('Uploads S50 OK');
-                    break;
-                // case 'S60':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsLyon, );
-                //     dump('Uploads S60 OK');
-                //     break;
-                // case 'S70':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsBordeaux, );
-                //     dump('Uploads S70 OK');
-                //     break;
+    //         switch ($dataOfFormListPortails[$key]['code_agence']['value']) {
+    //             // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails,$key,$agencyEquipments,$agencyListId)
+    //             // case 'S10':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGroup, );
+    //             //     dump('Uploads S10 OK');
+    //             //     break;
+    //             // case 'S40':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsStEtienne, );
+    //             //     dump('Uploads S40 OK');
+    //             //     break;
+    //             case 'S50':
+    //                 $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGrenoble, 414025);
+    //                 dump('Uploads S50 OK');
+    //                 break;
+    //             // case 'S60':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsLyon, );
+    //             //     dump('Uploads S60 OK');
+    //             //     break;
+    //             // case 'S70':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsBordeaux, );
+    //             //     dump('Uploads S70 OK');
+    //             //     break;
                 
-                case 'S80':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsParis, 421993);
-                    dump('Uploads for S80 OK');
-                    break;
+    //             case 'S80':
+    //                 $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsParis, 421993);
+    //                 dump('Uploads for S80 OK');
+    //                 break;
                 
-                case 'S100':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsMontpellier, 423853);
-                    dump('Uploads for S100 OK');
-                    break;
+    //             case 'S100':
+    //                 $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsMontpellier, 423853);
+    //                 dump('Uploads for S100 OK');
+    //                 break;
                 
-                // case 'S120':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsHautsDeFrance, );
-                //     dump('Uploads for S120 OK');
-                //     break;
+    //             // case 'S120':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsHautsDeFrance, );
+    //             //     dump('Uploads for S120 OK');
+    //             //     break;
                 
-                // case 'S130':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsToulouse, );
-                //     dump('Uploads for S130 OK');
-                //     break;
+    //             // case 'S130':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsToulouse, );
+    //             //     dump('Uploads for S130 OK');
+    //             //     break;
                 
-                // case 'S140':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSmp, );
-                //     dump('Uploads for S140 OK');
-                //     break;
+    //             // case 'S140':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSmp, );
+    //             //     dump('Uploads for S140 OK');
+    //             //     break;
                 
-                // case 'S150':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSogefi, );
-                //     dump('Uploads for S150 OK');
-                //     break;
+    //             // case 'S150':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSogefi, );
+    //             //     dump('Uploads for S150 OK');
+    //             //     break;
                 
-                // case 'S160':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRouen, );
-                //     dump('Uploads for S160 OK');
-                //     break;
+    //             // case 'S160':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRouen, );
+    //             //     dump('Uploads for S160 OK');
+    //             //     break;
                 
-                // case 'S170':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRennes, );
-                //     dump('Uploads for S170 OK');
-                //     break;
+    //             // case 'S170':
+    //             //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRennes, );
+    //             //     dump('Uploads for S170 OK');
+    //             //     break;
                 
-                default:
-                    return new JsonResponse('this is not for our agencies', Response::HTTP_OK, [], true);
-                    break;
-            }
-        }
+    //             default:
+    //                 return new JsonResponse('this is not for our agencies', Response::HTTP_OK, [], true);
+    //                 break;
+    //         }
+    //     }
 
-        // ----------------------                 Save new portails in database from all agencies
+    //     // ----------------------                 Save new portails in database from all agencies
         
 
-        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
-        return $this->redirectToRoute('app_api_form_update_portails');
-    }
+    //     // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+    //     return $this->redirectToRoute('app_api_form_update_portails');
+    // }
 
     
     /**
