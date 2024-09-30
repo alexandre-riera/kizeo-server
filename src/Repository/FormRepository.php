@@ -19,80 +19,124 @@ class FormRepository extends ServiceEntityRepository
         parent::__construct($registry, Form::class);
     }
 
-   /**
-    * @return Form[] Returns an array with all items from all agencies equipments lists 
-    */
-   public function getAgencyListEquipementsFromKizeoByListId($list_id): array
-   {
-        $response = $this->client->request(
-            'GET',
-            'https://forms.kizeo.com/rest/v3/lists/' . $list_id, [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-            ]
-        );
-        $content = $response->getContent();
-        $content = $response->toArray();
-        
-        $equipementsSplittedArray = [];
-        // $equipementsArray = array_map(null, $content['list']['items']);
-        $equipementsArray = array_map(null, $content['list']['items']);
-        /* On Kizeo, all lines look like that
-        *  ATEIS\CEA\SEC01|Porte sectionnelle|MISE EN SERVICE|NUMERO DE SERIE|ISEA|HAUTEUR|LARGEUR|REPERE SITE CLIENT|361|361|S50
-        *
-        *  And I need to sending this : 
-        *  "ATEIS:ATEIS\CEA:CEA\SEC01:SEC01|Porte sectionnelle:Porte sectionnelle|MISE EN SERVICE:MISE EN SERVICE|NUMERO DE SERIE:NUMERO DE SERIE|ISEA:ISEA|HAUTEUR:HAUTEUR|LARGEUR:LARGEUR|REPERE SITE CLIENT:REPERE SITE CLIENT|361:361|361:361|S50:S50"
-        */ 
-        for ($i=0; $i < count($equipementsArray) ; $i++) {
-            if (isset($equipementsArray[$i]) && in_array($equipementsArray[$i], $equipementsSplittedArray) == false) {
-                array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
-            }
-        }
+    /**
+     * @return Form[] Returns an array of lists from Kizeo
+     */
 
-        return $equipementsArray;
-   }
-   /**
-    * @return Form[] Returns an array of lists from Kizeo
-    */
-   public function getLists(): array
-   {
-        $response = $this->client->request(
-            'GET',
-            'https://forms.kizeo.com/rest/v3/lists', [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-            ]
-        );
-        $content = $response->getContent();
-        $content = $response->toArray();
+    public function getLists(): array
+    {
+            $response = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/lists', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $content = $response->getContent();
+            $content = $response->toArray();
 
-        return $content;
-   }
+            return $content;
+    }
 
-   /**
-    * @return Form[] Returns an array of forms from Kizeo
-    */
-   public function getForms(): array
-   {
-        $response = $this->client->request(
-            'GET',
-            'https://forms.kizeo.com/rest/v3/forms', [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-            ]
-        );
-        $content = $response->getContent();
-        $content = $response->toArray();
+    /**
+        * @return Form[] Returns an array of forms from Kizeo
+        */
+    public function getForms(): array
+    {
+            $response = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $content = $response->getContent();
+            $content = $response->toArray();
 
-        return $content;
-   }
+            return $content;
+    }
 
+
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- GET EQUIPMENTS LISTS FROM KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
+    /**
+     * @return Form[] Returns an array with all items from all agencies equipments lists 
+     */
+    public function getAgencyListEquipementsFromKizeoByListId($list_id): array
+    {
+         $response = $this->client->request(
+             'GET',
+             'https://forms.kizeo.com/rest/v3/lists/' . $list_id, [
+                 'headers' => [
+                     'Accept' => 'application/json',
+                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                 ],
+             ]
+         );
+         $content = $response->getContent();
+         $content = $response->toArray();
+         
+         $equipementsSplittedArray = [];
+         // $equipementsArray = array_map(null, $content['list']['items']);
+         $equipementsArray = array_map(null, $content['list']['items']);
+         /* On Kizeo, all lines look like that
+         *  ATEIS\CEA\SEC01|Porte sectionnelle|MISE EN SERVICE|NUMERO DE SERIE|ISEA|HAUTEUR|LARGEUR|REPERE SITE CLIENT|361|361|S50
+         *
+         *  And I need to sending this : 
+         *  "ATEIS:ATEIS\CEA:CEA\SEC01:SEC01|Porte sectionnelle:Porte sectionnelle|MISE EN SERVICE:MISE EN SERVICE|NUMERO DE SERIE:NUMERO DE SERIE|ISEA:ISEA|HAUTEUR:HAUTEUR|LARGEUR:LARGEUR|REPERE SITE CLIENT:REPERE SITE CLIENT|361:361|361:361|S50:S50"
+         */ 
+         for ($i=0; $i < count($equipementsArray) ; $i++) {
+             if (isset($equipementsArray[$i]) && in_array($equipementsArray[$i], $equipementsSplittedArray) == false) {
+                 array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
+             }
+         }
+ 
+         return $equipementsArray;
+    }
+ 
+    /**
+     * @return Form[] Returns an array with all items from all agencies portails lists 
+     */
+    public function getAgencyListPortailsFromKizeoByListId($list_id): array
+    {
+         $response = $this->client->request(
+             'GET',
+             'https://forms.kizeo.com/rest/v3/lists/' . $list_id, [
+                 'headers' => [
+                     'Accept' => 'application/json',
+                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                 ],
+             ]
+         );
+         $content = $response->getContent();
+         $content = $response->toArray();
+         
+         $equipementsSplittedArray = [];
+         // $equipementsArray = array_map(null, $content['list']['items']);
+         $equipementsArray = array_map(null, $content['list']['items']);
+         /* On Kizeo, all lines look like that
+         *  ATEIS\CEA\SEC01|Porte sectionnelle|MISE EN SERVICE|NUMERO DE SERIE|ISEA|HAUTEUR|LARGEUR|REPERE SITE CLIENT|361|361|S50
+         *
+         *  And I need to sending this : 
+         *  "ATEIS:ATEIS\CEA:CEA\SEC01:SEC01|Porte sectionnelle:Porte sectionnelle|MISE EN SERVICE:MISE EN SERVICE|NUMERO DE SERIE:NUMERO DE SERIE|ISEA:ISEA|HAUTEUR:HAUTEUR|LARGEUR:LARGEUR|REPERE SITE CLIENT:REPERE SITE CLIENT|361:361|361:361|S50:S50"
+         */ 
+         for ($i=0; $i < count($equipementsArray) ; $i++) {
+             if (isset($equipementsArray[$i]) && in_array($equipementsArray[$i], $equipementsSplittedArray) == false) {
+                 array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
+             }
+         }
+ 
+         return $equipementsArray;
+    }
+
+   //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- GET MAINTENANCE EQUIPMENTS FORMS FROM KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
    /**
     * @return Form[] Returns an array of Formulaires with class "MAINTENANCE" wich is all visites maintenance
     */
@@ -142,7 +186,9 @@ class FormRepository extends ServiceEntityRepository
         return $allFormsMaintenanceDataArray;
    }
 
-            //    ----------------------- LES PORTAILS  -----------------------------------  
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ----------------------------------- GET ETAT DES LIEUX PORTAILS FORMS FROM KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
    /**
     * @return Form[] Returns an array of Formulaires with class PORTAILS
     */
@@ -155,7 +201,8 @@ class FormRepository extends ServiceEntityRepository
         // dd($allFormsArray); // -----------------------------   Return all forms in an array
 
         foreach ($allFormsArray as $key => $value) {
-            if ($allFormsArray[$key]['class'] === 'PORTAILS') {
+            // if ($allFormsArray[$key]['class'] === 'PORTAILS') {
+            if (str_contains($allFormsArray[$key]['name'], 'Etat des lieux')) {
                 $response = $this->client->request(
                     'POST',
                     'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
@@ -182,7 +229,7 @@ class FormRepository extends ServiceEntityRepository
    {
         $eachFormDataArray = [];
         $allFormsPortailsArray = FormRepository::getFormsAdvancedPortails();
-        // ------------------------      Return 24 arrays with portails in them from 8 forms with class PORTAILS
+        // ------------------------      Return arrays with portails in them from forms with class forms name begin with 'Etat des lieux'
 
         foreach ($allFormsPortailsArray as $key => $value) {
             
@@ -212,7 +259,11 @@ class FormRepository extends ServiceEntityRepository
         $arrayResumesOfTheList = [];
 
         for ($i=0; $i < count($theList); $i++) {
-            array_push($arrayResumesOfTheList, array_unique(preg_split("/[:|]/", $theList[$i]->getIfexistDB())));
+            $portailIfExistDb = $theList[$i]->getIfexistDB();
+            if (!in_array($portailIfExistDb, $arrayResumesOfTheList)) {
+                array_push($arrayResumesOfTheList, $portailIfExistDb);
+            }
+            // array_push($arrayResumesOfTheList, array_unique(preg_split("/[:|]/", $theList[$i]->getIfexistDB())));
         }
         return $arrayResumesOfTheList;
     }
@@ -235,6 +286,10 @@ class FormRepository extends ServiceEntityRepository
         return $arrayPortailsInTheList;
     }
 
+
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- SAVE NEW EQUIPMENTS TO LOCAL BDD --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
     /**
      * Function to create and save new equipments in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170 --- MAJ IMAGES OK
      */
@@ -341,164 +396,7 @@ class FormRepository extends ServiceEntityRepository
                 }else{
                     $equipement->setModeleNacelle("");
                 }
-                //    ----------------  Enregistrement des photos ---------------------------
-                if (isset($additionalEquipment['photo_plaque']['value'])) {
-                    $equipement->setPhotoPlaque($additionalEquipment['photo_plaque']['value']);
-                }else{
-                    $equipement->setPhotoPlaque("");
-                }
                 
-                if (isset($additionalEquipment['photo_choc']['value'])) {
-                    $equipement->setPhotoChoc($additionalEquipment['photo_choc']['value']);
-                }else{
-                    $equipement->setPhotoChoc("");
-                }
-                if (isset($additionalEquipment['photo_choc_montant']['value'])) {
-                    $equipement->setPhotoChocMontant($additionalEquipment['photo_choc_montant']['value']);
-                }else{
-                    $equipement->setPhotoChocMontant("");
-                }
-                if (isset($additionalEquipment['photo_panneau_intermediaire_i']['value'])) {
-                    $equipement->setPhotoPanneauIntermediaire($additionalEquipment['photo_panneau_intermediaire_i']['value']);
-                }else{
-                    $equipement->setPhotoPanneauIntermediaire("");
-                }
-                if (isset($additionalEquipment['photo_panneau_bas_inter_ext']['value'])) {
-                    $equipement->setPhotoPanneauBasInterExt($additionalEquipment['photo_panneau_bas_inter_ext']['value']);
-                }else{
-                    $equipement->setPhotoPanneauBasInterExt("");
-                }
-                if (isset($additionalEquipment['photo_lame_basse_int_ext']['value'])) {
-                    $equipement->setPhotoLameBasseIntExt($additionalEquipment['photo_lame_basse_int_ext']['value']);
-                }else{
-                    $equipement->setPhotoLameBasseIntExt("");
-                }
-                if (isset($additionalEquipment['photo_lame_intermediaire_int']['value'])) {
-                    $equipement->setPhotoLameIntermediaireInt($additionalEquipment['photo_lame_intermediaire_int']['value']);
-                }else{
-                    $equipement->setPhotoLameIntermediaireInt("");
-                }
-                if (isset($additionalEquipment['photo_environnement_equipement1']['value'])) {
-                    $equipement->setPhotoEnvironnementEquipement($additionalEquipment['photo_environnement_equipement1']['value']);
-                }else{
-                    $equipement->setPhotoEnvironnementEquipement("");
-                }
-                if (isset($additionalEquipment['photo_bache']['value'])) {
-                    $equipement->setPhotoBache($additionalEquipment['photo_bache']['value']);
-                }else{
-                    $equipement->setPhotoBache("");
-                }
-                if (isset($additionalEquipment['photo_marquage_au_sol_']['value'])) {
-                    $equipement->setPhotoMarquageAuSol($additionalEquipment['photo_marquage_au_sol_']['value']);
-                }else{
-                    $equipement->setPhotoMarquageAuSol("");
-                }
-                if (isset($additionalEquipment['photo_environnement_eclairage']['value'])) {
-                    $equipement->setPhotoEnvironnementEclairage($additionalEquipment['photo_environnement_eclairage']['value']);
-                }else{
-                    $equipement->setPhotoEnvironnementEclairage("");
-                }
-                if (isset($additionalEquipment['photo_coffret_de_commande']['value'])) {
-                    $equipement->setPhotoCoffretDeCommande($additionalEquipment['photo_coffret_de_commande']['value']);
-                }else{
-                    $equipement->setPhotoCoffretDeCommande("");
-                }
-                if (isset($additionalEquipment['photo_carte']['value'])) {
-                    $equipement->setPhotoCarte($additionalEquipment['photo_carte']['value']);
-                }else{
-                    $equipement->setPhotoCarte("");
-                }
-                if (isset($additionalEquipment['photo_rail']['value'])) {
-                    $equipement->setPhotoRail($additionalEquipment['photo_rail']['value']);
-                }else{
-                    $equipement->setPhotoRail("");
-                }
-                if (isset($additionalEquipment['photo_equerre_rail']['value'])) {
-                    $equipement->setPhotoEquerreRail($additionalEquipment['photo_equerre_rail']['value']);
-                }else{
-                    $equipement->setPhotoEquerreRail("");
-                }
-                if (isset($additionalEquipment['photo_fixation_coulisse']['value'])) {
-                    $equipement->setPhotoFixationCoulisse($additionalEquipment['photo_fixation_coulisse']['value']);
-                }else{
-                    $equipement->setPhotoFixationCoulisse("");
-                }
-                if (isset($additionalEquipment['photo_moteur']['value'])) {
-                    $equipement->setPhotoMoteur($additionalEquipment['photo_moteur']['value']);
-                }else{
-                    $equipement->setPhotoMoteur("");
-                }
-                if (isset($additionalEquipment['photo_deformation_plateau']['value'])) {
-                    $equipement->setPhotoDeformationPlateau($additionalEquipment['photo_deformation_plateau']['value']);
-                }else{
-                    $equipement->setPhotoDeformationPlateau("");
-                }
-                if (isset($additionalEquipment['photo_deformation_plaque']['value'])) {
-                    $equipement->setPhotoDeformationPlaque($additionalEquipment['photo_deformation_plaque']['value']);
-                }else{
-                    $equipement->setPhotoDeformationPlaque("");
-                }
-                if (isset($additionalEquipment['photo_deformation_structure']['value'])) {
-                    $equipement->setPhotoDeformationStructure($additionalEquipment['photo_deformation_structure']['value']);
-                }else{
-                    $equipement->setPhotoDeformationStructure("");
-                }
-                if (isset($additionalEquipment['photo_deformation_chassis']['value'])) {
-                    $equipement->setPhotoDeformationChassis($additionalEquipment['photo_deformation_chassis']['value']);
-                }else{
-                    $equipement->setPhotoDeformationChassis("");
-                }
-                if (isset($additionalEquipment['photo_deformation_levre']['value'])) {
-                    $equipement->setPhotoDeformationLevre($additionalEquipment['photo_deformation_levre']['value']);
-                }else{
-                    $equipement->setPhotoDeformationLevre("");
-                }
-                if (isset($additionalEquipment['photo_fissure_cordon']['value'])) {
-                    $equipement->setPhotoFissureCordon($additionalEquipment['photo_fissure_cordon']['value']);
-                }else{
-                    $equipement->setPhotoFissureCordon("");
-                }
-                if (isset($additionalEquipment['photo_joue']['value'])) {
-                    $equipement->setPhotoJoue($additionalEquipment['photo_joue']['value']);
-                }else{
-                    $equipement->setPhotoJoue("");
-                }
-                if (isset($additionalEquipment['photo_butoir']['value'])) {
-                    $equipement->setPhotoButoir($additionalEquipment['photo_butoir']['value']);
-                }else{
-                    $equipement->setPhotoButoir("");
-                }
-                if (isset($additionalEquipment['photo_vantail']['value'])) {
-                    $equipement->setPhotoVantail($additionalEquipment['photo_vantail']['value']);
-                }else{
-                    $equipement->setPhotoVantail("");
-                }
-                if (isset($additionalEquipment['photo_linteau']['value'])) {
-                    $equipement->setPhotoLinteau($additionalEquipment['photo_linteau']['value']);
-                }else{
-                    $equipement->setPhotoLinteau("");
-                }
-                if (isset($additionalEquipment['photo_barriere']['value'])) {
-                    $equipement->setPhotoBariere($additionalEquipment['photo_barriere']['value']);
-                }else{
-                    $equipement->setPhotoBarriere("");
-                }
-                if (isset($additionalEquipment['photo_tourniquet']['value'])) {
-                    $equipement->setPhotoTourniquet($additionalEquipment['photo_tourniquet']['value']);
-                }else{
-                    $equipement->setPhotoTourniquet("");
-                }
-                if (isset($additionalEquipment['photo_sas']['value'])) {
-                    $equipement->setPhotoSas($additionalEquipment['photo_sas']['value']);
-                }else{
-                    $equipement->setPhotoSas("");
-                }
-                if (isset($additionalEquipment['photo_marquage_au_sol']['value'])) {
-                    $equipement->setPhotoMarquageAuSolPortail($additionalEquipment['photo_marquage_au_sol']['value']);
-                }else{
-                    $equipement->setPhotoMarquageAuSolPortail("");
-                }
-
                 if (isset($additionalEquipment['etat']['value'])) {
                     switch ($additionalEquipment['etat']['value']) {
                         case "Rien à signaler le jour de la visite. Fonctionnement ok":
@@ -528,6 +426,8 @@ class FormRepository extends ServiceEntityRepository
                             
                     }
                 }
+
+                $equipement->setEnMaintenance(true);
                 
                 // tell Doctrine you want to (eventually) save the Product (no queries yet)
                 $entityManager->persist($equipement);
@@ -538,43 +438,80 @@ class FormRepository extends ServiceEntityRepository
                 
                 echo nl2br("We have a new equipment or we have updated an equipment !");
             }else{
-                echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
+                echo nl2br("All equipments are already in database \n  You can go to the homepage");
                 die;
             }
         }
     }
+
     /**
-     * Function to create and save new PORTAILS from ETAT DES LIEUX PORTAILS in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170 --- MAJ IMAGES OK
+     * Function to create and save new PORTAILS from ETAT DES LIEUX PORTAILS in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170
+     * Function OK
      */
-    public function createAndSavePortailsInDatabaseByAgency($equipements, $arrayResumesEquipments, $entityAgency, $entityManager){
+    public function saveNewPortailsInDatabaseByAgency($libelle_equipement, $equipements, $arrayResumesEquipmentsInDatabase, $entityAgency, $entityManager){
+       
         // Passer à la fonction les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
         /**
         * List all additional equipments stored in individual array
         */
-        foreach ($equipements['data']['fields']['portails']['value']  as $additionalEquipment){
-            // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
-            $resume_equipement_supplementaire = 
-            $equipements['data']['fields']['liste_clients']['value'] . 
-            "\\" . 
-            $additionalEquipment['reference_equipement']['value'] . 
-            "|portail|" . 
-            $additionalEquipment['annee_installation_portail_']['value'] . 
-            "|" . 
-            $additionalEquipment['numero_serie']['value'] . 
-            "|" . 
-            $additionalEquipment['marques1']['value'] . 
-            "|" . 
-            $additionalEquipment['dimension_hauteur_vantail']['value'] . 
-            "|" . 
-            $additionalEquipment['dimension_largeur_passage_uti']['value'] . 
-            "|" . 
-            $additionalEquipment['dimension_longueur_vantail']['value'] . 
-            "|" . 
-            $additionalEquipment['ref_interne_client']['value'] . 
-            "|" . 
-            $additionalEquipment['id_societe_']['value'] . 
-            "|" . 
-            $additionalEquipment['n_agence']['value'];
+        foreach ($equipements['data']['fields']['portails']['value'] as $additionalEquipment){
+            // dump($equipements['data']);
+            // Everytime a new portail is read, we store its value in variable resume_equipement_supplementaire
+            if (isset($additionalEquipment['types_equipements']['value'])) {
+                # code...
+                $resume_equipement_supplementaire = 
+                $additionalEquipment['types_equipements']['value'] . 
+                "|portail|" . 
+                $additionalEquipment['types_de_fonctionnement']['value'] . 
+                "|" . 
+                $additionalEquipment['localisation_sur_site']['value'] . 
+                "|" . 
+                $additionalEquipment['annee_installation_portail_']['value'] . 
+                "|" . 
+                $additionalEquipment['numero_serie']['value'] . 
+                "|" . 
+                $additionalEquipment['marques1']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_hauteur_vantail']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_largeur_passage_uti']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_longueur_vantail']['value'] . 
+                "|" . 
+                $additionalEquipment['plaque_identification']['value'] . 
+                "|" . 
+                $equipements['data']['fields']['liste_clients']['value'] . 
+                "|" . 
+                $equipements['data']['fields']['ref_interne_client']['value'] .
+                "|" . 
+                $equipements['data']['fields']['id_societe_']['value']; 
+            }else{
+                $resume_equipement_supplementaire = 
+                $additionalEquipment['reference_equipement']['value'] . 
+                "|portail|" . 
+                $additionalEquipment['types_de_fonctionnement']['value'] . 
+                "|" . 
+                $additionalEquipment['localisation_sur_site']['value'] . 
+                "|" . 
+                $additionalEquipment['annee_installation_portail_']['value'] . 
+                "|" . 
+                $additionalEquipment['numero_serie']['value'] . 
+                "|" . 
+                $additionalEquipment['marques1']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_hauteur_vantail']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_largeur_passage_uti']['value'] . 
+                "|" . 
+                $additionalEquipment['dimension_longueur_vantail']['value'] . 
+                "|" . 
+                $additionalEquipment['plaque_identification']['value'] . 
+                "|" . 
+                $equipements['data']['fields']['liste_clients']['value'] . 
+                "|" . 
+                $equipements['data']['fields']['ref_interne_client']['value'] .
+                "|NC";
+            }
 
             
             /**
@@ -583,75 +520,57 @@ class FormRepository extends ServiceEntityRepository
              * type Optional. If this parameter is set to TRUE, the in_array() function searches for the search-string and specific type in the array
              */
             
-            if(!in_array($resume_equipement_supplementaire, $arrayResumesEquipments, TRUE)) {
-                
+            if(!in_array($resume_equipement_supplementaire, $arrayResumesEquipmentsInDatabase, TRUE)) {
                 /**
                  * Persist each equipement in database
                  * Save a new contrat_de_maintenance equipement in database when a technician make an update
                  */
                 $equipement = new $entityAgency;
-                $equipement->setIdContact($equipements['id_client_']['value']);
-                $equipement->setRaisonSociale($equipements['nom_client']['value']);
-                $equipement->setTest($equipements['test_']['value']);
-                $equipement->setDateEnregistrement($equipements['date_et_heure1']['value']);
-
-                if (isset($equipements['id_societe']['value'])) {
-                    $equipement->setCodeSociete($equipements['id_societe']['value']);
+                $equipement->setTrigrammeTech($equipements['data']['fields']['trigramme_de_la_personne_real']['value']);
+                $equipement->setTest("non");
+                $equipement->setIdContact($equipements['data']['fields']['ref_interne_client']['value']);
+                if (isset($equipements['data']['fields']['id_societe_']['value'])){
+                    $equipement->setCodeSociete($equipements['data']['fields']['id_societe_']['value']);
                 }else{
-                    $equipement->setCodeSociete("");
+                    $equipement->setCodeSociete("NC");
                 }
-                if (isset($equipements['id_agence']['value'])) {
-                    $equipement->setCodeAgence($equipements['id_agence']['value']);
+                $equipement->setDernièreVisite($equipements['data']['fields']['date_et_heure1']['value']);
+                $equipement->setIfExistDB($resume_equipement_supplementaire);
+                $equipement->setCodeAgence($equipements['data']['fields']['n_agence']['value']);
+                $equipement->setRaisonSociale($equipements['data']['fields']['liste_clients']['value']);
+                if (isset($additionalEquipment['types_equipements']['value'])){
+                    $equipement->setNumeroEquipement($additionalEquipment['types_equipements']['value']);
                 }else{
-                    $equipement->setCodeAgence("");
+                    $equipement->setNumeroEquipement($additionalEquipment['reference_equipement']['value']);
                 }
+                $equipement->setRepereSiteClient($additionalEquipment['localisation_sur_site']['value']);
+                $equipement->setEtat($additionalEquipment['etat_general_equipement1']['value']);
+                $equipement->setMarque($additionalEquipment['marques1']['value']);
+                $equipement->setNumeroDeSerie($additionalEquipment['numero_serie']['value']);
+                $equipement->setMiseEnService($additionalEquipment['annee_installation_portail_']['value']);
+                $equipement->setLibelleEquipement("portail");
+                $equipement->setModeFonctionnement($additionalEquipment['types_de_fonctionnement']['value']);
+                $equipement->setLargeur($additionalEquipment['dimension_largeur_passage_uti']['value']);
+                $equipement->setLongueur($additionalEquipment['dimension_longueur_vantail']['value']);
+                $equipement->setHauteur($additionalEquipment['dimension_hauteur_vantail']['value']);
+                $equipement->setPresenceCarnetEntretien($additionalEquipment['presence_carnet_entretien']['value']);
+                $equipement->setEtatDesLieuxFait(true);
                 
-                $equipement->setDernièreVisite($equipements['date_et_heure1']['value']);
-                $equipement->setTrigrammeTech($equipements['trigramme']['value']);
-                $equipement->setSignatureTech($equipements['signature3']['value']);
-
-                $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
-                $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
-                $equipement->setLibelleEquipement(strtolower($additionalEquipment['reference7']['value']));
-                $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
-                $equipement->setRepereSiteClient($additionalEquipment['localisation_site_client']['value']);
-                $equipement->setMiseEnService($additionalEquipment['reference2']['value']);
-                $equipement->setNumeroDeSerie($additionalEquipment['reference6']['value']);
-                $equipement->setMarque($additionalEquipment['reference5']['value']);
-                if (isset($additionalEquipment['reference3']['value'])) {
-                    $equipement->setLargeur($additionalEquipment['reference3']['value']);
-                }else{
-                    $equipement->setLargeur("");
-                }
-                if (isset($additionalEquipment['reference1']['value'])) {
-                    $equipement->setHauteur($additionalEquipment['reference1']['value']);
-                }else{
-                    $equipement->setHauteur("");
-                }
-                if (isset($additionalEquipment['longueur']['value'])) {
-                    $equipement->setLongueur($additionalEquipment['longueur']['value']);
-                }else{
-                    $equipement->setLongueur("NC");
-                }
-                $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
-                
-                // tell Doctrine you want to (eventually) save the Product (no queries yet)
                 $entityManager->persist($equipement);
-                
-                
                 // actually executes the queries (i.e. the INSERT query)
                 $entityManager->flush();
                 
-                echo nl2br("We have a new equipment or we have updated an equipment !");
-            }else{
-                echo nl2br("All equipments are already in database \n  Vous pouvez revenir en arrière");
-                die;
+                echo nl2br("Portails are updaated in BDD in table equipementS.. !");
             }
         }
     }
 
+
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- UPLOAD NEW EQUIPMENTS LIST TO KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
     /**
-     * Function to upload and save list agency with new records from maintenance formulaires --- OK POUR TOUTES LES AGENCES DE S10 à S170
+     * Function to upload and save list agency with new records from maintenance formulaires to Kizeo --- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
     public function uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $agencyEquipments, $agencyListId){
         foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
@@ -678,7 +597,38 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * Function to save and save new equipments in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170
+     * Function to upload and save list agency with new records from ETAT DES LIEUX PORTAILS formulaires to Kizeo --- OK POUR TOUTES LES AGENCES DE S10 à S170
+     */
+    public function uploadListAgencyEtatDesLieuxPortailsWithNewRecordsOnKizeo($dataOfFormList, $key, $agencyEquipments, $agencyListId){
+        // Mettre à jour pour les nouveaux portails des états des lieux
+        foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+            // Recréer le path avec pour modèle celui de la liste portails
+            $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
+            if (!in_array($theEquipment, $agencyEquipments, true)) {
+                array_push($agencyEquipments,  $theEquipment);
+            }
+        }
+        Request::enableHttpMethodParameterOverride(); // <-- add this line
+        $client = new Client();
+        $response = $client->request(
+            'PUT',
+            'https://forms.kizeo.com/rest/v3/lists/' . $agencyListId, [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+                'json'=>[
+                    'items' => $agencyEquipments,
+                ]
+            ]
+        );
+    }
+
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- SAVE BASE EQUIPMENTS LIST TO LOCAL BDD --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
+    /**
+     * Function to save base equipments lists in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
     public function saveEquipmentsListByAgencyOnLocalDatabase($listAgency, $entityAgency, $entityManager){
         $listAgencySplitted = [];
@@ -711,6 +661,10 @@ class FormRepository extends ServiceEntityRepository
         }
     }
 
+
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------------  SAVE PDF STANDARD FROM KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
     /**
      * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
      */
@@ -792,43 +746,89 @@ class FormRepository extends ServiceEntityRepository
                 }
             }
 
+        }
+        return $allFormsPdf;
+    } 
+    /**
+     * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
+     */
+    public function savePortailsPdfInPublicFolder(){
+        // Récupérer les fichiers PDF dans un tableau
+        // -----------------------------   Return all forms in an array
+        $allFormsArray = FormRepository::getForms();
+        $allFormsArray = $allFormsArray['forms'];
+        $allFormsPortailsArray = [];
+        $allFormsPdf = [];
 
-            // ------------------------------------------      POST to receive PDF FROM FORMS FROM TECHNICIANS WHITHOUT PICTURES
-            // $responseData = $this->client->request(
-            //     'POST',
-            //     'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/multiple_data/exports/' . $contentExportsAvailable['exports'][0]['id'] . '/pdf', [
-            //         'headers' => [
-            //             'Accept' => 'application/pdf',
-            //             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-            //         ],
-            //         'body' => [
-            //             'data_ids' => [
-            //                 $allFormsMaintenanceArray[$key]['_id']
-            //             ]
-            //         ],
-            //     ]
-            // );
-            // $content = $responseData->getContent();
+        // -----------------------------   Return all forms with class "MAINTENANCE"
+        foreach ($allFormsArray as $key => $value) {
+            if ($allFormsArray[$key]['class'] === 'PORTAILS') {
+                
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $content = $response->getContent();
+                $content = $response->toArray();
+                foreach ($content['data'] as $key => $value) {
+                    array_push($allFormsPortailsArray, $value);
+                }
+            }
+        }
+        // GET available exports from form_id
 
-            // dump('Nom client entrant dans le switch : ' . $allFormsMaintenanceArray[$key]['nom_client']);
-            // switch (str_contains($allFormsMaintenanceArray[$key]['nom_client'], '/')) {
-            //     case false:
-            //         mkdir($allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'], 0777, true);
-            //         file_put_contents( $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
-            //         break;
+        foreach ($allFormsPortailsArray as $key => $value) {
+            $responseExportsAvailable = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/exports', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $contentExportsAvailable = $responseExportsAvailable->getContent();
+            $contentExportsAvailable = $responseExportsAvailable->toArray();
             
-            //     case true:
-            //         $nomClient = $allFormsMaintenanceArray[$key]['nom_client'];
-            //         $nomClientClean = str_replace("/", "", $nomClient);
-            //         mkdir($nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'], 0777, true);
-            //         file_put_contents( $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . $nomClientClean . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
-            //         break;
-
-            //     default:
-            //         dump('Nom en erreur:   ' . $allFormsMaintenanceArray[$key]['nom_client']);
-            //         break;
-            // }
-            
+            // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
+            $responseData = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/data/' . $allFormsPortailsArray[$key]['_id'] . '/pdf', [
+                    'headers' => [
+                        'Accept' => 'application/pdf',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $content = $responseData->getContent();
+            dump('GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES');
+            if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])) {
+                # code...
+                switch (str_contains($allFormsPortailsArray[$key]['liste_clients'], '/')) {
+                    case false:
+                        mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
+                        file_put_contents('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        break;
+                
+                    case true:
+                        $nomClient = $allFormsPortailsArray[$key]['liste_clients'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        if (!file_exists($nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])){
+                            mkdir('EDL_Portails/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
+                            file_put_contents( 'EDL_Portails/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . $nomClientClean . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        }
+                        break;
+    
+                    default:
+                        dump('Nom en erreur:   ' . $allFormsPortailsArray[$key]['liste_clients']);
+                        break;
+                }
+            }
         }
         return $allFormsPdf;
     } 

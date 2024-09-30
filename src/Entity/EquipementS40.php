@@ -100,6 +100,11 @@ class EquipementS40
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $dateMiseEnConformite = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $isEtatDesLieuxFait = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?bool $isEnMaintenance = null;
 
     public function getId(): ?int
     {
@@ -450,6 +455,30 @@ class EquipementS40
     public function setLongueur(?string $longueur): static
     {
         $this->longueur = $longueur;
+
+        return $this;
+    }
+
+    public function isEtatDesLieuxFait(): ?bool
+    {
+        return $this->isEtatDesLieuxFait;
+    }
+
+    public function setEtatDesLieuxFait(?bool $isEtatDesLieuxFait): static
+    {
+        $this->isEtatDesLieuxFait = $isEtatDesLieuxFait;
+
+        return $this;
+    }
+
+    public function isEnMaintenance(): ?bool
+    {
+        return $this->isEnMaintenance;
+    }
+
+    public function setEnMaintenance(?bool $isEnMaintenance): static
+    {
+        $this->isEnMaintenance = $isEnMaintenance;
 
         return $this;
     }

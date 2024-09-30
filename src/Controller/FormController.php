@@ -217,7 +217,7 @@ class FormController extends AbstractController
     }
 
     /**
-     * Function to ADD new PORTAILS from technicians forms
+     * Function to ADD new PORTAILS from technicians forms in BDD and save PDF état des lieux locally
      */
     #[Route('/api/forms/update/portails', name: 'app_api_form_update_portails', methods: ['GET'])]
     public function getEtatDesLieuxPortailsDataOfForms(FormRepository $formRepository, EntityManagerInterface $entityManager)
@@ -238,10 +238,10 @@ class FormController extends AbstractController
         $entiteEquipementS170 = new EquipementS170;
 
         //Changer l'appel à la fonction saveEquipementPdfInPublicFolder() pour enregistrer les PDF standard des état des lieux portail
-        // $formRepository->saveEquipementPdfInPublicFolder();
+        $formRepository->savePortailsPdfInPublicFolder();
         
         // -------------------------------------------
-        // ----------------Call function iterate by list equipments to get ONLY Portails in Equipement_numeroAgence list 
+        // ----------------Call function iterate by list equipments to get ONLY Portails in Equipement_numeroAgence list IN LOCAL BDD
         // --------------  OK for this function
         // -------------------------------------------
         
@@ -264,149 +264,102 @@ class FormController extends AbstractController
         // --------------------------------------     Call function iterate by list of portails to get resumes in if_exist_db 
         // ----------------------------------  OK for this function
         // -------------------------------------------
-        $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGroupPortailsInDatabase);
-        $allResumesStEtienneEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes( $allStEtiennePortailsInDatabase);
-        $allResumesGrenobleEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGrenoblePortailsInDatabase);
-        $allResumesLyonEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allLyonPortailsInDatabase);
-        $allResumesBordeauxEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allBordeauxPortailsInDatabase);
-        $allResumesParisNordEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allParisNordPortailsInDatabase);
-        $allResumesMontpellierEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allMontpellierPortailsInDatabase);
-        $allResumesHautsDeFranceEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allHautsDeFrancePortailsInDatabase);
-        $allResumesToulouseEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allToulousePortailsInDatabase);
-        $allResumesSmpEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSmpPortailsInDatabase);
-        $allResumesSogefiEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSogefiPortailsInDatabase);
-        $allResumesRouenEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRouenPortailsInDatabase);
-        $allResumesRennesEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRennesPortailsInDatabase);
-
-        // GET all technicians forms from list class PORTAILS
-        $dataOfFormPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+        $allResumesGroupPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGroupPortailsInDatabase);
+        $allResumesStEtiennePortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes( $allStEtiennePortailsInDatabase);
+        $allResumesGrenoblePortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allGrenoblePortailsInDatabase);
+        $allResumesLyonPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allLyonPortailsInDatabase);
+        $allResumesBordeauxPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allBordeauxPortailsInDatabase);
+        $allResumesParisNordPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allParisNordPortailsInDatabase);
+        $allResumesMontpellierPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allMontpellierPortailsInDatabase);
+        $allResumesHautsDeFrancePortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allHautsDeFrancePortailsInDatabase);
+        $allResumesToulousePortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allToulousePortailsInDatabase);
+        $allResumesSmpPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSmpPortailsInDatabase);
+        $allResumesSogefiPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allSogefiPortailsInDatabase);
+        $allResumesRouenPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRouenPortailsInDatabase);
+        $allResumesRennesPortailsInDatabase = $formRepository->iterateListEquipementsToGetResumes($allRennesPortailsInDatabase);
         
-        dd($dataOfFormPortails[0]);
-        /**
-         * Store all equipments resumes stored in database to an array
-         */
-        // $allportailsResumeInDatabase = [];
-        // $allNewPortailsResume = [];
-        // for ($i=0; $i < count($allPortailsInDatabase); $i++) { 
-        //     array_push($allportailsResumeInDatabase, $allPortailsInDatabase[$i]->getIfexistDB());
-        // }
+        // GET all technicians Etat des lieux portails forms from list class PORTAILS
+        $dataOfFormsEtatDesLieuxPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
 
-        foreach ($dataOfFormPortails as $formPortail) { 
-            // dd($formPortail);
+        foreach ($dataOfFormsEtatDesLieuxPortails as $formPortail) { 
+            
             /**
             * Persist each portail in database
             */
-            // dd($formPortail['data']['fields']['portails']['value'][0]);
-            switch($formPortail['data']['fields']['n_agence']['value']){
-                case 'S10':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesGroupEquipementsInDatabase, $entiteEquipementS10, $entityManager);
-                    break;
-                
-                case 'S40':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesStEtienneEquipementsInDatabase, $entiteEquipementS40, $entityManager);
-                    break;
-                
-                case 'S50':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesGrenobleEquipementsInDatabase, $entiteEquipementS50, $entityManager);
-                    break;
-                
-                
-                case 'S60':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesLyonEquipementsInDatabase, $entiteEquipementS60, $entityManager);
-                    break;
-                
-                
-                case 'S70':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
-                    break;
-                
-                
-                case 'S80':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesParisNordEquipementsInDatabase, $entiteEquipementS80, $entityManager);
-                    break;
-                
-                
-                case 'S100':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesMontpellierEquipementsInDatabase, $entiteEquipementS100, $entityManager);
-                    break;
-                
-                
-                case 'S120':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
-                    break;
-                
-                
-                case 'S130':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
-                    break;
-                
-                
-                case 'S140':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesSmpEquipementsInDatabase, $entiteEquipementS140, $entityManager);
-                    break;
-                
-                
-                case 'S150':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
-                    break;
-                
-                
-                case 'S160':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
-                    break;
-                
-                
-                case 'S170':
-                    $formRepository->createAndSavePortailsInDatabaseByAgency($formPortail, $allResumesRennesEquipementsInDatabase, $entiteEquipementS170, $entityManager);
-                    break;
-                
-                default:
-                    dump('Le code agence n\'est pas prévu dans le code');
-                    break;
-            }
-            foreach ($formPortail['data']['fields']['portails']['value'] as $portail) {
-                array_push($allNewPortailsResume, $formPortail['data']['fields']['liste_clients']['columns']);
-                if (!in_array($formPortail['data']['fields']['liste_clients']['columns'], $allportailsResumeInDatabase, TRUE)){
-
-                    $equipement = new Portail;
-
-                    $equipement->setTrigrammeTech($formPortail['data']['fields']['trigramme_de_la_personne_real']['value']);
-                    $equipement->setIdContact($formPortail['data']['fields']['ref_interne_client']['value']);
-                    if (isset($formPortail['data']['fields']['id_societe_'])) {
-                        $equipement->setCodeSociete($formPortail['data']['fields']['id_societe_']['value']);
-                    }else{
-                        $equipement->setCodeSociete("");
-                    }
-                    $equipement->setDernièreVisite($formPortail['data']['fields']['date_et_heure1']['value']);
-                    $equipement->setSignatureTech($formPortail['data']['fields']['signature2']['value']);
-                    $equipement->setIfExistDB($formPortail['data']['fields']['liste_clients']['columns']);
-                    $equipement->setCodeAgence($formPortail['data']['fields']['n_agence']['value']);
-                    $equipement->setNomClient($formPortail['data']['fields']['liste_clients']['value']);
-                    $equipement->setNumeroEquipement($portail['reference_equipement']['value']);
-                    $equipement->setRepereSiteClient($portail['localisation_sur_site']['value']);
-                    $equipement->setEtat($portail['etat_general_equipement1']['value']);
-                    $equipement->setMarque($portail['marques']['value']);
-                    $equipement->setNumeroDeSerie($portail['numero_serie']['value']);
-                    $equipement->setModele($portail['modele']['value']);
-                    $equipement->setMiseEnService($portail['date_installation']['value']);
-                    $equipement->setLibelleEquipement($portail['types_de_portails']['value']);
-                    $equipement->setNombresVantaux($portail['nombres_vantaux']['value']);
-                    $equipement->setModeFonctionnement($portail['types_de_fonctionnement']['value']);
-                    $equipement->setLargeur($portail['dimension_largeur_passage_uti']['value']);
-                    $equipement->setLongueur($portail['dimension_longueur_vantail']['value']);
-                    $equipement->setHauteur($portail['dimension_hauteur_vantail']['value']);
+            if (isset($formPortail['data']['fields']['n_agence']['value'])) {
+                # code...
+                switch($formPortail['data']['fields']['n_agence']['value']){
+                    case 'S10':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesGroupPortailsInDatabase, $entiteEquipementS10, $entityManager);
+                        break;
                     
-                    $equipement->setPresenceCarnetEntretien($portail['presence_carnet_entretien']['value']);
+                    case 'S40':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesStEtiennePortailsInDatabase, $entiteEquipementS40, $entityManager);
+                        break;
                     
-                    // tell Doctrine you want to (eventually) save the Portail (no queries yet)
-                    $entityManager->persist($equipement);
+                    case 'S50':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesGrenoblePortailsInDatabase, $entiteEquipementS50, $entityManager);
+                        break;
+                    
+                    
+                    case 'S60':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesLyonPortailsInDatabase, $entiteEquipementS60, $entityManager);
+                        break;
+                    
+                    
+                    case 'S70':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesBordeauxPortailsInDatabase, $entiteEquipementS70, $entityManager);
+                        break;
+                    
+                    
+                    case 'S80':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesParisNordPortailsInDatabase, $entiteEquipementS80, $entityManager);
+                        break;
+                    
+                    
+                    case 'S100':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesMontpellierPortailsInDatabase, $entiteEquipementS100, $entityManager);
+                        break;
+                    
+                    
+                    case 'S120':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesHautsDeFrancePortailsInDatabase, $entiteEquipementS120, $entityManager);
+                        break;
+                    
+                    
+                    case 'S130':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesToulousePortailsInDatabase, $entiteEquipementS130, $entityManager);
+                        break;
+                    
+                    
+                    case 'S140':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesSmpPortailsInDatabase, $entiteEquipementS140, $entityManager);
+                        break;
+                    
+                    
+                    case 'S150':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesSogefiPortailsInDatabase, $entiteEquipementS150, $entityManager);
+                        break;
+                    
+                    
+                    case 'S160':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesRouenPortailsInDatabase, $entiteEquipementS160, $entityManager);
+                        break;
+                    
+                    
+                    case 'S170':
+                        $formRepository->saveNewPortailsInDatabaseByAgency("portail", $formPortail, $allResumesRennesPortailsInDatabase, $entiteEquipementS170, $entityManager);
+                        break;
+                    
+                    default:
+                        dump('Le code agence n\'est pas prévu dans le code');
+                        break;
                 }
-            }    
-            // actually executes the queries (i.e. the INSERT query)
-            $entityManager->flush();
+            }
         }
-        // return $this->redirectToRoute('app_api_form_update_portails_auto');
-        return new JsonResponse("Portails OK en BDD : " . "\n ", Response::HTTP_OK, [], true);
+        
+        // return new JsonResponse("Portails OK en BDD : " . "\n ", Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_update_lists_equipements');
     }
 
     /**
@@ -507,6 +460,107 @@ class FormController extends AbstractController
 
         // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
         return $this->redirectToRoute('app_api_form_update');
+    }
+
+    /**
+     * UPDATE LIST OF PORTAILS ON KIZEO AND FLUSH NEW PORTAILS IN LOCAL DATABASE    --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
+     * 
+     */
+    #[Route('/api/forms/update/lists/portails', name: 'app_api_form_update_lists_portails', methods: ['GET','PUT'])]
+    public function putUpdatesListsPortailsFromKizeoForms(FormRepository $formRepository){
+        $dataOfFormListPortails  =  $formRepository->getEtatDesLieuxPortailsDataOfForms();
+        dd($dataOfFormListPortails);
+        // GET portails des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
+        // $portailsGroup = $formRepository->getAgencyListPortailsFromKizeoByListId();
+        // $portailsStEtienne = $formRepository->getAgencyListPortailsFromKizeoByListId(418520);
+        $portailsGrenoble = $formRepository->getAgencyListPortailsFromKizeoByListId(418507);
+        // $portailsLyon = $formRepository->getAgencyListPortailsFromKizeoByListId(418519);
+        // $portailsBordeaux = $formRepository->getAgencyListPortailsFromKizeoByListId(419394);
+        $portailsParis = $formRepository->getAgencyListPortailsFromKizeoByListId(417773);
+        $portailsMontpellier = $formRepository->getAgencyListPortailsFromKizeoByListId(419710);
+        // $portailsHautsDeFrance = $formRepository->getAgencyListPortailsFromKizeoByListId(417950);
+        // $portailsToulouse = $formRepository->getAgencyListPortailsFromKizeoByListId(419424);
+        // $portailsSmp = $formRepository->getAgencyListPortailsFromKizeoByListId();
+        // $portailsSogefi = $formRepository->getAgencyListPortailsFromKizeoByListId(422539);
+        // $portailsRouen = $formRepository->getAgencyListPortailsFromKizeoByListId();
+        // $portailsRennes = $formRepository->getAgencyListPortailsFromKizeoByListId();
+        
+        foreach($dataOfFormListPortails as $key=>$value){
+
+            switch ($dataOfFormListPortails[$key]['code_agence']['value']) {
+                // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails,$key,$agencyEquipments,$agencyListId)
+                // case 'S10':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGroup, );
+                //     dump('Uploads S10 OK');
+                //     break;
+                // case 'S40':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsStEtienne, );
+                //     dump('Uploads S40 OK');
+                //     break;
+                case 'S50':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsGrenoble, 414025);
+                    dump('Uploads S50 OK');
+                    break;
+                // case 'S60':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsLyon, );
+                //     dump('Uploads S60 OK');
+                //     break;
+                // case 'S70':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsBordeaux, );
+                //     dump('Uploads S70 OK');
+                //     break;
+                
+                case 'S80':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsParis, 421993);
+                    dump('Uploads for S80 OK');
+                    break;
+                
+                case 'S100':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsMontpellier, 423853);
+                    dump('Uploads for S100 OK');
+                    break;
+                
+                // case 'S120':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsHautsDeFrance, );
+                //     dump('Uploads for S120 OK');
+                //     break;
+                
+                // case 'S130':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsToulouse, );
+                //     dump('Uploads for S130 OK');
+                //     break;
+                
+                // case 'S140':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSmp, );
+                //     dump('Uploads for S140 OK');
+                //     break;
+                
+                // case 'S150':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsSogefi, );
+                //     dump('Uploads for S150 OK');
+                //     break;
+                
+                // case 'S160':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRouen, );
+                //     dump('Uploads for S160 OK');
+                //     break;
+                
+                // case 'S170':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormListPortails, $key, $portailsRennes, );
+                //     dump('Uploads for S170 OK');
+                //     break;
+                
+                default:
+                    return new JsonResponse('this is not for our agencies', Response::HTTP_OK, [], true);
+                    break;
+            }
+        }
+
+        // ----------------------                 Save new portails in database from all agencies
+        
+
+        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_update_portails');
     }
 
     
