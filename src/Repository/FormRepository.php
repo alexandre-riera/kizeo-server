@@ -7,6 +7,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use GuzzleHttp\Client;
+use PhpParser\Node\Stmt\Continue_;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -599,30 +600,30 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Function to upload and save list agency with new records from ETAT DES LIEUX PORTAILS formulaires to Kizeo --- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
-    public function uploadListAgencyEtatDesLieuxPortailsWithNewRecordsOnKizeo($dataOfFormList, $key, $agencyEquipments, $agencyListId){
-        // Mettre à jour pour les nouveaux portails des états des lieux
-        foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
-            // Recréer le path avec pour modèle celui de la liste portails
-            $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
-            if (!in_array($theEquipment, $agencyEquipments, true)) {
-                array_push($agencyEquipments,  $theEquipment);
-            }
-        }
-        Request::enableHttpMethodParameterOverride(); // <-- add this line
-        $client = new Client();
-        $response = $client->request(
-            'PUT',
-            'https://forms.kizeo.com/rest/v3/lists/' . $agencyListId, [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-                'json'=>[
-                    'items' => $agencyEquipments,
-                ]
-            ]
-        );
-    }
+    // public function uploadListAgencyEtatDesLieuxPortailsWithNewRecordsOnKizeo($dataOfFormList, $key, $agencyEquipments, $agencyListId){
+    //     // Mettre à jour pour les nouveaux portails des états des lieux
+    //     foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+    //         // Recréer le path avec pour modèle celui de la liste portails
+    //         $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
+    //         if (!in_array($theEquipment, $agencyEquipments, true)) {
+    //             array_push($agencyEquipments,  $theEquipment);
+    //         }
+    //     }
+    //     Request::enableHttpMethodParameterOverride(); // <-- add this line
+    //     $client = new Client();
+    //     $response = $client->request(
+    //         'PUT',
+    //         'https://forms.kizeo.com/rest/v3/lists/' . $agencyListId, [
+    //             'headers' => [
+    //                 'Accept' => 'application/json',
+    //                 'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //             ],
+    //             'json'=>[
+    //                 'items' => $agencyEquipments,
+    //             ]
+    //         ]
+    //     );
+    // }
 
     //      ----------------------------------------------------------------------------------------------------------------------
     //      ---------------------------------------- SAVE BASE EQUIPMENTS LIST TO LOCAL BDD --------------------------------------
@@ -723,20 +724,20 @@ class FormRepository extends ServiceEntityRepository
             );
             $content = $responseData->getContent();
             dump('GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES');
-            if (!file_exists($allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'])) {
+            if (!file_exists('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4))) {
                 # code...
                 switch (str_contains($allFormsMaintenanceArray[$key]['nom_client'], '/')) {
                     case false:
-                        mkdir($allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'], 0777, true);
-                        file_put_contents( $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        mkdir('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4), 0777, true);
+                        file_put_contents( 'Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4) . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         break;
                 
                     case true:
                         $nomClient = $allFormsMaintenanceArray[$key]['nom_client'];
                         $nomClientClean = str_replace("/", "", $nomClient);
-                        if (!file_exists($nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'])){
-                            mkdir($nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'], 0777, true);
-                            file_put_contents( $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . $nomClientClean . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        if (!file_exists('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'])){
+                            mkdir('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4), 0777, true);
+                            file_put_contents('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' .  $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4) . '/' . $nomClientClean . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         }
                         break;
     
@@ -745,7 +746,6 @@ class FormRepository extends ServiceEntityRepository
                         break;
                 }
             }
-
         }
         return $allFormsPdf;
     } 
@@ -811,16 +811,16 @@ class FormRepository extends ServiceEntityRepository
                 # code...
                 switch (str_contains($allFormsPortailsArray[$key]['liste_clients'], '/')) {
                     case false:
-                        mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
-                        file_put_contents('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4), 0777, true);
+                        file_put_contents('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4) . '/' . $allFormsPortailsArray[$key]['liste_clients'] . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         break;
                 
                     case true:
                         $nomClient = $allFormsPortailsArray[$key]['liste_clients'];
                         $nomClientClean = str_replace("/", "", $nomClient);
-                        if (!file_exists($nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])){
-                            mkdir('EDL_Portails/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
-                            file_put_contents( 'EDL_Portails/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . $nomClientClean . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])){
+                            mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
+                            file_put_contents( 'ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . date_format($allFormsPortailsArray[$key]['date_et_heure1'], 'Y') . '/' . $nomClientClean . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         }
                         break;
     

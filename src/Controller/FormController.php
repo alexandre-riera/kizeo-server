@@ -117,7 +117,7 @@ class FormController extends AbstractController
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
 
-        // $formRepository->saveEquipementPdfInPublicFolder();
+        $formRepository->saveEquipementPdfInPublicFolder();
 
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();

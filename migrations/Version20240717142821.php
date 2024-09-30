@@ -21,13 +21,13 @@ final class Version20240717142821 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE equipement ADD heuteur_nacelle VARCHAR(255) DEFAULT NULL');
-        $this->addSql('ALTER TABLE portail_environement CHANGE commentaire_supp_si_necessaire commentaire_supp_si_necessaire VARCHAR(255) DEFAULT NULL');
+        
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('ALTER TABLE equipement DROP heuteur_nacelle');
-        $this->addSql('ALTER TABLE portail_environement CHANGE commentaire_supp_si_necessaire commentaire_supp_si_necessaire VARCHAR(255) NOT NULL');
+        
     }
 }
