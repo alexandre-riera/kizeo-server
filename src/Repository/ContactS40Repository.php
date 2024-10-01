@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Contact;
+use App\Entity\ContactS40;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -10,11 +10,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * @extends ServiceEntityRepository<Contact>
  */
-class ContactRepository extends ServiceEntityRepository
+class ContactS40Repository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry,  private HttpClientInterface $client)
     {
-        parent::__construct($registry, Contact::class);
+        parent::__construct($registry, ContactS40::class);
     }
 
     // /**
@@ -27,14 +27,14 @@ class ContactRepository extends ServiceEntityRepository
     // }
 
    /**
-    * @return Contact[] Returns an array of Contact objects
+    * @return ContactS40[] Returns an array of Contact objects
     */
    public function getContacts(): array
    {
         $contactsArray = [];
         $contactsSplittedArray = [];
 
-        // Request Liste clients 38
+        // Request Liste clients 42
         $response = $this->client->request(
             'GET',
             'https://forms.kizeo.com/rest/v3/lists/409466', [

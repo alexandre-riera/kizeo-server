@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\SocieteRepository;
+use App\Repository\SocieteS160Repository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SocieteRepository::class)]
-class Societe
+#[ORM\Entity(repositoryClass: SocieteS160Repository::class)]
+class SocieteS160
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -33,6 +33,9 @@ class Societe
 
     #[ORM\Column(length: 255)]
     private ?string $telephone = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $id_societe = null;
 
     public function getId(): ?int
     {
@@ -119,6 +122,18 @@ class Societe
     public function setTelephone(string $telephone): static
     {
         $this->telephone = $telephone;
+
+        return $this;
+    }
+
+    public function getIdSociete(): ?string
+    {
+        return $this->id_societe;
+    }
+
+    public function setIdSociete(?string $id_societe): static
+    {
+        $this->id_societe = $id_societe;
 
         return $this;
     }

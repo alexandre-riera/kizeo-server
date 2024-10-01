@@ -2,11 +2,11 @@
 
 namespace App\Entity;
 
-use App\Repository\ContactRepository;
+use App\Repository\ContactS60Repository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ContactRepository::class)]
-class Contact
+#[ORM\Entity(repositoryClass: ContactS60Repository::class)]
+class ContactS60
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
