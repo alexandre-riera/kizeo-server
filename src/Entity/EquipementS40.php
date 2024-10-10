@@ -82,7 +82,7 @@ class EquipementS40
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $modele_nacelle = null;
 
-    #[ORM\Column(length: 15)]
+    #[ORM\Column(length: 15, nullable: true)]
     private ?string $test = null;
 
     #[ORM\Column(length: 255, nullable: true)]

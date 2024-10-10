@@ -202,8 +202,8 @@ class FormRepository extends ServiceEntityRepository
         // dd($allFormsArray); // -----------------------------   Return all forms in an array
 
         foreach ($allFormsArray as $key => $value) {
-            // if ($allFormsArray[$key]['class'] === 'PORTAILS') {
-            if (str_contains($allFormsArray[$key]['name'], 'Etat des lieux')) {
+            // If forms name is contain "Etat des lieux" and is NOT "MODELE Etat des lieux Original" wich is 996714
+            if (str_contains($allFormsArray[$key]['name'], 'Etat des lieux') && $allFormsArray[$key]['id'] != 996714) {
                 $response = $this->client->request(
                     'POST',
                     'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
@@ -318,7 +318,9 @@ class FormRepository extends ServiceEntityRepository
                 $equipement = new $entityAgency;
                 $equipement->setIdContact($equipements['id_client_']['value']);
                 $equipement->setRaisonSociale($equipements['nom_client']['value']);
-                $equipement->setTest($equipements['test_']['value']);
+                if (isset($equipements['test_']['value'])) {
+                    $equipement->setTest($equipements['test_']['value']);
+                }
                 $equipement->setDateEnregistrement($equipements['date_et_heure1']['value']);
 
                 if (isset($equipements['id_societe']['value'])) {
@@ -456,13 +458,15 @@ class FormRepository extends ServiceEntityRepository
         * List all additional equipments stored in individual array
         */
         foreach ($equipements['data']['fields']['portails']['value'] as $additionalEquipment){
-            // dump($equipements['data']);
+            
             // Everytime a new portail is read, we store its value in variable resume_equipement_supplementaire
             if (isset($additionalEquipment['types_equipements']['value'])) {
                 # code...
                 $resume_equipement_supplementaire = 
-                $additionalEquipment['types_equipements']['value'] . 
-                "|portail|" . 
+                $additionalEquipment['types_equipements']['value'] . $additionalEquipment['reference_equipement']['value'] . 
+                "|" . 
+                $libelle_equipement . 
+                "|" . 
                 $additionalEquipment['types_de_fonctionnement']['value'] . 
                 "|" . 
                 $additionalEquipment['localisation_sur_site']['value'] . 
@@ -524,11 +528,10 @@ class FormRepository extends ServiceEntityRepository
             if(!in_array($resume_equipement_supplementaire, $arrayResumesEquipmentsInDatabase, TRUE)) {
                 /**
                  * Persist each equipement in database
-                 * Save a new contrat_de_maintenance equipement in database when a technician make an update
+                 * Save new portails when a new etat des lieux is up on kizeo
                  */
                 $equipement = new $entityAgency;
                 $equipement->setTrigrammeTech($equipements['data']['fields']['trigramme_de_la_personne_real']['value']);
-                $equipement->setTest("non");
                 $equipement->setIdContact($equipements['data']['fields']['ref_interne_client']['value']);
                 if (isset($equipements['data']['fields']['id_societe_']['value'])){
                     $equipement->setCodeSociete($equipements['data']['fields']['id_societe_']['value']);
@@ -540,7 +543,7 @@ class FormRepository extends ServiceEntityRepository
                 $equipement->setCodeAgence($equipements['data']['fields']['n_agence']['value']);
                 $equipement->setRaisonSociale($equipements['data']['fields']['liste_clients']['value']);
                 if (isset($additionalEquipment['types_equipements']['value'])){
-                    $equipement->setNumeroEquipement($additionalEquipment['types_equipements']['value']);
+                    $equipement->setNumeroEquipement($additionalEquipment['types_equipements']['value'] . $additionalEquipment['reference_equipement']['value']);
                 }else{
                     $equipement->setNumeroEquipement($additionalEquipment['reference_equipement']['value']);
                 }
@@ -640,7 +643,6 @@ class FormRepository extends ServiceEntityRepository
 
         foreach ($listAgencySplitted as $equipements){
             $equipement = new $entityAgency;
-            $equipement->setTest("Non");
             $equipement->setIdContact($equipements[18]);
             $equipement->setRaisonSociale($equipements[0]);
             $equipement->setCodeSociete($equipements[20]);
@@ -667,7 +669,7 @@ class FormRepository extends ServiceEntityRepository
     //      ---------------------------------------------  SAVE PDF STANDARD FROM KIZEO --------------------------------------
     //      ----------------------------------------------------------------------------------------------------------------------
     /**
-     * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
+     * Function to save PDF with pictures in directories on O2switch  -------------- FUNCTIONNAL -------
      */
     public function saveEquipementPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau
@@ -680,7 +682,6 @@ class FormRepository extends ServiceEntityRepository
         // -----------------------------   Return all forms with class "MAINTENANCE"
         foreach ($allFormsArray as $key => $value) {
             if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
-                
                 $response = $this->client->request(
                     'POST',
                     'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
@@ -697,21 +698,21 @@ class FormRepository extends ServiceEntityRepository
                 }
             }
         }
-        // GET available exports from form_id
-
+        
         foreach ($allFormsMaintenanceArray as $key => $value) {
-            $responseExportsAvailable = $this->client->request(
+            // seul appel à kizeo pour avoir les CE1, CE2 et CEA dans ['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path']
+            $response = $this->client->request(
                 'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/exports', [
+                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/data/' . $allFormsMaintenanceArray[$key]['_id'], [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
                 ]
             );
-            $contentExportsAvailable = $responseExportsAvailable->getContent();
-            $contentExportsAvailable = $responseExportsAvailable->toArray();
-            
+            $dataOfFormMaintenance = $response->getContent();
+            $dataOfFormMaintenance = $response->toArray();
+
             // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
             $responseData = $this->client->request(
                 'GET',
@@ -723,34 +724,82 @@ class FormRepository extends ServiceEntityRepository
                 ]
             );
             $content = $responseData->getContent();
-            dump('GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES');
-            if (!file_exists('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4))) {
-                # code...
-                switch (str_contains($allFormsMaintenanceArray[$key]['nom_client'], '/')) {
-                    case false:
-                        mkdir('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4), 0777, true);
-                        file_put_contents( 'Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4) . '/' . $allFormsMaintenanceArray[$key]['nom_client'] . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
-                        break;
+
+            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4))) {
                 
-                    case true:
-                        $nomClient = $allFormsMaintenanceArray[$key]['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        if (!file_exists('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'])){
-                            mkdir('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' . $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4), 0777, true);
-                            file_put_contents('Maintenance/' . $allFormsMaintenanceArray[$key]['code_agence']  . '/' .  $nomClientClean . ' - ' .  $allFormsMaintenanceArray[$key]['date_et_heure1'] . '/' . substr($allFormsMaintenanceArray[$key]['date_et_heure1'], 0, 4) . '/' . $nomClientClean . '-' . $allFormsMaintenanceArray[$key]['code_agence']  . '-' . $allFormsMaintenanceArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $allFormsMaintenanceArray[$key]['nom_client']);
-                        break;
+                if (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
+                    # code CE1
+                    switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
+                        case false:
+                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE1-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            break;
+                    
+                        case true:
+                            $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
+                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE1-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
+                            break;
+                    }
+                }elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
+                    # code CE2
+                    switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
+                        case false:
+                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE2-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            break;
+                    
+                        case true:
+                            $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
+                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE2-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
+                            break;
+                    }
+                }elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
+                    # code CEA
+                    switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
+                        case false:
+                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CEA-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            break;
+                    
+                        case true:
+                            $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
+                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
+                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CEA-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
+                            break;
+                    }
+                }else{
+                    dump("Ce formulaire n\'est pas un formulaire de maintenance" );
                 }
+                
             }
         }
         return $allFormsPdf;
     } 
     /**
-     * Function to save PDF with and without pictures in directories on O2switch  -------------- FUNCTIONNAL -------
+     * Function to save PDF with in directories on O2switch  -------------- FUNCTIONNAL -------
      */
     public function savePortailsPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau
@@ -760,9 +809,9 @@ class FormRepository extends ServiceEntityRepository
         $allFormsPortailsArray = [];
         $allFormsPdf = [];
 
-        // -----------------------------   Return all forms with class "MAINTENANCE"
+        // -----------------------------   Return all forms with name etat des lieux and avoid model etat des lieux with id 996714
         foreach ($allFormsArray as $key => $value) {
-            if ($allFormsArray[$key]['class'] === 'PORTAILS') {
+            if (str_contains($allFormsArray[$key]['name'], 'Etat des lieux') && $allFormsArray[$key]['id'] != 996714) {
                 
                 $response = $this->client->request(
                     'POST',
@@ -781,20 +830,20 @@ class FormRepository extends ServiceEntityRepository
             }
         }
         // GET available exports from form_id
-
+        // dd($allFormsPortailsArray);
         foreach ($allFormsPortailsArray as $key => $value) {
-            $responseExportsAvailable = $this->client->request(
-                'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/exports', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                ]
-            );
-            $contentExportsAvailable = $responseExportsAvailable->getContent();
-            $contentExportsAvailable = $responseExportsAvailable->toArray();
-            
+            // $responseExportsAvailable = $this->client->request(
+            //     'GET',
+            //     'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/exports', [
+            //         'headers' => [
+            //             'Accept' => 'application/json',
+            //             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+            //         ],
+            //     ]
+            // );
+            // $contentExportsAvailable = $responseExportsAvailable->getContent();
+            // $contentExportsAvailable = $responseExportsAvailable->toArray();
+            // dd($allFormsPortailsArray[$key]);
             // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
             $responseData = $this->client->request(
                 'GET',
@@ -806,21 +855,29 @@ class FormRepository extends ServiceEntityRepository
                 ]
             );
             $content = $responseData->getContent();
-            dump('GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES');
-            if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])) {
+            
+            $numero_agence = "";
+
+            if (isset($allFormsPortailsArray[$key]['n_agence'])) {
+                $numero_agence = $allFormsPortailsArray[$key]['n_agence'];
+            }else{
+                $numero_agence = substr($allFormsPortailsArray[$key]['_user_name'], 0, 4);
+            }
+
+            if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])) {
                 # code...
                 switch (str_contains($allFormsPortailsArray[$key]['liste_clients'], '/')) {
                     case false:
-                        mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4), 0777, true);
-                        file_put_contents('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4) . '/' . $allFormsPortailsArray[$key]['liste_clients'] . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        mkdir('ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4), 0777, true);
+                        file_put_contents('ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $allFormsPortailsArray[$key]['liste_clients'] . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4) . '/' . $allFormsPortailsArray[$key]['liste_clients'] . '-' . $numero_agence  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         break;
                 
                     case true:
                         $nomClient = $allFormsPortailsArray[$key]['liste_clients'];
                         $nomClientClean = str_replace("/", "", $nomClient);
-                        if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])){
-                            mkdir('ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
-                            file_put_contents( 'ETAT_DES_LIEUX_PORTAILS/' . $allFormsPortailsArray[$key]['n_agence'] . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . date_format($allFormsPortailsArray[$key]['date_et_heure1'], 'Y') . '/' . $nomClientClean . '-' . $allFormsPortailsArray[$key]['n_agence']  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
+                        if (!file_exists('ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'])){
+                            mkdir('ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'], 0777, true);
+                            file_put_contents( 'ETAT_DES_LIEUX_PORTAILS/' . $numero_agence . '/' . $nomClientClean . ' - ' .  $allFormsPortailsArray[$key]['date_et_heure1'] . '/' . substr($allFormsPortailsArray[$key]['date_et_heure1'], 0, 4) . '/' . $nomClientClean . '-' . $numero_agence  . '-' . $allFormsPortailsArray[$key]['date_et_heure1'] . '.pdf' , $content, LOCK_EX);
                         }
                         break;
     

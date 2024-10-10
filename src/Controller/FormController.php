@@ -37,10 +37,10 @@ class FormController extends AbstractController
      * HomePage route to avoid Symfony loading default page
      * 
      */
-    #[Route('/', name: 'home', methods: ['GET'])]
-    public function home(){
-        return new JsonResponse("L'application API KIZEO est lancée !", Response::HTTP_OK, [], true);
-    }
+    // #[Route('/', name: 'home', methods: ['GET'])]
+    // public function home(){
+    //     return new JsonResponse("L'application API KIZEO est lancée !", Response::HTTP_OK, [], true);
+    // }
 
     /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
@@ -118,7 +118,6 @@ class FormController extends AbstractController
         $entiteEquipementS170 = new EquipementS170;
 
         $formRepository->saveEquipementPdfInPublicFolder();
-
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();
         
