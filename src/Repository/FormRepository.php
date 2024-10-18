@@ -577,13 +577,46 @@ class FormRepository extends ServiceEntityRepository
      * Function to upload and save list agency with new records from maintenance formulaires to Kizeo --- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
     public function uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $agencyEquipments, $agencyListId){
+        
         foreach ($dataOfFormList[$key]['contrat_de_maintenance']['value'] as $equipment) {
+            // A remplacer  "SEC01|Porte sectionnelle|2005|206660A02|nc|A RENSEIGNER|A RENSEIGNER||1533|1533|S50"
+            // A remplacer  "Libelle equipement|Type equipement|Année|N° de série|Marque|Hauteur|Largeur|Repère site client|Id client|Id societe|Code agence"
+            $columnsUpdate = 
+            $equipment['equipement']['value'] . // Libelle equipement
+             '|' . 
+            $equipment['reference7']['value'] . // Type equipement
+             '|' .
+            $equipment['reference2']['value'] . // Année
+             '|' .
+            $equipment['reference6']['value'] . // N° de série
+            '|' .
+            $equipment['reference5']['value'] . // Marque
+            '|' .
+            $equipment['reference3']['value'] . // Hauteur
+            '|' .
+            $equipment['reference1']['value'] . // Largeur
+            '|' .
+            $equipment['localisation_site_client']['value'] . // Repère site client
+            '|' .
+            $dataOfFormList[$key]['id_client_']['value'] . // Id client
+            '|' .
+            $dataOfFormList[$key]['id_societe']['value'] .  // Id Societe
+            '|' . 
+            $dataOfFormList[$key]['id_agence']['value'] // Code agence
+            ;
+
+            $theEquipment = $equipment['equipement']['path'] . "\\" . $columnsUpdate;
             
-            $theEquipment = $equipment['equipement']['path'] . "\\" . $equipment['equipement']['columns'];
-            if (!in_array($theEquipment, $agencyEquipments, true)) {
+            if (in_array($equipment['equipement']['path'], $agencyEquipments, true)) {
+                $keyEquipment = array_search($equipment['equipement']['path'], $agencyEquipments);
+                unset($agencyEquipments[$keyEquipment]);
                 array_push($agencyEquipments,  $theEquipment);
             }
         }
+        
+        // J'enlève les doublons de la liste des equipements kizeo dans le tableau $agencyEquipments
+        $arrayEquipmentsToPutToKizeo = array_unique($agencyEquipments);
+
         Request::enableHttpMethodParameterOverride(); // <-- add this line
         $client = new Client();
         $response = $client->request(
@@ -594,7 +627,7 @@ class FormRepository extends ServiceEntityRepository
                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                 ],
                 'json'=>[
-                    'items' => $agencyEquipments,
+                    'items' => $arrayEquipmentsToPutToKizeo,
                 ]
             ]
         );
