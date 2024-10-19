@@ -52,7 +52,7 @@ class FormController extends AbstractController
         // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
         $formList  =  $entityManager->getRepository(ContactS10::class)->findAll();
 
-        return new JsonResponse("Clients de l'agence de Grenoble : " . count($formList), Response::HTTP_OK, [], true);
+        return new JsonResponse($formList);
     }
     /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
