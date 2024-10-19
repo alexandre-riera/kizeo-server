@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\ContactS10;
 use App\Entity\Form;
 use GuzzleHttp\Client;
 use App\Entity\Portail;
@@ -42,6 +43,17 @@ class FormController extends AbstractController
     //     return new JsonResponse("L'application API KIZEO est lancée !", Response::HTTP_OK, [], true);
     // }
 
+    /**
+     * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
+     */
+    #[Route('/api/lists/get/grenoble/clients', name: 'app_api_get_lists_clients_grenoble', methods: ['GET'])]
+    public function getListsClientsGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
+    {
+        // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
+        $formList  =  $entityManager->getRepository(ContactS10::class)->findAll();
+
+        return new JsonResponse("Clients de l'agence de Grenoble : " . count($formList), Response::HTTP_OK, [], true);
+    }
     /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
      */

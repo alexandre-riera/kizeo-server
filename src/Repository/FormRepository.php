@@ -61,7 +61,45 @@ class FormRepository extends ServiceEntityRepository
             return $content;
     }
 
-
+    //      ----------------------------------------------------------------------------------------------------------------------
+    //      ---------------------------------------- GET EQUIPMENTS LISTS FROM KIZEO --------------------------------------
+    //      ----------------------------------------------------------------------------------------------------------------------
+    /**
+    //  * @return Form[] Returns an array with all items from all agencies equipments lists 
+    //  */
+    // public function getAgencyListClientsFromKizeoByListId($list_id): array
+    // {
+    //     $clients = 
+    //     //  $response = $this->client->request(
+    //     //      'GET',
+    //     //      'https://forms.kizeo.com/rest/v3/lists/' . $list_id, [
+    //     //          'headers' => [
+    //     //              'Accept' => 'application/json',
+    //     //              'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //     //          ],
+    //     //      ]
+    //     //  );
+    //     //  $content = $response->getContent();
+    //     //  $content = $response->toArray();
+         
+    //     //  $clientsSplittedArray = [];
+    //     //  // $clientsArray = array_map(null, $content['list']['items']);
+    //     //  $clientsArray = array_map(null, $content['list']['items']);
+    //     //  /* On Kizeo, all lines look like that
+    //     //  *  ATEIS\CEA\SEC01|Porte sectionnelle|MISE EN SERVICE|NUMERO DE SERIE|ISEA|HAUTEUR|LARGEUR|REPERE SITE CLIENT|361|361|S50
+    //     //  *
+    //     //  *  And I need to sending this : 
+    //     //  *  "ATEIS:ATEIS\CEA:CEA\SEC01:SEC01|Porte sectionnelle:Porte sectionnelle|MISE EN SERVICE:MISE EN SERVICE|NUMERO DE SERIE:NUMERO DE SERIE|ISEA:ISEA|HAUTEUR:HAUTEUR|LARGEUR:LARGEUR|REPERE SITE CLIENT:REPERE SITE CLIENT|361:361|361:361|S50:S50"
+    //     //  */ 
+    //     //  for ($i=0; $i < count($clientsArray) ; $i++) {
+    //     //      if (isset($clientsArray[$i]) && in_array($clientsArray[$i], $clientsSplittedArray) == false) {
+    //     //          array_push($clientsSplittedArray, array_unique(preg_split("/[:|]/", $clientsArray[$i])));
+    //     //      }
+    //     //  }
+    //     //  dd($clientsSplittedArray);
+    //      return $clientsArray;
+    // }
+    
     //      ----------------------------------------------------------------------------------------------------------------------
     //      ---------------------------------------- GET EQUIPMENTS LISTS FROM KIZEO --------------------------------------
     //      ----------------------------------------------------------------------------------------------------------------------
@@ -96,7 +134,6 @@ class FormRepository extends ServiceEntityRepository
                  array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
              }
          }
- 
          return $equipementsArray;
     }
  
