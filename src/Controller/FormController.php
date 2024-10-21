@@ -44,15 +44,15 @@ class FormController extends AbstractController
     // }
 
     /**
-     * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
+     * @return Form[]Function to get Grenoble clients list from BDD  
      */
     #[Route('/api/lists/get/grenoble/clients', name: 'app_api_get_lists_clients_grenoble', methods: ['GET'])]
     public function getListsClientsGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): JsonResponse
     {
         // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
-        $formList  =  $entityManager->getRepository(ContactS10::class)->findAll();
+        $clientList  =  $entityManager->getRepository(ContactS10::class)->findAll();
 
-        return new JsonResponse(json_encode($formList), Response::HTTP_OK, []);
+        return new Response(json_encode($clientList), 200);
     }
     /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
