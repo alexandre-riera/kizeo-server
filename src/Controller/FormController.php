@@ -47,11 +47,11 @@ class FormController extends AbstractController
      * @return Form[]Function to get Grenoble clients list from BDD  
      */
     #[Route('/api/lists/get/grenoble/clients', name: 'app_api_get_lists_clients_grenoble', methods: ['GET'])]
-    public function getListsClientsGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager)
+    public function getListsClientsGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): Response
     {
         // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
         $clientList  =  $entityManager->getRepository(ContactS10::class)->findAll();
-        $clientList = $serializer->$_GET('serializer')->serialize($clientList, 'json');
+        $clientList = $serializer->serialize($clientList, 'json');
         $response = new Response($clientList);
         $response->headers->set('Content-Type', 'application/json');
         return $response;
