@@ -43,6 +43,9 @@ class ContactS50
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $id_contact = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $raison_sociale = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -164,6 +167,18 @@ class ContactS50
     public function setIdContact(?string $id_contact): static
     {
         $this->id_contact = $id_contact;
+
+        return $this;
+    }
+
+    public function getRaisonSociale(): ?string
+    {
+        return $this->raison_sociale;
+    }
+
+    public function setRaisonSociale(?string $raison_sociale): static
+    {
+        $this->raison_sociale = $raison_sociale;
 
         return $this;
     }
