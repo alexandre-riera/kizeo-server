@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ContactS10;
+use App\Entity\ContactS50;
 use App\Entity\Form;
 use GuzzleHttp\Client;
 use App\Entity\Portail;
@@ -50,7 +51,7 @@ class FormController extends AbstractController
     public function getListsClientsGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): Response
     {
         // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
-        $clientList  =  $entityManager->getRepository(ContactS10::class)->findAll();
+        $clientList  =  $entityManager->getRepository(ContactS50::class)->findAll();
         $clientList = $serializer->serialize($clientList, 'json');
         $response = new Response($clientList);
         $response->headers->set('Content-Type', 'application/json');
