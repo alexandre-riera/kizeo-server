@@ -58,6 +58,20 @@ class FormController extends AbstractController
         return $response;
     }
     /**
+     * @return Form[]Function to get Grenoble clients equipments list from BDD  
+     */
+    #[Route('/api/lists/get/grenoble/equipements', name: 'app_api_get_lists_equipements_clients_grenoble', methods: ['GET'])]
+    public function getListsEquipementsClientGrenoble(FormRepository $formRepository, SerializerInterface $serializer, EntityManagerInterface $entityManager): Response
+    {
+        // $formList  =  $formRepository->getAgencyListClientsFromKizeoByListId(409466);
+        $equipementsClientList  =  $entityManager->getRepository(EquipementS50::class)->findAll();
+        $equipementsClientList = $serializer->serialize($equipementsClientList, 'json');
+        $response = new Response($equipementsClientList);
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
+    }
+
+    /**
      * @return Form[]Function to list all lists on Kizeo with getLists() function from FormRepository  
      */
     #[Route('/api/lists/get/equipements-contrat-38', name: 'app_api_get_lists_equipements_contrat_38', methods: ['GET'])]
