@@ -146,7 +146,9 @@ class FormController extends AbstractController
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
 
+        // ------------------------------------------------------------   A REMETTRE
         $formRepository->saveEquipementPdfInPublicFolder();
+        
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();
         
@@ -241,7 +243,8 @@ class FormController extends AbstractController
             }
             
         }
-        return $this->redirectToRoute('app_api_form_update_portails');
+        return "OK ON A FINI AVEC LA MAINTENANCE !";
+        // return $this->redirectToRoute('app_api_form_update_portails');
     }
 
     /**

@@ -339,7 +339,7 @@ class FormRepository extends ServiceEntityRepository
         foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
             // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
             $resume_equipement_supplementaire = array_unique(preg_split("/[:|]/", $additionalEquipment['equipement']['columns']));
-            
+            dump($resume_equipement_supplementaire);
             /**
              * If resume_equipement_supplementaire value is NOT in  $allEquipementsResumeInDatabase array
              * Method used : in_array(search, inThisArray, type) 
@@ -371,7 +371,7 @@ class FormRepository extends ServiceEntityRepository
                     $equipement->setCodeAgence("");
                 }
                 
-                $equipement->setDernièreVisite($equipements['date_et_heure1']['value']);
+                $equipement->setDerniereVisite($equipements['date_et_heure1']['value']);
                 $equipement->setTrigrammeTech($equipements['trigramme']['value']);
                 $equipement->setSignatureTech($equipements['signature3']['value']);
 
@@ -739,7 +739,7 @@ class FormRepository extends ServiceEntityRepository
     //      ---------------------------------------------  SAVE PDF STANDARD FROM KIZEO --------------------------------------
     //      ----------------------------------------------------------------------------------------------------------------------
     /**
-     * Function to save PDF with pictures in directories on O2switch  -------------- FUNCTIONNAL -------
+     * Function to save PDF with pictures for maintenance equipements in directories on O2switch  -------------- FUNCTIONNAL -------
      */
     public function saveEquipementPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau
@@ -795,22 +795,37 @@ class FormRepository extends ServiceEntityRepository
             );
             $content = $responseData->getContent();
 
-            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4))) {
+
+            # Création des fichiers
+
+            $pathStructureToFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4);
+            $normalNameOfTheFile = $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+
+            // if (!file_exists($pathStructureToFile)) {
                 
                 if (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
-                    # code CE1
+                    # ------------------------------------------------------------------ ---------------------------    code CE1
+                    
                     switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
                         case false:
-                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE1-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
-                            break;
+                            if (!file_exists($pathStructureToFile . '/CE1')){
+                                mkdir($pathStructureToFile . '/CE1', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
                     
                         case true:
                             $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
                             $nomClientClean = str_replace("/", "", $nomClient);
-                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
-                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE1-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/CE1')){
+
+                                $cleanPathStructureToTheFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4)  . '/CE1';
+                                $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
                             }
                             break;
         
@@ -818,20 +833,28 @@ class FormRepository extends ServiceEntityRepository
                             dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
                             break;
                     }
-                }elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
-                    # code CE2
+                }
+                elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE2
                     switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
                         case false:
-                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE2-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
-                            break;
+                            if (!file_exists($pathStructureToFile . '/CE2')){
+                                mkdir($pathStructureToFile . '/CE2', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
                     
                         case true:
                             $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
                             $nomClientClean = str_replace("/", "", $nomClient);
-                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
-                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CE2-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/CE2')){
+
+                                $cleanPathStructureToTheFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4)  . '/CE2';
+                                $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
                             }
                             break;
         
@@ -839,20 +862,29 @@ class FormRepository extends ServiceEntityRepository
                             dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
                             break;
                     }
-                }elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
-                    # code CEA
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE3')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE3
                     switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
                         case false:
-                            mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                            file_put_contents( 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CEA-" . $dataOfFormMaintenance['data']['fields']['nom_client']['value'] . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
-                            break;
+                            if (!file_exists($pathStructureToFile . '/CE3')){
+                                mkdir($pathStructureToFile . '/CE3', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
                     
                         case true:
                             $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
                             $nomClientClean = str_replace("/", "", $nomClient);
-                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'])){
-                                mkdir('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4), 0777, true);
-                                file_put_contents('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' .  $nomClientClean . ' - ' .  $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/' . "CEA-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf' , $content, LOCK_EX);
+
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/CE3')){
+
+                                $cleanPathStructureToTheFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4)  . '/CE3';
+                                $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
                             }
                             break;
         
@@ -860,16 +892,77 @@ class FormRepository extends ServiceEntityRepository
                             dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
                             break;
                     }
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE4')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE4
+                    switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CE4')){
+                                mkdir($pathStructureToFile . '/CE4', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/CE4')){
+
+                                $cleanPathStructureToTheFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4)  . '/CE4';
+                                $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
+                            break;
+                    }
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenance['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CEA
+                    switch (str_contains($dataOfFormMaintenance['data']['fields']['nom_client']['value'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CEA')){
+                                mkdir($pathStructureToFile . '/CEA', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $dataOfFormMaintenance['data']['fields']['nom_client']['value'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+
+                            if (!file_exists('Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4) . '/CEA')){
+
+                                $cleanPathStructureToTheFile = 'Maintenance/' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'], 0, 4)  . '/CEA';
+                                $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $dataOfFormMaintenance['data']['fields']['code_agence']['value']  . '-' . $dataOfFormMaintenance['data']['fields']['date_et_heure1']['value'] . '.pdf';
+
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $dataOfFormMaintenance['data']['fields']['nom_client']);
+                            break;
+                    }
+                    
                 }else{
                     dump("Ce formulaire n\'est pas un formulaire de maintenance" );
                 }
                 
-            }
+            // }
         }
         return $allFormsPdf;
     } 
     /**
-     * Function to save PDF with in directories on O2switch  -------------- FUNCTIONNAL -------
+     * Function to save PDF with pictures for etat des lieux portails in directories on O2switch  -------------- FUNCTIONNAL -------
      */
     public function savePortailsPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau
