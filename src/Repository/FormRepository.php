@@ -995,18 +995,6 @@ class FormRepository extends ServiceEntityRepository
         // GET available exports from form_id
         // dd($allFormsPortailsArray);
         foreach ($allFormsPortailsArray as $key => $value) {
-            // $responseExportsAvailable = $this->client->request(
-            //     'GET',
-            //     'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsPortailsArray[$key]['_form_id'] . '/exports', [
-            //         'headers' => [
-            //             'Accept' => 'application/json',
-            //             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-            //         ],
-            //     ]
-            // );
-            // $contentExportsAvailable = $responseExportsAvailable->getContent();
-            // $contentExportsAvailable = $responseExportsAvailable->toArray();
-            // dd($allFormsPortailsArray[$key]);
             // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
             $responseData = $this->client->request(
                 'GET',

@@ -121,6 +121,29 @@ class FormController extends AbstractController
         
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
+    /**
+     * 
+     * Save PDF maintenance on remote server
+     */
+    #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
+    public function saveEquipementPdfInPublicFolder(FormRepository $formRepository): JsonResponse
+    {
+        $formRepository->saveEquipementPdfInPublicFolder();
+        
+        return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+    }
+    /**
+     * 
+     * Save PDF etat des lieux portails on remote server
+     */
+    #[Route('/api/forms/save/etatdeslieuxportails/pdf', name: 'app_api_form_save_etatdeslieuxportails_pdf', methods: ['GET'])]
+    public function savePortailsPdfInPublicFolder(FormRepository $formRepository): JsonResponse
+    {
+        //Changer l'appel à la fonction saveEquipementPdfInPublicFolder() pour enregistrer les PDF standard des état des lieux portail
+        $formRepository->savePortailsPdfInPublicFolder();
+        
+        return new JsonResponse("Les pdf d'état des lieux portails ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+    }
 
     
 
@@ -145,9 +168,7 @@ class FormController extends AbstractController
         $entiteEquipementS150 = new EquipementS150;
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
-
-        // ------------------------------------------------------------   A REMETTRE
-        $formRepository->saveEquipementPdfInPublicFolder();
+        
         
         // GET all technicians forms formulaire Visite maintenance
         $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();
@@ -243,8 +264,8 @@ class FormController extends AbstractController
             }
             
         }
-        return "OK ON A FINI AVEC LA MAINTENANCE !";
-        // return $this->redirectToRoute('app_api_form_update_portails');
+        // return "OK ON A FINI AVEC LA MAINTENANCE !";
+        return $this->redirectToRoute('app_api_form_update_portails');
     }
 
     /**
@@ -267,9 +288,6 @@ class FormController extends AbstractController
         $entiteEquipementS150 = new EquipementS150;
         $entiteEquipementS160 = new EquipementS160;
         $entiteEquipementS170 = new EquipementS170;
-
-        //Changer l'appel à la fonction saveEquipementPdfInPublicFolder() pour enregistrer les PDF standard des état des lieux portail
-        $formRepository->savePortailsPdfInPublicFolder();
         
         // -------------------------------------------
         // ----------------Call function iterate by list equipments to get ONLY Portails in Equipement_numeroAgence list IN LOCAL BDD
