@@ -2,11 +2,11 @@
 
 namespace App\Controller;
 
-use App\Entity\ContactS10;
-use App\Entity\ContactS50;
 use App\Entity\Form;
 use GuzzleHttp\Client;
 use App\Entity\Portail;
+use App\Entity\ContactS10;
+use App\Entity\ContactS50;
 use App\Entity\Equipement;
 use App\Entity\PortailAuto;
 use App\Entity\EquipementS10;
