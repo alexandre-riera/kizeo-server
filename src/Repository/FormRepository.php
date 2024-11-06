@@ -1078,6 +1078,61 @@ class FormRepository extends ServiceEntityRepository
         }
         return $allFormsPdf;
     } 
+
+    /**
+     * Function to mark maintenance forms as UNREAD 
+     */
+    public function markMaintenanceFormsAsUnread(){
+        // Récupérer les fichiers PDF dans un tableau
+        // -----------------------------   Return all forms in an array
+        $allFormsArray = FormRepository::getForms();  // All forms on Kizeo
+        $allFormsArray = $allFormsArray['forms'];
+        $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
+
+        // ----------------------------- DÉBUT Return all forms with class "MAINTENANCE"
+        foreach ($allFormsArray as $key => $value) {
+            if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $content = $response->getContent();
+                $content = $response->toArray();
+                foreach ($content['data'] as $key => $value) {
+                    array_push($allFormsMaintenanceArray, $value);
+                }
+            }
+        }
+        // -----------------------------  FIN Return all forms with class "MAINTENANCE"
+
+        foreach ($allFormsMaintenanceArray as $formMaintenance) {
+            // -------------------------------------------            MARK FORM AS UNREAD !!!
+            // ------------------------------------------------------------------------------
+            $response = $this->client->request(
+                'POST',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $formMaintenance['_form_id'] . '/markasunreadbyaction/read', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'json' => [
+                        "data_ids" => [intval($formMaintenance['_id'])]
+                    ]
+                ]
+            );
+            $dataOfResponse = $response->getContent();
+            
+            // -------------------------------------------            MARKED FORM AS UNREAD !!!
+            // ------------------------------------------------------------------------------
+            
+        }
+    }
+
     /**
      * Function to save PDF with pictures for etat des lieux portails in directories on O2switch  -------------- FUNCTIONNAL -------
      */

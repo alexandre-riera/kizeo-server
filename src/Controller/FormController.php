@@ -128,9 +128,22 @@ class FormController extends AbstractController
     #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
     public function saveEquipementPdfInPublicFolder(FormRepository $formRepository): JsonResponse
     {
+        // $formRepository->saveEquipementPdfInPublicFolder();
         $formRepository->saveEquipementPdfInPublicFolder();
         
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+    }
+    /**
+     * 
+     * MARK PDF maintenance as UNREAD on kizeo
+     */
+    #[Route('/api/forms/markasunread/maintenance/pdf', name: 'app_api_form_markasunread_maintenance_pdf', methods: ['GET'])]
+    public function markMaintenanceFormsAsUnread(FormRepository $formRepository): JsonResponse
+    {
+        // $formRepository->saveEquipementPdfInPublicFolder();
+        $formRepository->markMaintenanceFormsAsUnread();
+        
+        return new JsonResponse("Les pdf de maintenance ont bien été mis en non lu ", Response::HTTP_OK, [], true);
     }
     /**
      * 
