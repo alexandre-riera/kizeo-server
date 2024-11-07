@@ -119,20 +119,20 @@ class FormRepository extends ServiceEntityRepository
          $content = $response->getContent();
          $content = $response->toArray();
          
-         $equipementsSplittedArray = [];
-         // $equipementsArray = array_map(null, $content['list']['items']);
+        //  $equipementsSplittedArray = [];
          $equipementsArray = array_map(null, $content['list']['items']);
+         
          /* On Kizeo, all lines look like that
          *  ATEIS\CEA\SEC01|Porte sectionnelle|MISE EN SERVICE|NUMERO DE SERIE|ISEA|HAUTEUR|LARGEUR|REPERE SITE CLIENT|361|361|S50
          *
          *  And I need to sending this : 
          *  "ATEIS:ATEIS\CEA:CEA\SEC01:SEC01|Porte sectionnelle:Porte sectionnelle|MISE EN SERVICE:MISE EN SERVICE|NUMERO DE SERIE:NUMERO DE SERIE|ISEA:ISEA|HAUTEUR:HAUTEUR|LARGEUR:LARGEUR|REPERE SITE CLIENT:REPERE SITE CLIENT|361:361|361:361|S50:S50"
          */ 
-         for ($i=0; $i < count($equipementsArray) ; $i++) {
-             if (isset($equipementsArray[$i]) && in_array($equipementsArray[$i], $equipementsSplittedArray) == false) {
-                 array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
-             }
-         }
+        //  for ($i=0; $i < count($equipementsArray) ; $i++) {
+        //      if (isset($equipementsArray[$i]) && in_array($equipementsArray[$i], $equipementsSplittedArray) == false) {
+        //          array_push($equipementsSplittedArray, preg_split("/[|]/", $equipementsArray[$i]));
+        //      }
+        //  }
          return $equipementsArray;
     }
  
@@ -475,7 +475,6 @@ class FormRepository extends ServiceEntityRepository
                 // actually executes the queries (i.e. the INSERT query)
                 $entityManager->flush();
                 
-                echo nl2br("We have a new equipment or we have updated an equipment !");
             }else{
                 echo nl2br("All equipments are already in database \n  You can go to the homepage");
                 die;
@@ -574,7 +573,7 @@ class FormRepository extends ServiceEntityRepository
                 }else{
                     $equipement->setCodeSociete("NC");
                 }
-                $equipement->setDernièreVisite($equipements['data']['fields']['date_et_heure1']['value']);
+                $equipement->setDerniereVisite($equipements['data']['fields']['date_et_heure1']['value']);
                 $equipement->setIfExistDB($resume_equipement_supplementaire);
                 $equipement->setCodeAgence($equipements['data']['fields']['n_agence']['value']);
                 $equipement->setRaisonSociale($equipements['data']['fields']['liste_clients']['value']);
@@ -705,11 +704,10 @@ class FormRepository extends ServiceEntityRepository
      */
     public function saveEquipmentsListByAgencyOnLocalDatabase($listAgency, $entityAgency, $entityManager){
         $listAgencySplitted = [];
-        
         foreach ($listAgency as $equipement) {
             array_push($listAgencySplitted, preg_split("/[:|]/", $equipement));
         }
-
+        
         foreach ($listAgencySplitted as $equipements){
             $equipement = new $entityAgency;
             $equipement->setIdContact($equipements[18]);
@@ -1135,6 +1133,7 @@ class FormRepository extends ServiceEntityRepository
 
     /**
      * Function to save PDF with pictures for etat des lieux portails in directories on O2switch  -------------- FUNCTIONNAL -------
+     * ----------------------------             LE MARK AS READ N'EST PAS IMPLEMENTE
      */
     public function savePortailsPdfInPublicFolder(){
         // Récupérer les fichiers PDF dans un tableau

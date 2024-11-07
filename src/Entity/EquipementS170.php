@@ -54,7 +54,7 @@ class EquipementS170
     private ?string $etat = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $dernière_visite = null;
+    private ?string $derniere_visite = null;
 
     #[ORM\Column(length: 3, nullable: true)]
     private ?string $trigramme_tech = null;
@@ -258,14 +258,14 @@ class EquipementS170
         return $this;
     }
 
-    public function getDernièreVisite(): ?string
+    public function getDerniereVisite(): ?string
     {
-        return $this->dernière_visite;
+        return $this->derniere_visite;
     }
 
-    public function setDernièreVisite(?string $dernière_visite): static
+    public function setDerniereVisite(?string $derniere_visite): static
     {
-        $this->dernière_visite = $dernière_visite;
+        $this->derniere_visite = $derniere_visite;
 
         return $this;
     }

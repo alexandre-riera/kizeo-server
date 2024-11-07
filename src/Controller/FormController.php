@@ -158,8 +158,6 @@ class FormController extends AbstractController
         return new JsonResponse("Les pdf d'état des lieux portails ont bien été sauvegardés ", Response::HTTP_OK, [], true);
     }
 
-    
-
     /**
      * Function to SAVE new equipments from technicians forms MAINTENANCE from formulaires Visite maintenance To local BDD
      * then call route to save portails at  #[Route('/api/forms/update/portails', name: 'app_api_form_update_portails', methods: ['GET'])]
@@ -277,8 +275,8 @@ class FormController extends AbstractController
             }
             
         }
-        // return "OK ON A FINI AVEC LA MAINTENANCE !";
-        return $this->redirectToRoute('app_api_form_update_portails');
+        return new JsonResponse("Les équipements en maintenance sont bien enregistrés en base !", Response::HTTP_OK, [], true);
+        // return $this->redirectToRoute('app_api_form_update_portails');
     }
 
     /**
@@ -420,8 +418,8 @@ class FormController extends AbstractController
             }
         }
         
-        // return new JsonResponse("Portails OK en BDD : " . "\n ", Response::HTTP_OK, [], true);
-        return $this->redirectToRoute('app_api_form_update_lists_equipements');
+        return "Les portails d'états des lieux portails sont bien enregistrés en base !";
+        // return $this->redirectToRoute('app_api_form_update_lists_equipements');
     }
 
     /**
@@ -435,13 +433,14 @@ class FormController extends AbstractController
         // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
         // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
-        // $equipmentsLyon = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        $equipmentsLyon = $formRepository->getAgencyListEquipementsFromKizeoByListId(427444);
         // $equipmentsBordeaux = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         $equipmentsParis = $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
         $equipmentsMontpellier = $formRepository->getAgencyListEquipementsFromKizeoByListId(423853);
+        $equipmentsStEtienne = $formRepository->getAgencyListEquipementsFromKizeoByListId(427442);
         // $equipmentsHautsDeFrance = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         // $equipmentsToulouse = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        // $equipmentsSmp = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        $equipmentsSmp = $formRepository->getAgencyListEquipementsFromKizeoByListId(427682);
         // $equipmentsSogefi = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         // $equipmentsRouen = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         // $equipmentsRennes = $formRepository->getAgencyListEquipementsFromKizeoByListId();
@@ -454,18 +453,18 @@ class FormController extends AbstractController
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGroup, );
                 //     dump('Uploads S10 OK');
                 //     break;
-                // case 'S40':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, );
-                //     dump('Uploads S40 OK');
-                //     break;
+                case 'S40':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, 427442);
+                    dump('Uploads S40 OK');
+                    break;
                 case 'S50':
                     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGrenoble, 414025);
                     dump('Uploads S50 OK');
                     break;
-                // case 'S60':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, );
-                //     dump('Uploads S60 OK');
-                //     break;
+                case 'S60':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, 427444);
+                    dump('Uploads S60 OK');
+                    break;
                 // case 'S70':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsBordeaux, );
                 //     dump('Uploads S70 OK');
@@ -491,10 +490,10 @@ class FormController extends AbstractController
                 //     dump('Uploads for S130 OK');
                 //     break;
                 
-                // case 'S140':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSmp, );
-                //     dump('Uploads for S140 OK');
-                //     break;
+                case 'S140':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSmp, 427682);
+                    dump('Uploads for S140 OK');
+                    break;
                 
                 // case 'S150':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSogefi, );
@@ -632,24 +631,15 @@ class FormController extends AbstractController
      */
     #[Route('/api/upload/list/equipements/grenoble', name: 'app_api_upload_list_equipements_grenoble', methods: ['GET'])]
     public function saveAllGrenobleListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
-        // $entiteEquipementS10 = new EquipementS10;
-        // $entiteEquipementS40 = new EquipementS40;
+       
         $entiteEquipementS50 = new EquipementS50;
-        // $entiteEquipementS60 = new EquipementS60;
-        // $entiteEquipementS70 = new EquipementS70;
-        // $entiteEquipementS80 = new EquipementS80;
-        // $entiteEquipementS100 = new EquipementS100;
-        // $entiteEquipementS120 = new EquipementS120;
-        // $entiteEquipementS130 = new EquipementS130;
-        // $entiteEquipementS140 = new EquipementS140;
-        // $entiteEquipementS150 = new EquipementS150;
-        // $entiteEquipementS160 = new EquipementS160;
-        // $entiteEquipementS170 = new EquipementS170;
 
         $formRepository->saveEquipmentsListByAgencyOnLocalDatabase($formRepository->getAgencyListEquipementsFromKizeoByListId(414025), $entiteEquipementS50, $entityManager);
 
-        return $this->redirectToRoute('app_api_upload_list_equipements_paris');
+        // return $this->redirectToRoute('app_api_upload_list_equipements_paris');
+        return "La liste des équipements de base de Grenoble est en BDD";
     }
+
     #[Route('/api/upload/list/equipements/paris', name: 'app_api_upload_list_equipements_paris', methods: ['GET'])]
     public function saveAllParisListEquipmentsInDatabase(FormRepository $formRepository, EntityManagerInterface $entityManager){
         $entiteEquipementS80 = new EquipementS80;
