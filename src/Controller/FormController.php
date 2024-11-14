@@ -24,6 +24,7 @@ use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
 use App\Repository\FormRepository;
 use App\Entity\PortailEnvironement;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,6 +33,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Contracts\Cache\CacheInterface;
 
 class FormController extends AbstractController
 {
@@ -125,11 +127,10 @@ class FormController extends AbstractController
      * 
      * Save PDF maintenance on remote server
      */
-    #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
-    public function saveEquipementPdfInPublicFolder(FormRepository $formRepository): JsonResponse
+    #[Route('/api/forms/save/maintenance/equipments/and/pdf', name: 'app_api_form_save_maintenance_equipments_and_pdf', methods: ['GET'])]
+    public function saveEquipementPdfInPublicFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
-        // $formRepository->saveEquipementPdfInPublicFolder();
-        $formRepository->saveEquipementPdfInPublicFolder();
+        $formRepository->saveEquipmentsInDatabaseAndEquipmentsPdf($cache);
         
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
     }
@@ -164,7 +165,7 @@ class FormController extends AbstractController
      * --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
      */
     #[Route('/api/forms/update/maintenance', name: 'app_api_form_update', methods: ['GET'])]
-    public function getDataOfFormsMaintenance(FormRepository $formRepository,EntityManagerInterface $entityManager)
+    public function getDataOfFormsMaintenance(FormRepository $formRepository,EntityManagerInterface $entityManager, CacheInterface $cache)
         {
         $entiteEquipementS10 = new EquipementS10;
         $entiteEquipementS40 = new EquipementS40;
@@ -182,22 +183,22 @@ class FormController extends AbstractController
         
         
         // GET all technicians forms formulaire Visite maintenance
-        $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance();
+        $dataOfFormMaintenance  =  $formRepository->getDataOfFormsMaintenance($cache);
         
         // --------------------------------------                       Call function iterate by list equipments -------------------------------------------
-        $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS10::class)->findAll());
+        // $allResumesGroupEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS10::class)->findAll());
         $allResumesStEtienneEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS40::class)->findAll());
         $allResumesGrenobleEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS50::class)->findAll());
         $allResumesLyonEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS60::class)->findAll());
-        $allResumesBordeauxEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS70::class)->findAll());
+        // $allResumesBordeauxEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS70::class)->findAll());
         $allResumesParisNordEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS80::class)->findAll());
         $allResumesMontpellierEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS100::class)->findAll());
-        $allResumesHautsDeFranceEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS120::class)->findAll());
-        $allResumesToulouseEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS130::class)->findAll());
+        // $allResumesHautsDeFranceEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS120::class)->findAll());
+        // $allResumesToulouseEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS130::class)->findAll());
         $allResumesSmpEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS140::class)->findAll());
-        $allResumesSogefiEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS150::class)->findAll());
-        $allResumesRouenEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS160::class)->findAll());
-        $allResumesRennesEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS170::class)->findAll());
+        // $allResumesSogefiEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS150::class)->findAll());
+        // $allResumesRouenEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS160::class)->findAll());
+        // $allResumesRennesEquipementsInDatabase = $formRepository->iterateListEquipementsToGetResumes($entityManager->getRepository(EquipementS170::class)->findAll());
         
         foreach ($dataOfFormMaintenance as $equipements){
             
@@ -207,9 +208,9 @@ class FormController extends AbstractController
             switch ($equipements['code_agence']['value']) {
                 // Passer à la fonction createAndSaveInDatabaseByAgency()
                 // les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
-                case 'S10':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesGroupEquipementsInDatabase, $entiteEquipementS10, $entityManager);
-                    break;
+                // case 'S10':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesGroupEquipementsInDatabase, $entiteEquipementS10, $entityManager);
+                //     break;
                 
                 case 'S40':
                     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesStEtienneEquipementsInDatabase, $entiteEquipementS40, $entityManager);
@@ -225,9 +226,9 @@ class FormController extends AbstractController
                     break;
                 
                 
-                case 'S70':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
-                    break;
+                // case 'S70':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
+                //     break;
                 
                 
                 case 'S80':
@@ -240,14 +241,14 @@ class FormController extends AbstractController
                     break;
                 
                 
-                case 'S120':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
-                    break;
+                // case 'S120':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
+                //     break;
                 
                 
-                case 'S130':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
-                    break;
+                // case 'S130':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
+                //     break;
                 
                 
                 case 'S140':
@@ -255,19 +256,19 @@ class FormController extends AbstractController
                     break;
                 
                 
-                case 'S150':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
-                    break;
+                // case 'S150':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
+                //     break;
                 
                 
-                case 'S160':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
-                    break;
+                // case 'S160':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
+                //     break;
                 
                 
-                case 'S170':
-                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRennesEquipementsInDatabase, $entiteEquipementS170, $entityManager);
-                    break;
+                // case 'S170':
+                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRennesEquipementsInDatabase, $entiteEquipementS170, $entityManager);
+                //     break;
                 
                 default:
                     dump('Le code agence n\'est pas prévu dans le code');
@@ -427,8 +428,8 @@ class FormController extends AbstractController
      * 
      */
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
-    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository){
-        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance();
+    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository, CacheInterface $cache){
+        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance($cache);
 
         // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
         // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
