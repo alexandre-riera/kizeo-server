@@ -13,6 +13,7 @@ class EquipementS40
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $numero_equipement = null;
 
@@ -105,6 +106,10 @@ class EquipementS40
 
     #[ORM\Column(nullable: true)]
     private ?bool $isEnMaintenance = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $visite = null;
+
 
     public function getId(): ?int
     {
@@ -479,6 +484,18 @@ class EquipementS40
     public function setEnMaintenance(?bool $isEnMaintenance): static
     {
         $this->isEnMaintenance = $isEnMaintenance;
+
+        return $this;
+    }
+
+    public function getVisite(): ?string
+    {
+        return $this->visite;
+    }
+
+    public function setVisite(string $visite): static
+    {
+        $this->visite = $visite;
 
         return $this;
     }

@@ -1,0 +1,271 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Parc Équipements Clients Somafi{% endblock %}
+
+{% block body %}
+<style>
+    header{
+        font-size: 24px;
+        text-align: center;
+    }
+
+    /*Sélection agence et client*/
+    .selections-container{
+        width: 100vw;
+        margin-left: 30px;
+        margin-bottom: 30px;
+    }
+    /* CLIENTS */
+    .selection-client{
+        margin-bottom: 30px;
+    }
+    .selection-client-container{
+        width: 100vw;
+        margin-left: 30px;
+    }
+    .selection-client-label{
+        margin-right: 30px;
+        font-size: 18px;
+    }
+    #client-sous-contrat-select{
+        width: 250px;
+    }
+
+    /* AGENCES */
+    .selection-agence{
+        margin-bottom: 20px;
+    }
+    .selection-agence-label{
+        margin-right: 30px;
+        font-size: 18px;
+    }
+    #agence-sous-contrat-select{
+        width: 250px;
+        margin-left: 36px;
+    }
+    
+    /*Infos client*/
+    .client-infos{
+        margin-top: 20px;
+        margin-bottom: 30px;
+        border: 1px dashed black;
+    }
+    .entete-client-infos{
+        height: 25%;
+        width: 80vw;
+        display: flex;
+    }
+    .infos-gauche, .infos-droite{
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 20px;
+        font-size: large;
+        font-weight: bold;
+    }
+    span{
+        margin-bottom: 10px;
+    }
+    span .number{
+        font-size: 18px;
+    }
+
+    /*Table équipements client*/
+    td{
+        border: 1px solid black;
+        width: 24rem;
+        height: 2rem;
+        margin: 5px;
+        text-align: center;
+    }
+
+</style>
+
+{% block header %}
+<header class="header">
+    <h1>Parc Équipements Clients Somafi</h1>
+</header>
+{% endblock %}
+
+{% block clientsInformations %}
+<div class="selections-container">
+    <div class="selection-client" >
+        <!-- N'apparait que si le client n'est pas sélectionné et que l'agence n'est pas sélectionnée -->
+        {% if clientSelected == NULL and agenceSelected == NULL %}
+            <div>
+                <h2><span class="number">1) </span>Sélectionnez votre agence</h2>
+                <form action="" method="post">
+                    <select class="form-control" id="agnece-somafi" name="agenceName">
+                        <option value = "" selected> Select agence </option> 
+                        {% for agence in agenciesArray %}
+                            <option  value="{{ agence.getCode() }}" id="agence_selected">{{ agence.getAgence() }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type = "submit" name = "submitAgence" value = "Select Agence">
+                </form>
+            </div>
+        {% endif %}
+        <!-- N'apparait que si l'agence est sélectionnée -->
+        {% if agenceSelected %}
+            <div>
+                <h2><span class="number">2) </span>Sélectionnez maintenant votre client</h2>
+                <h3>Agence de rattachement : {{ agenceSelected }}</h3>
+                <label class="selection-client-label" for="client-select">Client sous contrat</label>
+                <form action="" method="post">
+                    <select class="form-control" id="client-sous-contrat-select" name="clientName">
+                        <option value = "" selected> Select client </option> 
+                        {% if agenceSelected == "Grenoble" or agenceSelected == "grenoble" or agenceSelected == "Gre"  or agenceSelected == "gre"   or agenceSelected == "S50"  or agenceSelected == "s50" %}
+                            {% for client in clientsGrenoble%}
+                                <option value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s50">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Montpellier" or agenceSelected == "montpellier" or agenceSelected == "montp"  or agenceSelected == "mon"   or agenceSelected == "S100"   or agenceSelected == "s100"%}
+                            {% for client in clientsMontpellier%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s100">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "ParisNord" or agenceSelected == "paris nord" or agenceSelected == "paris"  or agenceSelected == "S80"  or agenceSelected == "s80" %}
+                            {% for client in clientsParisNord%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s80">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Group" or agenceSelected == "group" or agenceSelected == "grou"  or agenceSelected == "S10"   or agenceSelected == "s10"%}
+                            {% for client in clientsGroup%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s10">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "St Etienne" or agenceSelected == "st etienne" or agenceSelected == "stetienne"  or agenceSelected == "S40"   or agenceSelected == "s40"%}
+                            {% for client in clientsStEtienne%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s40">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Lyon" or agenceSelected == "lyon" or agenceSelected == "ly"  or agenceSelected == "S60"  or agenceSelected == "s60" %}
+                            {% for client in clientsLyon%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s60">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Bordeaux" or agenceSelected == "bordeaux" or agenceSelected == "bor"  or agenceSelected == "S70"   or agenceSelected == "s70"%}
+                            {% for client in clientsBordeaux%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s70">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "HautsDeFrance" or agenceSelected == "Portland" or agenceSelected == "portland" or agenceSelected == "hdf"   or agenceSelected == "S120"   or agenceSelected == "s120"%}
+                            {% for client in clientsHautsDeFrance%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s120">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Toulouse" or agenceSelected == "toulouse" or agenceSelected == "tou"  or agenceSelected == "S130"   or agenceSelected == "s130"%}
+                            {% for client in clientsToulouse%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s130">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "SMP" or agenceSelected == "Epinal" or agenceSelected == "epinal"  or agenceSelected == "smp"  or agenceSelected == "S140"   or agenceSelected == "s140"%}
+                            {% for client in clientsEpinal%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s140">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Paca" or agenceSelected == "PACA" or agenceSelected == "brignoles" or agenceSelected == "Brignoles"   or agenceSelected == "S150"   or agenceSelected == "s150"%}
+                            {% for client in clientsPaca%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s150">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Rouen" or agenceSelected == "rouen" or agenceSelected == "rou"  or agenceSelected == "S160"   or agenceSelected == "s160"%}
+                            {% for client in clientsRouen%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s160">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% elseif agenceSelected == "Rennes" or agenceSelected == "rennes" or agenceSelected == "ren"  or agenceSelected == "S170"   or agenceSelected == "s170"%}
+                            {% for client in clientsRennes%}
+                                <option  value="{{ client.getRaisonSociale() }} {{ agenceSelected }}" id="client_selected_s170">{{ client.getRaisonSociale() }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <p>L'agence entrée n'est pas valide ou connue</p>
+                        {% endif %}
+                    </select>
+                    <input type = "submit" name = "submitClient" value = "Select client">
+                </form> 
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% if clientSelectedInformations != NULL  %}
+    <div class="client-infos">
+        <div class="entete-client-infos">
+            <div class="infos-gauche">
+                <span>Nom client : {{ clientSelectedInformations.getRaisonSociale() }}</span>
+                <span>Id client : {{ clientSelectedInformations.getIdContact() }} </span>
+                <span>Id société : {{ clientSelectedInformations.getIdSociete() }} </span>
+                <span>Agence : {{ agenceSelected }}</span>
+            </div>
+            <div class="infos-droite">
+                <span>Adresse client : {{ clientSelectedInformations.getAdressep1() }} </span>
+                <span>Téléphone : {{ clientSelectedInformations.getTelephone() }} </span>
+                <span>Code postal : {{ clientSelectedInformations.getCpostalp() }} </span>
+                <span>Ville : {{ clientSelectedInformations.getVillep() }} </span>
+                <span>Fin de contrat : </span>
+            </div>
+        </div>
+    </div>
+{%endif%}
+<div class="downloadPdf">
+    <label for="download">Télécharger le PDF de maintenance</label>
+    <button type="submit" >Visite PDF</button>
+</div>
+{% endblock %}
+
+{% block clientEquipements %}
+{% if clientSelectedInformations != NULL  %}
+<div>
+    {% for equipment in clientSelectedEquipmentsFiltered %}
+    <table class="table-equipement-client">
+        <thead>
+            <tr>
+            <th>Visite</th>
+            <th>Trigramme interne</th>
+            <th>Libelle</th>
+            <th>Dernière visite</th>
+            <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if {{equipment.getVisite()}} == "CE1" %}
+                <tr>
+                <td>CE1</td>
+                <td>{{ equipment.getVisite() }}</td>
+                <td>{{ equipment.getNumeroEquipement() }}</td>
+                <td>{{ equipment.getLibelleEquipement() }}</td>
+                <td>{{ equipment.getDerniereVisite() }}</td>
+                <td>{{ equipment.getEtat() }}</td>
+                </tr>
+            {% elseif  {{equipment.getVisite()}} == "CE2" %}
+                <tr>
+                <td>CE2</td>
+                <td>{{ equipment.getVisite() }}</td>
+                <td>{{ equipment.getNumeroEquipement() }}</td>
+                <td>{{ equipment.getLibelleEquipement() }}</td>
+                <td>{{ equipment.getDerniereVisite() }}</td>
+                <td>{{ equipment.getEtat() }}</td>
+                </tr>
+            {% elseif  {{equipment.getVisite()}} == "CE3" %}
+                <tr>
+                <td>CE3</td>
+                <td>{{ equipment.getVisite() }}</td>
+                <td>{{ equipment.getNumeroEquipement() }}</td>
+                <td>{{ equipment.getLibelleEquipement() }}</td>
+                <td>{{ equipment.getDerniereVisite() }}</td>
+                <td>{{ equipment.getEtat() }}</td>
+                </tr>
+            {% elseif  {{equipment.getVisite()}} == "CE4" %}
+                <tr>
+                <td>CE4</td>
+                <td>{{ equipment.getVisite() }}</td>
+                <td>{{ equipment.getNumeroEquipement() }}</td>
+                <td>{{ equipment.getLibelleEquipement() }}</td>
+                <td>{{ equipment.getDerniereVisite() }}</td>
+                <td>{{ equipment.getEtat() }}</td>
+                </tr>
+            {% elseif  {{equipment.getVisite()}} == "CEA" %}
+                <tr>
+                <td>CEA</td>
+                <td>{{ equipment.getVisite() }}</td>
+                <td>{{ equipment.getNumeroEquipement() }}</td>
+                <td>{{ equipment.getLibelleEquipement() }}</td>
+                <td>{{ equipment.getDerniereVisite() }}</td>
+                <td>{{ equipment.getEtat() }}</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+{% endfor %}
+</div>
+{%endif%}
+{% endblock %}
+{% endblock %}

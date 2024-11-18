@@ -24,6 +24,8 @@ use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManager;
+use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
 
 /**
  * @extends ServiceEntityRepository<ApiForm>
@@ -350,13 +352,14 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Function to create and save new equipments in local database by agency --- OK POUR TOUTES LES AGENCES DE S10 à S170 --- MAJ IMAGES OK
      */
-    public function createAndSaveInDatabaseByAgency($equipements, $entityAgency, $formUnread){
-        // Passer à la fonction les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
+    public function createAndSaveInDatabaseByAgency($equipements, $entityAgency){
+        
+        
         /**
         * List all additional equipments stored in individual array
         */
+        // On sauvegarde les équipements issus des formulaires non lus en BDD
         foreach ($equipements['contrat_de_maintenance']['value']  as $additionalEquipment){
-            
             // Everytime a new resume is read, we store its value in variable resume_equipement_supplementaire
             // $resume_equipement_supplementaire = array_unique(preg_split("/[:|]/", $additionalEquipment['equipement']['columns']));
             // $resume_equipement_supplementaire = $additionalEquipment['equipement']['columns'];
@@ -396,8 +399,23 @@ class FormRepository extends ServiceEntityRepository
             $equipement->setDerniereVisite($equipements['date_et_heure1']['value']);
             $equipement->setTrigrammeTech($equipements['trigramme']['value']);
             $equipement->setSignatureTech($equipements['signature3']['value']);
-
-            $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
+            
+            if (str_contains($additionalEquipment['equipement']['path'], 'CE1')) {
+                $equipement->setVisite("CE1");
+            }
+            elseif(str_contains($additionalEquipment['equipement']['path'], 'CE2')){
+                $equipement->setVisite("CE2");
+            }
+            elseif(str_contains($additionalEquipment['equipement']['path'], 'CE3')){
+                $equipement->setVisite("CE3");
+            }
+            elseif(str_contains($additionalEquipment['equipement']['path'], 'CE4')){
+                $equipement->setVisite("CE4");
+            }
+            elseif(str_contains($additionalEquipment['equipement']['path'], 'CEA')){
+                $equipement->setVisite("CEA");
+            }
+            $equipement->setNumeroEquipement($additionalEquipment['equipement']['path']);
             $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
             $equipement->setLibelleEquipement(strtolower($additionalEquipment['reference7']['value']));
             $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
@@ -491,14 +509,18 @@ class FormRepository extends ServiceEntityRepository
 
             $equipement->setEnMaintenance(true);
             
+            dump("Les équipements de " . $equipements['nom_client']['value'] . " ont été sauvegardés en BDD");
+            
             // tell Doctrine you want to (eventually) save the Product (no queries yet)
             $this->getEntityManager()->persist($equipement);
-            
-            
             // actually executes the queries (i.e. the INSERT query)
             $this->getEntityManager()->flush();
+            
+            // }
         }
-        dump("Les équipements de " . $equipements['nom_client']['value'] . " ont été sauvegardés en BDD");
+        // Mettre la fonction SAVE PDF
+        // FormRepository::exportAndSavePdfInRootFolder($formUnread, $dataOfFormMaintenanceUnread);
+        
     }
 
     /**
@@ -755,265 +777,358 @@ class FormRepository extends ServiceEntityRepository
      * --------------------------------------------------- EXPORT PDF AND SAVE IN ROOT FOLDER ------------------------------
      * --------------------------------------------------------------------------------------------------------------------------
      */
-    public function exportAndSavePdfInRootFolder($formUnread, $dataOfFormMaintenanceUnread){
-        // dd($dataOfFormMaintenanceUnread);
-        // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
-        $responseData = $this->client->request(
-            'GET',
-            'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/data/' . $formUnread['_id'] . '/pdf', [
-                'headers' => [
-                    'Accept' => 'application/pdf',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-            ]
-        );
-        $content = $responseData->getContent();
+    public function savePdfInAssetsPdfFolder($cache){
 
-        # Création des fichiers
-            
-        $pathStructureToFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $formUnread['nom_client'] . '/' . substr($formUnread['date_et_heure1'], 0, 4);
-        $normalNameOfTheFile = $formUnread['nom_client'] . '-' . $formUnread['code_agence'] . '.pdf';
+        // -----------------------------   Return all forms in an array | cached for 2419200 seconds 1 month
+        $allFormsArray = $cache->get('all-forms-on-kizeo', function(ItemInterface $item){
+            $item->expiresAfter(2419200);
+            $result = FormRepository::getForms();
+            return $result['forms'];
+        });
+
+        // $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
+        $formMaintenanceUnread = [];
+        $dataOfFormMaintenanceUnread = [];
+        $allFormsKeyId = [];
+        $formUnreadArray = [];
         
-        if (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
-            # ------------------------------------------------------------------ ---------------------------    code CE1
-            switch (str_contains($formUnread['nom_client'], '/')) {
-                case false:
-                    if (!file_exists($pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile)){
-                        mkdir($pathStructureToFile . '/CE1', 0777, true);
-                        file_put_contents( $pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile , $content, LOCK_EX);
-                        break;
-                    }
-            
-                case true:
-                    $nomClient = $formUnread['nom_client'];
-                    $nomClientClean = str_replace("/", "", $nomClient);
-                    $cleanPathStructureToTheFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $nomClientClean . '/' . substr($formUnread['date_et_heure1'], 0, 4) . '/CE1';
-                    $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $formUnread['code_agence'] . '.pdf';
+        // ----------------------------- DÉBUT GET all Forms ID with class "MAINTENANCE"
+        foreach ($allFormsArray as $key => $value) {
+            if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
+                // Récuperation des forms ID
+                array_push($allFormsKeyId, $allFormsArray[$key]['id']);
+                // $allFormsMaintenanceArray = $cache->get('allFormsMaintenanceArray', function(ItemInterface $item) use ($allFormsArray, $key, $allFormsMaintenanceArray) {
+                //     $item->expiresAfter(604800); // 1 week
 
-                    if (!file_exists($cleanNameOfTheFile)){
-                        mkdir($cleanPathStructureToTheFile, 0777, true);
-                        file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                    }
-                    break;
-
-                default:
-                    dump('Nom en erreur:   ' . $formUnread['nom_client']);
-                    break;
+                //     $response = $this->client->request(
+                //         'POST',
+                //         'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                //             'headers' => [
+                //                 'Accept' => 'application/json',
+                //                 'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                //             ],
+                //         ]
+                //     );
+                //     $content = $response->getContent();
+                //     $content = $response->toArray();
+                    
+                //     foreach ($content['data'] as $key => $value) {
+                //         array_push($allFormsMaintenanceArray, $value);
+                //     }
+                    
+                // });
             }
-
-            // -------------------------------------------            MARK FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/markasreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => [intval($formUnread['_id'])]
-                    ]
-                ]
-            );
-            $dataOfResponse = $response->getContent();
-            
-            
-            // -------------------------------------------            MARKED FORM AS READ !!!
-            // ------------------------------------------------------------------------------
         }
-        elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
-            # ------------------------------------------------------------------ ---------------------------    code CE2
-            switch (str_contains($formUnread['nom_client'], '/')) {
-                case false:
-                    if (!file_exists($pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile)){
-                        mkdir($pathStructureToFile . '/CE2', 0777, true);
-                        file_put_contents( $pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile , $content, LOCK_EX);
-                        break;
-                    }
-            
-                case true:
-                    $nomClient = $formUnread['nom_client'];
-                    $nomClientClean = str_replace("/", "", $nomClient);
-                    $cleanPathStructureToTheFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $nomClientClean . '/' . substr($formUnread['date_et_heure1'], 0, 4)  . '/CE2';
-                    $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $formUnread['code_agence'] . '.pdf';
+        // -----------------------------  FIN Return all forms with class "MAINTENANCE"
 
-                    if (!file_exists($cleanNameOfTheFile)){
-                        mkdir($cleanPathStructureToTheFile, 0777, true);
-                        file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                    }
-                    break;
-
-                default:
-                    dump('Nom en erreur:   ' . $formUnread['nom_client']);
-                    break;
-            }
-            
-            // -------------------------------------------            MARK FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/markasreadbyaction/read', [
+        // ----------------------------------------------------------------------- Début d'appel KIZEO aux formulaires non lus par ID de leur liste
+        // ----------------------------------------------------------- Appel de 10 formulaires à la fois en mettant le paramètre LIMIT à 10 en fin d'url
+        // --------------- Remise à zéro du tableau $formMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec les prochains 10 formulaires non lus  ------------------
+        $formMaintenanceUnread = [];
+        foreach ($allFormsKeyId as $key) {
+            $responseUnread = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $key . '/data/unread/read/10', [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
-                    'json' => [
-                        "data_ids" => [intval($formUnread['_id'])]
-                    ]
                 ]
             );
-            $dataOfResponse = $response->getContent();
-            
-            
-            // -------------------------------------------            MARKED FORM AS READ !!!
-            // ------------------------------------------------------------------------------
+
+            $result = $responseUnread->getContent();
+            $result = $responseUnread->toArray();
+            array_push($formMaintenanceUnread, $result);
             
         }
-        elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE3')) {
-            # ------------------------------------------------------------------ ---------------------------    code CE3
-            switch (str_contains($formUnread['nom_client'], '/')) {
-                case false:
-                    if (!file_exists($pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile)){
-                        mkdir($pathStructureToFile . '/CE3', 0777, true);
-                        file_put_contents( $pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile , $content, LOCK_EX);
-                        break;
-                    }
-            
-                case true:
-                    $nomClient = $formUnread['nom_client'];
-                    $nomClientClean = str_replace("/", "", $nomClient);
-                    $cleanPathStructureToTheFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $nomClientClean . '/' . substr($formUnread['date_et_heure1'], 0, 4)  . '/CE3';
-                    $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $formUnread['code_agence'] . '.pdf';
-
-                    if (!file_exists($cleanNameOfTheFile)){
-                        mkdir($cleanPathStructureToTheFile, 0777, true);
-                        file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                    }
-                    break;
-
-                default:
-                    dump('Nom en erreur:   ' . $formUnread['nom_client']);
-                    break;
-            }
-            
-            // -------------------------------------------            MARK FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/markasreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => [intval($formUnread['_id'])]
+       
+        // ----------------------------------------------------------------------- Début d'appel de la DATA des formulaires non lus
+        // --------------- Remise à zéro du tableau $dataOfFormMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec la data des 10 formulaires non lus  ------------------
+        $dataOfFormMaintenanceUnread = [];
+        foreach ($formMaintenanceUnread as $formUnread) {
+            foreach ($formUnread['data'] as $form) {
+                array_push($formUnreadArray, $form);
+                // J'incrémente le compteur de formulaire non lu
+                // $unreadFormCounter += 1;
+                // dump('Compteur début de boucle : ' . $unreadFormCounter);
+                $response = $this->client->request(
+                    'GET',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/data/' . $form['_id'], [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
                     ]
-                ]
-            );
-            $dataOfResponse = $response->getContent();
-            
-            
-            // -------------------------------------------            MARKED FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            
+                );
+                $result= $response->getContent();
+                $result= $response->toArray();
+                array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
+            }
         }
-        elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE4')) {
-            # ------------------------------------------------------------------ ---------------------------    code CE4
-            switch (str_contains($formUnread['nom_client'], '/')) {
-                case false:
-                    if (!file_exists($pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile)){
-                        mkdir($pathStructureToFile . '/CE4', 0777, true);
-                        file_put_contents( $pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile , $content, LOCK_EX);
-                        break;
-                    }
-            
-                case true:
-                    $nomClient = $formUnread['nom_client'];
-                    $nomClientClean = str_replace("/", "", $nomClient);
-                    $cleanPathStructureToTheFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $nomClientClean . '/' . substr($formUnread['date_et_heure1'], 0, 4)  . '/CE4';
-                    $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $formUnread['code_agence'] . '.pdf';
 
-                    if (!file_exists($cleanNameOfTheFile)){
-                        mkdir($cleanPathStructureToTheFile, 0777, true);
-                        file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                    }
-                    break;
 
-                default:
-                    dump('Nom en erreur:   ' . $formUnread['nom_client']);
-                    break;
-            }
-            
-            // -------------------------------------------            MARK FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/markasreadbyaction/read', [
+
+        foreach ($formUnreadArray as $form) {
+            // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
+            $responseData = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/data/' . $form['_id'] . '/pdf', [
                     'headers' => [
-                        'Accept' => 'application/json',
+                        'Accept' => 'application/pdf',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
-                    'json' => [
-                        "data_ids" => [intval($formUnread['_id'])]
-                    ]
                 ]
             );
-            $dataOfResponse = $response->getContent();
+            $content = $responseData->getContent();
+    
+            # Création des fichiers
+                
+            $pathStructureToFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $form['nom_client'] . '/' . substr($form['date_et_heure1'], 0, 4);
+            $normalNameOfTheFile = $form['nom_client'] . '-' . $form['code_agence'] . '.pdf';
             
-            
-            // -------------------------------------------            MARKED FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            
-        }
-        elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
-            # ------------------------------------------------------------------ ---------------------------    code CEA
-            switch (str_contains($formUnread['nom_client'], '/')) {
-                case false:
-                    if (!file_exists($pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile)){
-                        mkdir($pathStructureToFile . '/CEA', 0777, true);
-                        file_put_contents( $pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile , $content, LOCK_EX);
+            if (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
+                # ------------------------------------------------------------------ ---------------------------    code CE1
+                switch (str_contains($form['nom_client'], '/')) {
+                    case false:
+                        if (!file_exists($pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile)){
+                            mkdir($pathStructureToFile . '/CE1', 0777, true);
+                            file_put_contents( $pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile , $content, LOCK_EX);
+                            break;
+                        }
+                
+                    case true:
+                        $nomClient = $form['nom_client'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4) . '/CE1';
+                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+    
+                        if (!file_exists($cleanNameOfTheFile)){
+                            mkdir($cleanPathStructureToTheFile, 0777, true);
+                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                        }
                         break;
-                    }
-            
-                case true:
-                    $nomClient = $formUnread['nom_client'];
-                    $nomClientClean = str_replace("/", "", $nomClient);
-                    $cleanPathStructureToTheFile = '../maintenance/' . $formUnread['code_agence']  . '/' . $nomClientClean . '/' . substr($formUnread['date_et_heure1'], 0, 4)  . '/CEA';
-                    $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $formUnread['code_agence'] . '.pdf';
-
-                    if (!file_exists($cleanNameOfTheFile)){
-                        mkdir($cleanPathStructureToTheFile, 0777, true);
-                        file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                    }
-                    break;
-
-                default:
-                    dump('Nom en erreur:   ' . $formUnread['nom_client']);
-                    break;
-            }
-            
-            // -------------------------------------------            MARK FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/markasreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => [intval($formUnread['_id'])]
+    
+                    default:
+                        dump('Nom en erreur:   ' . $form['nom_client']);
+                        break;
+                }
+    
+                // -------------------------------------------            MARK FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'json' => [
+                            "data_ids" => [intval($form['_id'])]
+                        ]
                     ]
-                ]
-            );
-            $dataOfResponse = $response->getContent();
-            
-            
-            // -------------------------------------------            MARKED FORM AS READ !!!
-            // ------------------------------------------------------------------------------
-            
-        }else{
-            dump("Ce formulaire n\'est pas un formulaire de maintenance" );
+                );
+                $dataOfResponse = $response->getContent();
+                
+                
+                // -------------------------------------------            MARKED FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+            }
+            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
+                # ------------------------------------------------------------------ ---------------------------    code CE2
+                switch (str_contains($form['nom_client'], '/')) {
+                    case false:
+                        if (!file_exists($pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile)){
+                            mkdir($pathStructureToFile . '/CE2', 0777, true);
+                            file_put_contents( $pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile , $content, LOCK_EX);
+                            break;
+                        }
+                
+                    case true:
+                        $nomClient = $form['nom_client'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE2';
+                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+    
+                        if (!file_exists($cleanNameOfTheFile)){
+                            mkdir($cleanPathStructureToTheFile, 0777, true);
+                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                        }
+                        break;
+    
+                    default:
+                        dump('Nom en erreur:   ' . $form['nom_client']);
+                        break;
+                }
+                
+                // -------------------------------------------            MARK FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'json' => [
+                            "data_ids" => [intval($form['_id'])]
+                        ]
+                    ]
+                );
+                $dataOfResponse = $response->getContent();
+                
+                
+                // -------------------------------------------            MARKED FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                
+            }
+            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE3')) {
+                # ------------------------------------------------------------------ ---------------------------    code CE3
+                switch (str_contains($form['nom_client'], '/')) {
+                    case false:
+                        if (!file_exists($pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile)){
+                            mkdir($pathStructureToFile . '/CE3', 0777, true);
+                            file_put_contents( $pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile , $content, LOCK_EX);
+                            break;
+                        }
+                
+                    case true:
+                        $nomClient = $form['nom_client'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE3';
+                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+    
+                        if (!file_exists($cleanNameOfTheFile)){
+                            mkdir($cleanPathStructureToTheFile, 0777, true);
+                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                        }
+                        break;
+    
+                    default:
+                        dump('Nom en erreur:   ' . $form['nom_client']);
+                        break;
+                }
+                
+                // -------------------------------------------            MARK FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'json' => [
+                            "data_ids" => [intval($form['_id'])]
+                        ]
+                    ]
+                );
+                $dataOfResponse = $response->getContent();
+                
+                
+                // -------------------------------------------            MARKED FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                
+            }
+            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE4')) {
+                # ------------------------------------------------------------------ ---------------------------    code CE4
+                switch (str_contains($form['nom_client'], '/')) {
+                    case false:
+                        if (!file_exists($pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile)){
+                            mkdir($pathStructureToFile . '/CE4', 0777, true);
+                            file_put_contents( $pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile , $content, LOCK_EX);
+                            break;
+                        }
+                
+                    case true:
+                        $nomClient = $form['nom_client'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE4';
+                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+    
+                        if (!file_exists($cleanNameOfTheFile)){
+                            mkdir($cleanPathStructureToTheFile, 0777, true);
+                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                        }
+                        break;
+    
+                    default:
+                        dump('Nom en erreur:   ' . $form['nom_client']);
+                        break;
+                }
+                
+                // -------------------------------------------            MARK FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'json' => [
+                            "data_ids" => [intval($form['_id'])]
+                        ]
+                    ]
+                );
+                $dataOfResponse = $response->getContent();
+                
+                
+                // -------------------------------------------            MARKED FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                
+            }
+            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
+                # ------------------------------------------------------------------ ---------------------------    code CEA
+                switch (str_contains($form['nom_client'], '/')) {
+                    case false:
+                        if (!file_exists($pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile)){
+                            mkdir($pathStructureToFile . '/CEA', 0777, true);
+                            file_put_contents( $pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile , $content, LOCK_EX);
+                            break;
+                        }
+                
+                    case true:
+                        $nomClient = $form['nom_client'];
+                        $nomClientClean = str_replace("/", "", $nomClient);
+                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CEA';
+                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+    
+                        if (!file_exists($cleanNameOfTheFile)){
+                            mkdir($cleanPathStructureToTheFile, 0777, true);
+                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                        }
+                        break;
+    
+                    default:
+                        dump('Nom en erreur:   ' . $form['nom_client']);
+                        break;
+                }
+                
+                // -------------------------------------------            MARK FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                $response = $this->client->request(
+                    'POST',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'json' => [
+                            "data_ids" => [intval($form['_id'])]
+                        ]
+                    ]
+                );
+                $dataOfResponse = $response->getContent();
+                
+                
+                // -------------------------------------------            MARKED FORM AS READ !!!
+                // ------------------------------------------------------------------------------
+                
+            }else{
+                dump("Ce formulaire n\'est pas un formulaire de maintenance" );
+            }
         }
         dump("Le PDF a bien été sauvegardé");
     }
@@ -1026,9 +1141,7 @@ class FormRepository extends ServiceEntityRepository
     * Function to save PDF with pictures for maintenance equipements in directories on O2switch  -------------- LOCAL FUNCTIONNAL -------
     * Implementation du cache symfony pour améliorer la performance en remote
     */
-    public function saveEquipmentsInDatabaseAndEquipmentsPdf($cache){
-
-        // Récupérer les fichiers PDF dans un tableau
+    public function saveEquipmentsInDatabase($cache){
         // -----------------------------   Return all forms in an array | cached for 2419200 seconds 1 month
         $allFormsArray = $cache->get('all-forms-on-kizeo', function(ItemInterface $item){
             $item->expiresAfter(2419200);
@@ -1036,9 +1149,11 @@ class FormRepository extends ServiceEntityRepository
             return $result['forms'];
         });
 
-        $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
-        $unreadFormCounter = 0;
+        // $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
+        // $unreadFormCounter = 0;
+        $formMaintenanceUnread = [];
         $dataOfFormMaintenanceUnread = [];
+        $allFormsKeyId = [];
         
         $entiteEquipementS10 = new EquipementS10;
         $entiteEquipementS40 = new EquipementS40;
@@ -1059,231 +1174,319 @@ class FormRepository extends ServiceEntityRepository
         // -----------------------------------------------------------------------------------------------------------------------------------------------------------------
         // $allResumesGroupEquipementsInDatabase = $cache->get('allResumesGroupEquipementsInDatabase', function(ItemInterface $item){
             
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS10::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS10::class)->findAll());
         // });
         // $allResumesStEtienneEquipementsInDatabase = $cache->get('allResumesStEtienneEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS40::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS40::class)->findAll());
         // });
         // $allResumesGrenobleEquipementsInDatabase = $cache->get('allResumesGrenobleEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS50::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS50::class)->findAll());
         // });
         // $allResumesLyonEquipementsInDatabase = $cache->get('allResumesLyonEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS60::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS60::class)->findAll());
         // });
         // $allResumesBordeauxEquipementsInDatabase = $cache->get('allResumesBordeauxEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS70::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS70::class)->findAll());
         // });
         // $allResumesParisNordEquipementsInDatabase = $cache->get('allResumesParisNordEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS80::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS80::class)->findAll());
         // });
         // $allResumesMontpellierEquipementsInDatabase = $cache->get('allResumesMontpellierEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS100::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS100::class)->findAll());
         // });
         // $allResumesHautsDeFranceEquipementsInDatabase = $cache->get('allResumesHautsDeFranceEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS120::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS120::class)->findAll());
         // });
         // $allResumesToulouseEquipementsInDatabase = $cache->get('allResumesToulouseEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS130::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS130::class)->findAll());
         // });
         // $allResumesSmpEquipementsInDatabase = $cache->get('allResumesSmpEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS140::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS140::class)->findAll());
         // });
         // $allResumesSogefiEquipementsInDatabase = $cache->get('allResumesSogefiEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS150::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS150::class)->findAll());
         // });
         // $allResumesRouenEquipementsInDatabase = $cache->get('allResumesRouenEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS160::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS160::class)->findAll());
         // });
         // $allResumesRennesEquipementsInDatabase = $cache->get('allResumesRennesEquipementsInDatabase', function(ItemInterface $item){
-        //     $item->expiresAfter(2419200);
-        //     $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS170::class)->findAll());
-        //     return $result;
+        //     $item->expiresAfter(120);
+        //     $queryBuilder = $this->getEntityManager()->createQueryBuilder();
+        //     $queryBuilder->select('equipment')
+        //     ->from(EquipementS10::class, 'equipment')
+        //     ->where('equipment.if_exist_db' != '')
+        //     ;
+        //     $query = $queryBuilder->getQuery();
+        //     $arrayResult = $query->getArrayResult();
+        //     return $arrayResult;
+        //     // $result = FormRepository::iterateListEquipementsToGetResumes($this->getEntityManager()->getRepository(EquipementS170::class)->findAll());
         // });
         
-        // ----------------------------- DÉBUT Return all forms with class "MAINTENANCE"
+        // ----------------------------- DÉBUT Return all forms with class "MAINTENANCE" WITH CACHE  1 week
         foreach ($allFormsArray as $key => $value) {
             if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                    ]
-                );
-                $content = $response->getContent();
-                $content = $response->toArray();
-                foreach ($content['data'] as $key => $value) {
-                    array_push($allFormsMaintenanceArray, $value);
-                }
+                // Récuperation des forms ID
+                array_push($allFormsKeyId, $allFormsArray[$key]['id']);
+                // $allFormsMaintenanceArray = $cache->get('allFormsMaintenanceArray', function(ItemInterface $item) use ($allFormsArray, $key, $allFormsMaintenanceArray) {
+                //     $item->expiresAfter(604800); // 1 week
+
+                //     $response = $this->client->request(
+                //         'POST',
+                //         'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                //             'headers' => [
+                //                 'Accept' => 'application/json',
+                //                 'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                //             ],
+                //         ]
+                //     );
+                //     $content = $response->getContent();
+                //     $content = $response->toArray();
+                    
+                //     foreach ($content['data'] as $key => $value) {
+                //         array_push($allFormsMaintenanceArray, $value);
+                //     }
+                    
+                // });
             }
         }
         // -----------------------------  FIN Return all forms with class "MAINTENANCE"
 
-        foreach ($allFormsMaintenanceArray as $key => $value) {
-            // Je push les id des formulaires RÉCUPERÉS
-            // array_push($Id_dataOfFormMaintenance, $allFormsMaintenanceArray[$key]['_id']);
-
-            // ----------------------------------------------------------------------- Début d'appel KIZEO aux formulaires non lus
-            $response = $this->client->request(
+        // ----------------------------------------------------------------------- Début d'appel KIZEO aux formulaires non lus par ID de leur liste
+        // ----------------------------------------------------------- Appel de 10 formulaires à la fois en mettant le paramètre LIMIT à 10 en fin d'url
+        // --------------- Remise à zéro du tableau $formMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec les prochains 10 formulaires non lus  ------------------
+        $formMaintenanceUnread = [];
+        foreach ($allFormsKeyId as $key) {
+            $responseUnread = $this->client->request(
                 'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/data/unread/read/500', [
+                'https://forms.kizeo.com/rest/v3/forms/' .  $key . '/data/unread/read/10', [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
                 ]
             );
-            $formMaintenanceUnread = $response->getContent();
-            $formMaintenanceUnread = $response->toArray();
-            
-            // J'incrémente le compteur de formulaire non lu
-            foreach ($formMaintenanceUnread['data'] as $formMaintenanceUnreadForId) {
-                $unreadFormCounter += 1;
-            }
 
-            foreach ($formMaintenanceUnread['data'] as $formUnread) {
-                if ($unreadFormCounter != 0) {
-                    dump('Compteur début de boucle : ' . $unreadFormCounter);
-                    // seul appel à kizeo pour avoir les CE1, CE2, CE3, CE4 et CEA dans ['data']['fields']['contrat_de_maintenance']['value'][0]['equipement']['path']
-                    $response = $this->client->request(
-                        'GET',
-                        'https://forms.kizeo.com/rest/v3/forms/' .  $formUnread['_form_id'] . '/data/' . $formUnread['_id'], [
-                            'headers' => [
-                                'Accept' => 'application/json',
-                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                            ],
-                        ]
-                    );
-                    $result= $response->getContent();
-                    $result= $response->toArray();
-                    array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
-                    
-                    // ------------- Selon le code agence, enregistrement des equipements en BDD local et enregistrements des PDF en local
-                    // foreach ($dataOfFormMaintenanceUnread['data']['fields'] as $equipements){
-                    foreach ($dataOfFormMaintenanceUnread as $equipements){
-                        // ----------------------------------------------------------   
-                        // IF code_agence d'$equipements = S50 ou S100 ou etc... on boucle sur ses équipements supplémentaires
-                        // ----------------------------------------------------------
-                        switch ($equipements['code_agence']['value']) {
-                            // Passer à la fonction createAndSaveInDatabaseByAgency()
-                            // les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
-                            case 'S10':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS10, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            case 'S40':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS40, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            case 'S50':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements,  $entiteEquipementS50, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S60':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS60, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S70':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS70, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S80':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS80, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S100':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements,  $entiteEquipementS100, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S120':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS120, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S130':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS130, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S140':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS140, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S150':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS150, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S160':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS160, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            
-                            case 'S170':
-                                FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS170, $formUnread);
-                                $unreadFormCounter -= 1;
-                                break;
-                            
-                            default:
-                                dump('Le code agence n\'est pas prévu dans le code');
-                                break;
-                        }
-                        
-                    }
-                    
-                    // ------------- FIN selon le code agence, enregistrement des equipements en BDD local et enregistrements des PDF en local
-                    // CALL TO FUNCTION SAVE PDF
-                    FormRepository::exportAndSavePdfInRootFolder($formUnread, $dataOfFormMaintenanceUnread);
-                }                
-            }
-            // ------------------------------------------------------------------------ FIN d'appel KIZEO aux formulaires non lus
+            $result = $responseUnread->getContent();
+            $result = $responseUnread->toArray();
+            array_push($formMaintenanceUnread, $result);
+            
         }
-        return "L'enregistrement en base de données ainsi que la création des Pdf s'est bien déroulé";
-    } 
+       
+        // ----------------------------------------------------------------------- Début d'appel data des formulaires non lus
+        // --------------- Remise à zéro du tableau $dataOfFormMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec la data des 10 formulaires non lus  ------------------
+        $dataOfFormMaintenanceUnread = [];
+        foreach ($formMaintenanceUnread as $formUnread) {
+            foreach ($formUnread['data'] as $form) {
+                // J'incrémente le compteur de formulaire non lu
+                // $unreadFormCounter += 1;
+                // dump('Compteur début de boucle : ' . $unreadFormCounter);
+                $response = $this->client->request(
+                    'GET',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/data/' . $form['_id'], [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $result= $response->getContent();
+                $result= $response->toArray();
+                array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
+            }
+        }
+
+        // ------------- Selon le code agence, enregistrement des equipements en BDD local et enregistrements des PDF en local
+        foreach ($dataOfFormMaintenanceUnread as $equipements){
+                // if ($unreadFormCounter != 0) {
+                // ----------------------------------------------------------   
+                // IF code_agence d'$equipements = S50 ou S100 ou etc... on boucle sur ses équipements supplémentaires
+                // ----------------------------------------------------------
+                switch ($equipements['code_agence']['value']) {
+                    // Passer à la fonction createAndSaveInDatabaseByAgency()
+                    // les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
+                    case 'S10':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS10);
+                        break;
+                    
+                    case 'S40':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS40);
+                        break;
+                    
+                    case 'S50':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements,  $entiteEquipementS50);
+                        break;
+                    
+                    
+                    case 'S60':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS60);
+                        break;
+                    
+                    
+                    case 'S70':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS70);
+                        break;
+                    
+                    
+                    case 'S80':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS80);
+                        break;
+                    
+                    
+                    case 'S100':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements,  $entiteEquipementS100);
+                        break;
+                    
+                    
+                    case 'S120':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS120);
+                        break;
+                    
+                    
+                    case 'S130':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS130);
+                        break;
+                    
+                    
+                    case 'S140':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS140);
+                        break;
+                    
+                    
+                    case 'S150':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS150);
+                        break;
+                    
+                    
+                    case 'S160':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS160);
+                        break;
+                    
+                    
+                    case 'S170':
+                        FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS170);
+                        break;
+                    
+                    default:
+                        dump('Le code agence n\'est pas prévu dans le code');
+                        break;
+                }
+                
+            // }
+        }
+        
+        return "L'enregistrement en base de données s'est bien déroulé";
+    }
+
 
     /**
      * Function to mark maintenance forms as UNREAD 

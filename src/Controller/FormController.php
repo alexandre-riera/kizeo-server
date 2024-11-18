@@ -127,10 +127,23 @@ class FormController extends AbstractController
      * 
      * Save PDF maintenance on remote server
      */
-    #[Route('/api/forms/save/maintenance/equipments/and/pdf', name: 'app_api_form_save_maintenance_equipments_and_pdf', methods: ['GET'])]
-    public function saveEquipementPdfInPublicFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
+    #[Route('/api/forms/save/maintenance/equipments', name: 'app_api_form_save_maintenance_equipments', methods: ['GET'])]
+    public function saveEquipementsInDatabase(FormRepository $formRepository, CacheInterface $cache)
     {
-        $formRepository->saveEquipmentsInDatabaseAndEquipmentsPdf($cache);
+        $formRepository->saveEquipmentsInDatabase($cache);
+        
+        
+        // return new JsonResponse("Les équipements de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
+    }
+    /**
+     * 
+     * Save PDF maintenance on remote server
+     */
+    #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
+    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
+    {
+        $formRepository->savePdfInAssetsPdfFolder($cache);
         
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
     }
