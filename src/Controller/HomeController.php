@@ -238,7 +238,7 @@ class HomeController extends AbstractController
             'agenceSelected' => $agenceSelected, // String
             'agenciesArray' => $agenciesArray, // Array of all agencies (params : code, agence)
             'clientSelectedInformations'  => $clientSelectedInformations, // Selected Entity Contact
-            'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is sup 3 months ago
+            'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
         ]);
     }
 }

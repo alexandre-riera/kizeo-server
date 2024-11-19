@@ -1,7 +1,10 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Parc Équipements Clients Somafi{% endblock %}
-
+{% block javascripts %}
+<script src="{{ asset('js/filtrerVisite.js') }}"></script>
+<script src="{{ asset('js/filtrerLibelle.js') }}"></script>
+{% endblock %}
 {% block body %}
 <style>
     header{
@@ -73,10 +76,56 @@
     /*Table équipements client*/
     td{
         border: 1px solid black;
-        width: 24rem;
+        width: 20rem;
         height: 2rem;
         margin: 5px;
         text-align: center;
+    }
+    /* Couleurs des td selon statut de maintenance */
+    .bkg_vert{
+        width: 4rem;
+        background-color: green;
+        color: white;
+        font-weight: bold;
+    }
+    .bkg_orange{
+        width: 4rem;
+        background-color: orange;
+        color: white;
+        font-weight: bold;
+    }
+    .bkg_rouge{
+        width: 4rem;
+        background-color: red;
+        color: white;
+        font-weight: bold;
+    }
+    .bkg_arret{
+        width: 4rem;
+        background-color: black;
+        color: white;
+        font-weight: bold;
+    }
+    .bkg_inaccessible{
+        width: 4rem;
+        background-color: yellow;
+        font-weight: bold;
+    }
+    /* Couleurs des TR selon la visite */
+    .bkg_row_visite_1{
+        background-color: lightgray;
+    }
+    .bkg_row_visite_2{
+        background-color: lightblue;
+    }
+    .bkg_row_visite_3{
+        background-color: lightseagreen;
+    }
+    .bkg_row_visite_4{
+        background-color: lightsalmon;
+    }
+    .bkg_row_visite_A{
+        background-color: lightyellow;
     }
 
 </style>
@@ -202,69 +251,144 @@
 {% endblock %}
 
 {% block clientEquipements %}
-{% if clientSelectedInformations != NULL  %}
+{% if clientSelectedInformations != NULL and clientSelectedEquipmentsFiltered != NULL  %}
 <div>
-    {% for equipment in clientSelectedEquipmentsFiltered %}
+    <div class="filters_table">
+        <h3>Filtres</h3>
+        {# Filtre sur les visites #}
+        <label for="choix-visite">Visite</label>
+        <select class="select_visite" onSelect="filtrerVisite(this.value)">
+            <option class="select_visite_option" data-visite="CE1">CE1</option>
+            <option class="select_visite_option" data-visite="CE2">CE2</option>
+            <option class="select_visite_option" data-visite="CE3">CE3</option>
+            <option class="select_visite_option" data-visite="CE4">CE4</option>
+            <option class="select_visite_option" data-visite="CEA">CEA</option>
+        </select>
+        {# Filtre sur les libelles equipements #}
+        <label for="choix-libelle">Libelle</label>
+        <select class="select_libelle" onSelect="filtrerLibelle(this.value)" multiple>
+            <option class="select_libelle_option" data-libelle="SEC" title="Porte sectionnelle">SEC</option>
+            <option class="select_libelle_option" data-libelle="RAP" title="Porte rapide">RAP</option>
+            <option class="select_libelle_option" data-libelle="RID" title="Rideau">RID</option>
+            <option class="select_libelle_option" data-libelle="PEX" title="Portail">PEX</option>
+            <option class="select_libelle_option" data-libelle="BLE" title="Barrière levante">BLE</option>
+            <option class="select_libelle_option" data-libelle="BLR" title="Bloc roue">BLR</option>
+            <option class="select_libelle_option" data-libelle="NIV" title="Niveleur">NIV</option>
+            <option class="select_libelle_option" data-libelle="PRO" title="Protection">PRO</option>
+            <option class="select_libelle_option" data-libelle="TEL" title="Table élevatrice">TEL</option>
+        </select>
+    </div>
+
     <table class="table-equipement-client">
         <thead>
-            <tr>
             <th>Visite</th>
             <th>Trigramme interne</th>
             <th>Libelle</th>
             <th>Dernière visite</th>
             <th>État</th>
-            </tr>
+            <th>Statut de Maintenance</th>
         </thead>
+    {% for equipment in clientSelectedEquipmentsFiltered %}
         <tbody>
-            {% if {{equipment.getVisite()}} == "CE1" %}
-                <tr>
-                <td>CE1</td>
-                <td>{{ equipment.getVisite() }}</td>
-                <td>{{ equipment.getNumeroEquipement() }}</td>
-                <td>{{ equipment.getLibelleEquipement() }}</td>
-                <td>{{ equipment.getDerniereVisite() }}</td>
-                <td>{{ equipment.getEtat() }}</td>
+            {% if equipment.visite == "CE1" %}
+                <tr class="bkg_row_visite_1" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                    <td>{{ equipment.getVisite() }}</td>
+                    <td>{{ equipment.getNumeroEquipement() }}</td>
+                    <td>{{ equipment.getLibelleEquipement() }}</td>
+                    <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getEtat() }}</td>
+                    {%if equipment.statutDeMaintenance == "Vert" %}
+                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Orange" %}
+                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                    {% endif %}
                 </tr>
-            {% elseif  {{equipment.getVisite()}} == "CE2" %}
-                <tr>
-                <td>CE2</td>
-                <td>{{ equipment.getVisite() }}</td>
-                <td>{{ equipment.getNumeroEquipement() }}</td>
-                <td>{{ equipment.getLibelleEquipement() }}</td>
-                <td>{{ equipment.getDerniereVisite() }}</td>
-                <td>{{ equipment.getEtat() }}</td>
+            {% elseif  equipment.visite  == "CE2" %}
+                <tr class="bkg_row_visite_2" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                    <td>{{ equipment.getVisite() }}</td>
+                    <td>{{ equipment.getNumeroEquipement() }}</td>
+                    <td>{{ equipment.getLibelleEquipement() }}</td>
+                    <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getEtat() }}</td>
+                    {%if equipment.statutDeMaintenance == "Vert" %}
+                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Orange" %}
+                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                    {% endif %}
                 </tr>
-            {% elseif  {{equipment.getVisite()}} == "CE3" %}
-                <tr>
-                <td>CE3</td>
-                <td>{{ equipment.getVisite() }}</td>
-                <td>{{ equipment.getNumeroEquipement() }}</td>
-                <td>{{ equipment.getLibelleEquipement() }}</td>
-                <td>{{ equipment.getDerniereVisite() }}</td>
-                <td>{{ equipment.getEtat() }}</td>
+            {% elseif  equipment.visite  == "CE3" %}
+                <tr class="bkg_row_visite_3" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                    <td>{{ equipment.getVisite() }}</td>
+                    <td>{{ equipment.getNumeroEquipement() }}</td>
+                    <td>{{ equipment.getLibelleEquipement() }}</td>
+                    <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getEtat() }}</td>
+                    {%if equipment.statutDeMaintenance == "Vert" %}
+                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Orange" %}
+                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                    {% endif %}
                 </tr>
-            {% elseif  {{equipment.getVisite()}} == "CE4" %}
-                <tr>
-                <td>CE4</td>
-                <td>{{ equipment.getVisite() }}</td>
-                <td>{{ equipment.getNumeroEquipement() }}</td>
-                <td>{{ equipment.getLibelleEquipement() }}</td>
-                <td>{{ equipment.getDerniereVisite() }}</td>
-                <td>{{ equipment.getEtat() }}</td>
+            {% elseif  equipment.visite  == "CE4" %}
+                <tr class="bkg_row_visite_4" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                    <td>{{ equipment.getVisite() }}</td>
+                    <td>{{ equipment.getNumeroEquipement() }}</td>
+                    <td>{{ equipment.getLibelleEquipement() }}</td>
+                    <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getEtat() }}</td>
+                    {%if equipment.statutDeMaintenance == "Vert" %}
+                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Orange" %}
+                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                    {% endif %}
                 </tr>
-            {% elseif  {{equipment.getVisite()}} == "CEA" %}
-                <tr>
-                <td>CEA</td>
-                <td>{{ equipment.getVisite() }}</td>
-                <td>{{ equipment.getNumeroEquipement() }}</td>
-                <td>{{ equipment.getLibelleEquipement() }}</td>
-                <td>{{ equipment.getDerniereVisite() }}</td>
-                <td>{{ equipment.getEtat() }}</td>
+            {% elseif  equipment.visite  == "CEA" %}
+                <tr class="bkg_row_visite_A" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                    <td>{{ equipment.getVisite() }}</td>
+                    <td>{{ equipment.getNumeroEquipement() }}</td>
+                    <td>{{ equipment.getLibelleEquipement() }}</td>
+                    <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getEtat() }}</td>
+                    {%if equipment.statutDeMaintenance == "Vert" %}
+                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Orange" %}
+                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                    {% endif %}
                 </tr>
             {% endif %}
         </tbody>
+    {% endfor %}
     </table>
-{% endfor %}
 </div>
 {%endif%}
 {% endblock %}

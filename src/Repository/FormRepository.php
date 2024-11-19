@@ -415,7 +415,7 @@ class FormRepository extends ServiceEntityRepository
             elseif(str_contains($additionalEquipment['equipement']['path'], 'CEA')){
                 $equipement->setVisite("CEA");
             }
-            $equipement->setNumeroEquipement($additionalEquipment['equipement']['path']);
+            $equipement->setNumeroEquipement($additionalEquipment['equipement']['value']);
             $equipement->setIfExistDB($additionalEquipment['equipement']['columns']);
             $equipement->setLibelleEquipement(strtolower($additionalEquipment['reference7']['value']));
             $equipement->setModeFonctionnement($additionalEquipment['mode_fonctionnement_2']['value']);
@@ -750,31 +750,30 @@ class FormRepository extends ServiceEntityRepository
         }
         
         foreach ($listAgencySplitted as $equipements){
-            $equipement = new $entityAgency;
-            $equipement->setIdContact($equipements[18]);
-            $equipement->setRaisonSociale($equipements[0]);
-            $equipement->setCodeSociete($equipements[20]);
-            $equipement->setCodeAgence($equipements[22]);
-
-            $equipement->setNumeroEquipement($equipements[3]);
-            $equipement->setLibelleEquipement(strtolower($equipements[4]));
-            $equipement->setRepereSiteClient($equipements[2]);
-            $equipement->setMiseEnService($equipements[6]);
-            $equipement->setNumeroDeSerie($equipements[8]);
-            $equipement->setMarque($equipements[10]);
-
-            // tell Doctrine you want to (eventually) save the Product (no queries yet)
-            $entityManager->persist($equipement);
-            
-            // actually executes the queries (i.e. the INSERT query)
-            $entityManager->flush();
-            
+                $equipement = new $entityAgency;
+                $equipement->setIdContact($equipements[18]);
+                $equipement->setRaisonSociale($equipements[0]);
+                $equipement->setCodeSociete($equipements[20]);
+                $equipement->setCodeAgence($equipements[22]);
+    
+                $equipement->setNumeroEquipement($equipements[3]);
+                $equipement->setLibelleEquipement(strtolower($equipements[4]));
+                // $equipement->setRepereSiteClient($equipements[2]); // Le repère site client n'est pas ici
+                $equipement->setMiseEnService($equipements[6]);
+                $equipement->setNumeroDeSerie($equipements[8]);
+                $equipement->setMarque($equipements[10]);
+    
+                // tell Doctrine you want to (eventually) save the Product (no queries yet)
+                $entityManager->persist($equipement);
+                
+                // actually executes the queries (i.e. the INSERT query)
+                $entityManager->flush();
         }
     }
 
     /**
      * ------------------------------------------------------------------------------------------------------------------------
-     * --------------------------------------------------- EXPORT PDF AND SAVE IN ROOT FOLDER ------------------------------
+     * --------------------------------------------------- EXPORT PDF AND SAVE IN ASSETS/PDF FOLDER ------------------------------
      * --------------------------------------------------------------------------------------------------------------------------
      */
     public function savePdfInAssetsPdfFolder($cache){

@@ -650,8 +650,7 @@ class FormController extends AbstractController
 
         $formRepository->saveEquipmentsListByAgencyOnLocalDatabase($formRepository->getAgencyListEquipementsFromKizeoByListId(414025), $entiteEquipementS50, $entityManager);
 
-        // return $this->redirectToRoute('app_api_upload_list_equipements_paris');
-        return "La liste des équipements de base de Grenoble est en BDD";
+        return new JsonResponse("La liste des équipements de base de Grenoble est en BDD", Response::HTTP_OK, [], true);
     }
 
     #[Route('/api/upload/list/equipements/paris', name: 'app_api_upload_list_equipements_paris', methods: ['GET'])]
