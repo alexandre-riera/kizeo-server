@@ -1,7 +1,7 @@
 function filtrerStatutDeMaintenance()
 {
   var select = document.getElementById('statutdemaintenance-dropdown').selectedIndex;
-  select+=15;
+  select+=23;
   var data = document.getElementsByTagName('option')[select].value;
 
   console.log("Le filtre de statut de maintenance est  " + data + " avec un id egal à " + select);

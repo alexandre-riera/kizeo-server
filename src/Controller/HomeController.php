@@ -108,9 +108,7 @@ class HomeController extends AbstractController
                 echo 'Please select the value.';
             }  
         }
-
-        dump($clientSelected);
-        dump($agenceSelected);
+        // Mattre des dump ici pour agence selectionnée et client selectionné si besoin
         // ENLEVER LE NOM DE L'AGENCE ET L'ESPACE A LA FIN DU NOM DU CLIENT SÉLECTIONNÉ
         $clientSelected = rtrim($clientSelected, "\S10\S40\S50\S60\S70\S80\S100\S120\S130\S140\S150\S160\S170\ ");
         dump($clientSelected);
