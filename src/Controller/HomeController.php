@@ -33,6 +33,7 @@ use App\Entity\EquipementS140;
 use App\Entity\EquipementS150;
 use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
+use App\Repository\HomeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -45,22 +46,38 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_front')]
-    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request): Response
+    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request, HomeRepository $homeRepository): Response
     {
-        // GET CONTACTS BY AGENCY
+        // GET CONTACTS KIZEO BY AGENCY
+        // $clientsGroup  =  $homeRepository->getListClientFromKizeoById();
+        $clientsStEtienne  =  $homeRepository->getListClientFromKizeoById(427441);
+        $clientsGrenoble  =  $homeRepository->getListClientFromKizeoById(409466);
+        $clientsLyon  =  $homeRepository->getListClientFromKizeoById(427443);
+        // $clientsBordeaux  =  $homeRepository->getListClientFromKizeoById();
+        $clientsParisNord  =  $homeRepository->getListClientFromKizeoById(421994);
+        $clientsMontpellier  =  $homeRepository->getListClientFromKizeoById(423852);
+        // $clientsHautsDeFrance  =  $homeRepository->getListClientFromKizeoById();
+        // $clientsToulouse  =  $homeRepository->getListClientFromKizeoById();
+        $clientsEpinal  =  $homeRepository->getListClientFromKizeoById(427681);
+        // $clientsPaca  =  $homeRepository->getListClientFromKizeoById();
+        $clientsRouen  =  $homeRepository->getListClientFromKizeoById(427677);
+        // $clientsRennes  =  $homeRepository->getListClientFromKizeoById();
+        
+        // GET CONTACTS GESTAN BY AGENCY
         $clientsGroup  =  $entityManager->getRepository(ContactS10::class)->findAll();
-        $clientsStEtienne  =  $entityManager->getRepository(ContactS40::class)->findAll();
-        $clientsGrenoble  =  $entityManager->getRepository(ContactS50::class)->findAll();
-        $clientsLyon  =  $entityManager->getRepository(ContactS60::class)->findAll();
+        // $clientsStEtienne  =  $entityManager->getRepository(ContactS40::class)->findAll();
+        // $clientsGrenoble  =  $entityManager->getRepository(ContactS50::class)->findAll();
+        // $clientsLyon  =  $entityManager->getRepository(ContactS60::class)->findAll();
         $clientsBordeaux  =  $entityManager->getRepository(ContactS70::class)->findAll();
-        $clientsParisNord  =  $entityManager->getRepository(ContactS80::class)->findAll();
-        $clientsMontpellier  =  $entityManager->getRepository(ContactS100::class)->findAll();
+        // $clientsParisNord  =  $entityManager->getRepository(ContactS80::class)->findAll();
+        // $clientsMontpellier  =  $entityManager->getRepository(ContactS100::class)->findAll();
         $clientsHautsDeFrance  =  $entityManager->getRepository(ContactS120::class)->findAll();
         $clientsToulouse  =  $entityManager->getRepository(ContactS130::class)->findAll();
-        $clientsEpinal  =  $entityManager->getRepository(ContactS140::class)->findAll();
+        // $clientsEpinal  =  $entityManager->getRepository(ContactS140::class)->findAll();
         $clientsPaca  =  $entityManager->getRepository(ContactS150::class)->findAll();
-        $clientsRouen  =  $entityManager->getRepository(ContactS160::class)->findAll();
+        // $clientsRouen  =  $entityManager->getRepository(ContactS160::class)->findAll();
         $clientsRennes  =  $entityManager->getRepository(ContactS170::class)->findAll();
+        
         $agenciesArray = $entityManager->getRepository(Agency::class)->findAll();
 
         // GET CLIENT SELECTED INFORMATION BY AGENCY BY HIS RAISON_SOCIALE
@@ -91,6 +108,7 @@ class HomeController extends AbstractController
                 echo 'Please select the value.';
             }  
         }
+
         dump($clientSelected);
         dump($agenceSelected);
         // ENLEVER LE NOM DE L'AGENCE ET L'ESPACE A LA FIN DU NOM DU CLIENT SÉLECTIONNÉ
@@ -101,118 +119,256 @@ class HomeController extends AbstractController
             switch ($agenceSelected) {
                 case 'S10':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S10':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['raison_sociale' => $clientSelected]);
                 case 'S40':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S40':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S50':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['raison_sociale' => $clientSelected]);
                     
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDerniereVisite() != NULL) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                         }
                     }
                     break;
                 case ' S50':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['raison_sociale' => $clientSelected]);
                     
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDerniereVisite() != NULL) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                         }
                     }
                     break;
                 case 'S60':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S60':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S70':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S70':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S80':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S80':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S100':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S100':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S120':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S120':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S130':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S130':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S140':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S140':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S150':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S150':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S160':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S160':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case 'S170':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 case ' S170':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['raison_sociale' => $clientSelected]);
-                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $clientSelectedInformations->getIdContact()]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['raison_sociale' => $clientSelected]);
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
                     break;
                 
                 default:
@@ -239,6 +395,139 @@ class HomeController extends AbstractController
             'agenciesArray' => $agenciesArray, // Array of all agencies (params : code, agence)
             'clientSelectedInformations'  => $clientSelectedInformations, // Selected Entity Contact
             'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
+            'totalClientSelectedEquipmentsFiltered'  => count($clientSelectedEquipmentsFiltered), // Total Selected Entity Equipement where last visit is superior 3 months ago
         ]);
+    }
+
+    #[Route('/save/modal/equipement', name: 'app_save_modal_equipement')]
+    public function saveModalInDatabase(EntityManagerInterface $entityManager){
+
+        // Récupération de l'équipement édité dans la modal
+        if(isset($_POST['saveEquipmentFromModal'])){
+            $equipmentidEquipementAndIdRow= $_POST['id'];
+            $equipmentNom = $_POST['nom'];
+            $equipmentPrenom = $_POST['prenom'];
+            $equipmentLibelle = $_POST['libelle'];
+            $equipmentVisite = $_POST['visite'];
+            $equipmentRaisonSociale = $_POST['raisonSociale'];
+            $equipmentModeleNacelle = $_POST['modeleNacelle'];
+            $equipmentHauteurNacelle = $_POST['hauteurNacelle'];
+            $equipmentIfExistDB = $_POST['ifExistDB'];
+            $equipmentSignatureTech = $_POST['signatureTech'];
+            $equipmentTrigrammeTech = $_POST['trigrammeTech'];
+            $equipmentAnomalies = $_POST['anomalies'];
+            $equipmentIdContact = $_POST['idContact'];
+            $equipmentIdSociete = $_POST['idSociete'];
+            $equipmentCodeAgence = $_POST['codeAgence'];
+            // $equipmentTrigramme = $_POST['trigramme'];
+            $equipmentModeFonctionnement = $_POST['modeFonctionnement'];
+            $equipmentRepereSiteClient = $_POST['repereSiteClient'];
+            $equipmentMiseEnService = $_POST['miseEnService'];
+            $equipmentNumeroDeSerie = $_POST['numeroDeSerie'];
+            $equipmentMarque = $_POST['marque'];
+            $equipmentHauteur = $_POST['hauteur'];
+            $equipmentLargeur = $_POST['largeur'];
+            $equipmentLongueur = $_POST['longueur'];
+            // $equipmentPlaqueSignaletique = $_POST['plaqueSignaletique'];
+            // $equipmentEtat = $_POST['etat'];
+            // $equipmentDerniereVisiteDeMaintenance = $_POST['derniereVisiteDeMaintenance'];
+            // $equipmentOldStatut = $_POST['oldStatut'];
+            $equipmentNewStatutClient = $_POST['newStatutClient'];
+            // $equipmentCarnetEntretien = $_POST['carnetEntretien'];
+            // $equipmentStatutConformite = $_POST['statutConformite'];
+
+            // Save IT
+            $entityAgency = null;
+            switch ($equipmentCodeAgence) {
+                case 'S10':
+                    $entityAgency = EquipementS10::class;
+                    break;
+                case 'S40':
+                    $entityAgency = EquipementS40::class;
+                    break;
+                case 'S50':
+                    $entityAgency = EquipementS50::class;
+                    break;
+                case 'S60':
+                    $entityAgency = EquipementS60::class;
+                    break;
+                case 'S70':
+                    $entityAgency = EquipementS70::class;
+                    break;
+                case 'S80':
+                    $entityAgency = EquipementS80::class;
+                    break;
+                case 'S100':
+                    $entityAgency = EquipementS100::class;
+                    break;
+                case 'S120':
+                    $entityAgency = EquipementS120::class;
+                    break;
+                case 'S130':
+                    $entityAgency = EquipementS130::class;
+                    break;
+                case 'S140':
+                    $entityAgency = EquipementS140::class;
+                    break;
+                case 'S150':
+                    $entityAgency = EquipementS150::class;
+                    break;
+                case 'S160':
+                    $entityAgency = EquipementS160::class;
+                    break;
+                case 'S170':
+                    $entityAgency = EquipementS170::class;
+                    break;
+                
+                default:
+                    # code...
+                    break;
+            }
+            $equipement = new $entityAgency;
+            $equipement->setIdContact($equipmentIdContact);
+            $equipement->setDateEnregistrement(date("Y-m-d"));
+            $equipement->setCodeSociete($equipmentIdSociete);
+            $equipement->setCodeAgence($equipmentCodeAgence);
+            // $equipement->setDerniereVisite($equipmentDerniereVisiteDeMaintenance);
+            if (empty($equipmentNom) && empty($equipmentPrenom)) {
+                $equipement->setTrigrammeTech($equipmentTrigrammeTech);
+            }else{
+                $equipement->setTrigrammeTech($equipmentNom . " " . $equipmentPrenom);
+            }
+            $equipement->setSignatureTech($equipmentSignatureTech);
+            $equipement->setVisite($equipmentVisite);
+            // $equipement->setNumeroEquipement($equipmentTrigramme);
+            $equipement->setIfExistDB($equipmentIfExistDB);
+            $equipement->setLibelleEquipement(strtolower($equipmentLibelle));
+            $equipement->setModeFonctionnement($equipmentModeFonctionnement);
+            $equipement->setRepereSiteClient($equipmentRepereSiteClient);
+            $equipement->setMiseEnService($equipmentMiseEnService);
+            $equipement->setNumeroDeSerie($equipmentNumeroDeSerie);
+            $equipement->setMarque($equipmentMarque);
+            $equipement->setLargeur($equipmentLargeur);
+            $equipement->setHauteur($equipmentHauteur);
+            $equipement->setLongueur($equipmentLongueur);
+            // $equipement->setPlaqueSignaletique($equipmentPlaqueSignaletique);
+            $equipement->setAnomalies($equipmentAnomalies);
+            // $equipement->setEtat($equipmentEtat);
+            $equipement->setHauteurNacelle($equipmentHauteurNacelle);
+            $equipement->setModeleNacelle($equipmentModeleNacelle);
+            if (isset($equipmentNewStatutClient)) {
+                $equipement->setStatutDeMaintenance($equipmentNewStatutClient);
+            }else{
+                // $equipement->setStatutDeMaintenance($equipmentOldStatut);
+            }
+            $equipement->setRaisonSociale($equipmentRaisonSociale);
+            // $equipement->setPresenceCarnetEntretien($equipmentCarnetEntretien);
+            // $equipement->setStatutConformite($equipmentStatutConformite);
+            $equipement->setEnMaintenance(true);
+            
+            // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            $entityManager->persist($equipement);
+            // actually executes the queries (i.e. the INSERT query)
+            $entityManager->flush();
+
+        }
+        return new Response("L'équipement édité dans la modal a bien été enregistré en base de données", Response::HTTP_OK, [], true);
     }
 }
