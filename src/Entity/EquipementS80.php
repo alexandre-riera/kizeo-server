@@ -56,7 +56,7 @@ class EquipementS80
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $derniere_visite = null;
 
-    #[ORM\Column(length: 3, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $trigramme_tech = null;
 
     #[ORM\Column(length: 255, nullable: true)]
