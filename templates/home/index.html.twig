@@ -45,7 +45,7 @@
     }
     /*Sélection agence et client*/
     .selections-container{
-        width: 100vw;
+        width: 94vw;
         margin-left: 30px;
         margin-bottom: 30px;
     }
@@ -402,9 +402,11 @@
             <div class="card downloadPdf">
                 <div class="card-body">
                     <h4 class="card-title">Compte-rendu</h4>
-                    <br>
-                    <br>
-                    <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-download"></i>Get PDF<i class="fa-solid fa-file"></i></button>
+                    <ul>
+                        {% for file in directoriesLists %}
+                        <li><a href="{{ asset('assets/pdf/maintenance/S50/'~clientSelected~'/2024/CE2/'~file) }}">{{ file }}</a></li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
@@ -447,25 +449,25 @@
                     </div>
                     <div class="col-md-6">
                       <label for="trigramme" class="form-label">Équipement cible</label>
-                      <input type="text" class="form-control" id="modal_trigramme" value="" name="trigramme" readonly/>
+                      <input type="text" class="form-control" id="modal_trigramme" value="" name="trigramme" />
                       <label for="codeAgence" class="form-label">Code Agence</label>
-                      <input type="text" class="form-control" id="modal_codeAgence" value="" name="codeAgence" readonly/>
+                      <input type="text" class="form-control" id="modal_codeAgence" value="" name="codeAgence" />
                     </div>
                     <div class="col-md-6">
                       <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
-                      <input type="text" class="form-control" id="modal_modeFonctionnement" value="" name="modeFonctionnement" />
+                      <input type="text" class="form-control" id="modal_modeFonctionnement" value="" name="modefonctionnement" />
                     </div>
                     <div class="col-md-6">
                       <label for="repereCiteClient" class="form-label">Repère site client</label>
-                      <input type="text" id="modal_repereSiteClient" class="form-control" value="" name="repereSiteClient" />
+                      <input type="text" id="modal_repereSiteClient" class="form-control" value="" name="reperesiteclient" />
                     </div>
                     <div class="col-md-6">
                       <label for="miseEnService" class="form-label">Mise en service</label>
-                      <input type="text" id="modal_miseEnService" class="form-control" value="" name="miseEnService" />
+                      <input type="text" id="modal_miseEnService" class="form-control" value="" name="miseenservice" />
                     </div>
                     <div class="col-md-6">
                       <label for="numeroDeSerie" class="form-label">Numéro de série</label>
-                      <input type="text" id="modal_numeroDeSerie" class="form-control" value="" name="numeroDeSerie" />
+                      <input type="text" id="modal_numeroDeSerie" class="form-control" value="" name="numerodeserie" />
                     </div>
                     <div class="col-md-6">
                       <label for="marque" class="form-label">Marque</label>
@@ -485,23 +487,23 @@
                     </div>
                     <div class="col-md-12">
                       <label for="plaqueSignaletique" class="form-label">Plaque signalétique</label>
-                      <input type="text" id="modal_plaqueSignaletique" class="form-control" value="" name="plaqueSignaletique" readonly/>
+                      <input type="text" id="modal_plaqueSignaletique" class="form-control" value="" name="plaquesignaletique"/>
                     </div>
                     <div class="col-12">
                       <label for="etat" class="form-label">État de l'équipement</label>
-                      <textarea id="modal_etat" class="form-control " value="" name="etat" disabled ></textarea>
+                      <textarea id="modal_etat" class="form-control " value="" name="etat" ></textarea>
                     </div>
                     <div class="col-6">
                       <label for="dateDerniereVisite" class="form-label">Dernière visite de maintenance</label>
-                      <input type="text" id="modal_derniereVisite"class="form-control" value="" name="derniereVisiteDeMaintenance" readonly />
+                      <input type="text" id="modal_derniereVisite"class="form-control" value="" name="dernierevisitedemaintenance" />
                     </div>
                     <div class="col-6">
                         <label for="statut-actuel" class="form-label">Statut actuel de l'équipement</label>
-                        <input type="text" id="modal_statut" class="form-control" value="" name="oldStatut" readonly />
+                        <input type="text" id="modal_statut" class="form-control" value="" name="oldstatut" />
                       </div>
                     <div class="col-6">
                       <label for="statut" class="form-label">Statut de l'équipement</label>
-                      <select id="modal_prochain_statut" class="form-select"  name="newStatutClient">
+                      <select id="modal_prochain_statut" class="form-select"  name="newstatutclient">
                         <option selected>Choose...</option>
                         <option value="Vert">Vert</option>
                         <option value="Orange">Orange</option>
@@ -512,11 +514,11 @@
                     </div>
                     <div class="col-md-6">
                       <label for="carnetEntretien" class="form-label">Présence carnet d'entretien</label>
-                      <input type="text" id="modal_carnetEntretien" class="form-control" value="" name="carnetEntretien" readonly />
+                      <input type="text" id="modal_carnetEntretien" class="form-control" value="" name="carnetentretien" />
                     </div>
                     <div class="col-md-6">
                       <label for="statutConformite" class="form-label">Statut conformité</label>
-                      <input type="text" id="modal_statutConformite" class="form-control" value="" name="statutConformite" readonly />
+                      <input type="text" id="modal_statutConformite" class="form-control" value="" name="statutconformite" />
                     </div>
                     
                     <button type="submit" id="saveEquipmentFromModal" class="btn btn-primary" name="saveEquipmentFromModal">Enregistrer</button>

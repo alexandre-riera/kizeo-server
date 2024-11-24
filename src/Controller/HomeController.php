@@ -87,9 +87,10 @@ class HomeController extends AbstractController
         $clientSelectedEquipmentsFiltered = [];
         // GET VALUE OF AGENCY SELECTED
         $agenceSelected = "";
-         
         // // GET VALUE OF CLIENT SELECTED
         $clientSelected = "";
+        // GET directories and files OF CLIENT SELECTED
+        $directoriesLists = [];
 
         // Récupération de l'agence sélectionnée nécessaire pour charger la liste client de l'agence
         if(isset($_POST['submitAgence'])){  
@@ -127,6 +128,14 @@ class HomeController extends AbstractController
                 case ' S10':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['raison_sociale' => $clientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['raison_sociale' => $clientSelected]);
+
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                        }
+                    }
+                    break;
                 case 'S40':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['raison_sociale' => $clientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['raison_sociale' => $clientSelected]);
@@ -154,8 +163,10 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
                         }
                     }
+                    // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
                     break;
                 case ' S50':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['raison_sociale' => $clientSelected]);
@@ -164,8 +175,10 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
                         }
                     }
+                    // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
                     break;
                 case 'S60':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['raison_sociale' => $clientSelected]);
@@ -393,6 +406,7 @@ class HomeController extends AbstractController
             'clientSelectedInformations'  => $clientSelectedInformations, // Selected Entity Contact
             'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
             'totalClientSelectedEquipmentsFiltered'  => count($clientSelectedEquipmentsFiltered), // Total Selected Entity Equipement where last visit is superior 3 months ago
+            'directoriesLists'  => $directoriesLists, // Total Selected Entity Equipement where last visit is superior 3 months ago
         ]);
     }
 
@@ -416,22 +430,22 @@ class HomeController extends AbstractController
             $equipmentIdContact = $_POST['idContact'];
             $equipmentIdSociete = $_POST['idSociete'];
             $equipmentCodeAgence = $_POST['codeAgence'];
-            // $equipmentTrigramme = $_POST['trigramme'];
-            $equipmentModeFonctionnement = $_POST['modeFonctionnement'];
-            $equipmentRepereSiteClient = $_POST['repereSiteClient'];
-            $equipmentMiseEnService = $_POST['miseEnService'];
-            $equipmentNumeroDeSerie = $_POST['numeroDeSerie'];
+            $equipmentTrigramme = $_POST['trigramme'];
+            $equipmentModeFonctionnement = $_POST['modefonctionnement'];
+            $equipmentRepereSiteClient = $_POST['reperesiteclient'];
+            $equipmentMiseEnService = $_POST['miseenservice'];
+            $equipmentNumeroDeSerie = $_POST['numerodeserie'];
             $equipmentMarque = $_POST['marque'];
             $equipmentHauteur = $_POST['hauteur'];
             $equipmentLargeur = $_POST['largeur'];
             $equipmentLongueur = $_POST['longueur'];
-            // $equipmentPlaqueSignaletique = $_POST['plaqueSignaletique'];
-            // $equipmentEtat = $_POST['etat'];
-            // $equipmentDerniereVisiteDeMaintenance = $_POST['derniereVisiteDeMaintenance'];
-            // $equipmentOldStatut = $_POST['oldStatut'];
-            $equipmentNewStatutClient = $_POST['newStatutClient'];
-            // $equipmentCarnetEntretien = $_POST['carnetEntretien'];
-            // $equipmentStatutConformite = $_POST['statutConformite'];
+            $equipmentPlaqueSignaletique = $_POST['plaquesignaletique'];
+            $equipmentEtat = $_POST['etat'];
+            $equipmentDerniereVisiteDeMaintenance = $_POST['dernierevisitedemaintenance'];
+            $equipmentOldStatut = $_POST['oldstatut'];
+            $equipmentNewStatutClient = $_POST['newstatutclient'];
+            $equipmentCarnetEntretien = $_POST['carnetentretien'];
+            $equipmentStatutConformite = $_POST['statutconformite'];
 
             // Save IT
             $entityAgency = null;
@@ -485,7 +499,7 @@ class HomeController extends AbstractController
             $equipement->setDateEnregistrement(date("Y-m-d"));
             $equipement->setCodeSociete($equipmentIdSociete);
             $equipement->setCodeAgence($equipmentCodeAgence);
-            // $equipement->setDerniereVisite($equipmentDerniereVisiteDeMaintenance);
+            $equipement->setDerniereVisite($equipmentDerniereVisiteDeMaintenance);
             if (empty($equipmentNom) && empty($equipmentPrenom)) {
                 $equipement->setTrigrammeTech($equipmentTrigrammeTech);
             }else{
@@ -493,7 +507,7 @@ class HomeController extends AbstractController
             }
             $equipement->setSignatureTech($equipmentSignatureTech);
             $equipement->setVisite($equipmentVisite);
-            // $equipement->setNumeroEquipement($equipmentTrigramme);
+            $equipement->setNumeroEquipement($equipmentTrigramme);
             $equipement->setIfExistDB($equipmentIfExistDB);
             $equipement->setLibelleEquipement(strtolower($equipmentLibelle));
             $equipement->setModeFonctionnement($equipmentModeFonctionnement);
@@ -504,19 +518,19 @@ class HomeController extends AbstractController
             $equipement->setLargeur($equipmentLargeur);
             $equipement->setHauteur($equipmentHauteur);
             $equipement->setLongueur($equipmentLongueur);
-            // $equipement->setPlaqueSignaletique($equipmentPlaqueSignaletique);
+            $equipement->setPlaqueSignaletique($equipmentPlaqueSignaletique);
             $equipement->setAnomalies($equipmentAnomalies);
-            // $equipement->setEtat($equipmentEtat);
+            $equipement->setEtat($equipmentEtat);
             $equipement->setHauteurNacelle($equipmentHauteurNacelle);
             $equipement->setModeleNacelle($equipmentModeleNacelle);
-            if (isset($equipmentNewStatutClient)) {
+            if (isset($equipmentNewStatutClient) && $equipmentNewStatutClient != "Choose...") {
                 $equipement->setStatutDeMaintenance($equipmentNewStatutClient);
             }else{
-                // $equipement->setStatutDeMaintenance($equipmentOldStatut);
+                $equipement->setStatutDeMaintenance($equipmentOldStatut);
             }
             $equipement->setRaisonSociale($equipmentRaisonSociale);
-            // $equipement->setPresenceCarnetEntretien($equipmentCarnetEntretien);
-            // $equipement->setStatutConformite($equipmentStatutConformite);
+            $equipement->setPresenceCarnetEntretien($equipmentCarnetEntretien);
+            $equipement->setStatutConformite($equipmentStatutConformite);
             $equipement->setEnMaintenance(true);
             
             // tell Doctrine you want to (eventually) save the Product (no queries yet)

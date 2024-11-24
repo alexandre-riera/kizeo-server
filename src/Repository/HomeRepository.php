@@ -37,4 +37,28 @@ class HomeRepository{
         return $listClientsFiltered;
     }
 
+    public function getListOfPdf($clientSelected, $visite){
+        $thisYear = date('Y');
+        $directoriesLists = scandir( "assets/pdf/maintenance/S50/$clientSelected/$thisYear/CE2/" );
+        $results = [];
+        foreach($directoriesLists as $fichier){
+
+            if(preg_match("#\.(pdf)$#i", $fichier)){
+                
+                //la preg_match définie : \.(jpg|jpeg|png|gif|bmp|tif)$
+                
+                //Elle commence par un point "." (doit être échappé avec anti-slash \ car le point veut dire "tous les caractères" sinon)
+                
+                //"|" parenthèses avec des barres obliques dit "ou" (plusieurs possibilités : jpg ou jpeg ou png...)
+                
+                //La condition "$" signifie que le nom du fichier doit se terminer par la chaîne spécifiée. Par exemple, un fichier nommé 'monFichier.jpg.php' ne sera pas accepté, car il ne se termine pas par '.jpg', '.jpeg', '.png' ou toute autre extension souhaitée.
+                
+                if (!in_array($fichier, $results)) {
+                    array_push($results, $fichier);
+                }
+            }
+        }
+        return $results;
+    }
+
 }
