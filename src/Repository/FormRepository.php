@@ -791,7 +791,7 @@ class FormRepository extends ServiceEntityRepository
         $allFormsKeyId = [];
         $formUnreadArray = [];
         
-        // ----------------------------- DÉBUT GET all Forms ID with class "MAINTENANCE"
+        // ----------------------------- DÉBUT GET all Forms ID with class "MAINTENANCE" we store every forms id
         foreach ($allFormsArray as $key => $value) {
             if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
                 // Récuperation des forms ID
@@ -867,8 +867,6 @@ class FormRepository extends ServiceEntityRepository
             }
         }
 
-
-
         foreach ($formUnreadArray as $form) {
             // ------------------------------------------      GET to receive PDF FROM FORMS FROM TECHNICIANS WHITH PICTURES
             $responseData = $this->client->request(
@@ -887,246 +885,251 @@ class FormRepository extends ServiceEntityRepository
             $pathStructureToFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $form['nom_client'] . '/' . substr($form['date_et_heure1'], 0, 4);
             $normalNameOfTheFile = $form['nom_client'] . '-' . $form['code_agence'] . '.pdf';
             
-            if (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
-                # ------------------------------------------------------------------ ---------------------------    code CE1
-                switch (str_contains($form['nom_client'], '/')) {
-                    case false:
-                        if (!file_exists($pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile)){
-                            mkdir($pathStructureToFile . '/CE1', 0777, true);
-                            file_put_contents( $pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile , $content, LOCK_EX);
+            // Ajouté pour voir si cela fix le mauvais nommage des dossiers PDF sur le nom de la visite de maintenance. Ex: SDCC est enregistré en CE2 au lieu de CEA
+            // SDDCC bon en BDD mais pas en enregistrement des pdf
+            for ($i=0; $i < count($dataOfFormMaintenanceUnread); $i++) { 
+                # code...
+                if (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE1
+                    switch (str_contains($form['nom_client'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile)){
+                                mkdir($pathStructureToFile . '/CE1', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE1' . '/' . "CE1-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $form['nom_client'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4) . '/CE1';
+                            $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+        
+                            if (!file_exists($cleanNameOfTheFile)){
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
                             break;
-                        }
-                
-                    case true:
-                        $nomClient = $form['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4) . '/CE1';
-                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
-    
-                        if (!file_exists($cleanNameOfTheFile)){
-                            mkdir($cleanPathStructureToTheFile, 0777, true);
-                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $form['nom_client']);
-                        break;
-                }
-    
-                // -------------------------------------------            MARK FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'json' => [
-                            "data_ids" => [intval($form['_id'])]
-                        ]
-                    ]
-                );
-                $dataOfResponse = $response->getContent();
-                
-                
-                // -------------------------------------------            MARKED FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-            }
-            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
-                # ------------------------------------------------------------------ ---------------------------    code CE2
-                switch (str_contains($form['nom_client'], '/')) {
-                    case false:
-                        if (!file_exists($pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile)){
-                            mkdir($pathStructureToFile . '/CE2', 0777, true);
-                            file_put_contents( $pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile , $content, LOCK_EX);
+        
+                        default:
+                            dump('Nom en erreur:   ' . $form['nom_client']);
                             break;
-                        }
-                
-                    case true:
-                        $nomClient = $form['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE2';
-                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
-    
-                        if (!file_exists($cleanNameOfTheFile)){
-                            mkdir($cleanPathStructureToTheFile, 0777, true);
-                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $form['nom_client']);
-                        break;
-                }
-                
-                // -------------------------------------------            MARK FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'json' => [
-                            "data_ids" => [intval($form['_id'])]
+                    }
+        
+                    // -------------------------------------------            MARK FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    $response = $this->client->request(
+                        'POST',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json' => [
+                                "data_ids" => [intval($form['_id'])]
+                            ]
                         ]
-                    ]
-                );
-                $dataOfResponse = $response->getContent();
-                
-                
-                // -------------------------------------------            MARKED FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                
-            }
-            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE3')) {
-                # ------------------------------------------------------------------ ---------------------------    code CE3
-                switch (str_contains($form['nom_client'], '/')) {
-                    case false:
-                        if (!file_exists($pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile)){
-                            mkdir($pathStructureToFile . '/CE3', 0777, true);
-                            file_put_contents( $pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile , $content, LOCK_EX);
+                    );
+                    $dataOfResponse = $response->getContent();
+                    
+                    
+                    // -------------------------------------------            MARKED FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                }
+                elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE2')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE2
+                    switch (str_contains($form['nom_client'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile)){
+                                mkdir($pathStructureToFile . '/CE2', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE2' . '/' . "CE2-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $form['nom_client'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE2';
+                            $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+        
+                            if (!file_exists($cleanNameOfTheFile)){
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
                             break;
-                        }
-                
-                    case true:
-                        $nomClient = $form['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE3';
-                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
-    
-                        if (!file_exists($cleanNameOfTheFile)){
-                            mkdir($cleanPathStructureToTheFile, 0777, true);
-                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $form['nom_client']);
-                        break;
-                }
-                
-                // -------------------------------------------            MARK FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'json' => [
-                            "data_ids" => [intval($form['_id'])]
-                        ]
-                    ]
-                );
-                $dataOfResponse = $response->getContent();
-                
-                
-                // -------------------------------------------            MARKED FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                
-            }
-            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE4')) {
-                # ------------------------------------------------------------------ ---------------------------    code CE4
-                switch (str_contains($form['nom_client'], '/')) {
-                    case false:
-                        if (!file_exists($pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile)){
-                            mkdir($pathStructureToFile . '/CE4', 0777, true);
-                            file_put_contents( $pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile , $content, LOCK_EX);
+        
+                        default:
+                            dump('Nom en erreur:   ' . $form['nom_client']);
                             break;
-                        }
-                
-                    case true:
-                        $nomClient = $form['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE4';
-                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
-    
-                        if (!file_exists($cleanNameOfTheFile)){
-                            mkdir($cleanPathStructureToTheFile, 0777, true);
-                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $form['nom_client']);
-                        break;
-                }
-                
-                // -------------------------------------------            MARK FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'json' => [
-                            "data_ids" => [intval($form['_id'])]
+                    }
+                    
+                    // -------------------------------------------            MARK FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    $response = $this->client->request(
+                        'POST',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json' => [
+                                "data_ids" => [intval($form['_id'])]
+                            ]
                         ]
-                    ]
-                );
-                $dataOfResponse = $response->getContent();
-                
-                
-                // -------------------------------------------            MARKED FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                
-            }
-            elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
-                # ------------------------------------------------------------------ ---------------------------    code CEA
-                switch (str_contains($form['nom_client'], '/')) {
-                    case false:
-                        if (!file_exists($pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile)){
-                            mkdir($pathStructureToFile . '/CEA', 0777, true);
-                            file_put_contents( $pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile , $content, LOCK_EX);
+                    );
+                    $dataOfResponse = $response->getContent();
+                    
+                    
+                    // -------------------------------------------            MARKED FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE3')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE3
+                    switch (str_contains($form['nom_client'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile)){
+                                mkdir($pathStructureToFile . '/CE3', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE3' . '/' . "CE3-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $form['nom_client'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE3';
+                            $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+        
+                            if (!file_exists($cleanNameOfTheFile)){
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
                             break;
-                        }
-                
-                    case true:
-                        $nomClient = $form['nom_client'];
-                        $nomClientClean = str_replace("/", "", $nomClient);
-                        $cleanPathStructureToTheFile = '../maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CEA';
-                        $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
-    
-                        if (!file_exists($cleanNameOfTheFile)){
-                            mkdir($cleanPathStructureToTheFile, 0777, true);
-                            file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
-                        }
-                        break;
-    
-                    default:
-                        dump('Nom en erreur:   ' . $form['nom_client']);
-                        break;
-                }
-                
-                // -------------------------------------------            MARK FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'json' => [
-                            "data_ids" => [intval($form['_id'])]
+        
+                        default:
+                            dump('Nom en erreur:   ' . $form['nom_client']);
+                            break;
+                    }
+                    
+                    // -------------------------------------------            MARK FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    $response = $this->client->request(
+                        'POST',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json' => [
+                                "data_ids" => [intval($form['_id'])]
+                            ]
                         ]
-                    ]
-                );
-                $dataOfResponse = $response->getContent();
-                
-                
-                // -------------------------------------------            MARKED FORM AS READ !!!
-                // ------------------------------------------------------------------------------
-                
-            }else{
-                dump("Ce formulaire n\'est pas un formulaire de maintenance" );
+                    );
+                    $dataOfResponse = $response->getContent();
+                    
+                    
+                    // -------------------------------------------            MARKED FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE4')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CE4
+                    switch (str_contains($form['nom_client'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile)){
+                                mkdir($pathStructureToFile . '/CE4', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CE4' . '/' . "CE4-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $form['nom_client'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CE4';
+                            $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+        
+                            if (!file_exists($cleanNameOfTheFile)){
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $form['nom_client']);
+                            break;
+                    }
+                    
+                    // -------------------------------------------            MARK FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    $response = $this->client->request(
+                        'POST',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json' => [
+                                "data_ids" => [intval($form['_id'])]
+                            ]
+                        ]
+                    );
+                    $dataOfResponse = $response->getContent();
+                    
+                    
+                    // -------------------------------------------            MARKED FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    
+                }
+                elseif (str_contains($dataOfFormMaintenanceUnread[0]['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CEA')) {
+                    # ------------------------------------------------------------------ ---------------------------    code CEA
+                    switch (str_contains($form['nom_client'], '/')) {
+                        case false:
+                            if (!file_exists($pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile)){
+                                mkdir($pathStructureToFile . '/CEA', 0777, true);
+                                file_put_contents( $pathStructureToFile . '/CEA' . '/' . "CEA-" . $normalNameOfTheFile , $content, LOCK_EX);
+                                break;
+                            }
+                    
+                        case true:
+                            $nomClient = $form['nom_client'];
+                            $nomClientClean = str_replace("/", "", $nomClient);
+                            $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $form['code_agence']  . '/' . $nomClientClean . '/' . substr($form['date_et_heure1'], 0, 4)  . '/CEA';
+                            $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $form['code_agence'] . '.pdf';
+        
+                            if (!file_exists($cleanNameOfTheFile)){
+                                mkdir($cleanPathStructureToTheFile, 0777, true);
+                                file_put_contents($cleanNameOfTheFile , $content, LOCK_EX);
+                            }
+                            break;
+        
+                        default:
+                            dump('Nom en erreur:   ' . $form['nom_client']);
+                            break;
+                    }
+                    
+                    // -------------------------------------------            MARK FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    $response = $this->client->request(
+                        'POST',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/markasreadbyaction/read', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'json' => [
+                                "data_ids" => [intval($form['_id'])]
+                            ]
+                        ]
+                    );
+                    $dataOfResponse = $response->getContent();
+                    
+                    
+                    // -------------------------------------------            MARKED FORM AS READ !!!
+                    // ------------------------------------------------------------------------------
+                    
+                }else{
+                    dump("Ce formulaire n\'est pas un formulaire de maintenance" );
+                }
             }
         }
         dump("Le PDF a bien été sauvegardé");
@@ -1386,9 +1389,6 @@ class FormRepository extends ServiceEntityRepository
         $dataOfFormMaintenanceUnread = [];
         foreach ($formMaintenanceUnread as $formUnread) {
             foreach ($formUnread['data'] as $form) {
-                // J'incrémente le compteur de formulaire non lu
-                // $unreadFormCounter += 1;
-                // dump('Compteur début de boucle : ' . $unreadFormCounter);
                 $response = $this->client->request(
                     'GET',
                     'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/data/' . $form['_id'], [
