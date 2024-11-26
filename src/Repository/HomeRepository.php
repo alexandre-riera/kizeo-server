@@ -39,7 +39,7 @@ class HomeRepository{
 
     public function getListOfPdf($clientSelected, $visite){
         $thisYear = date('Y');
-        $directoriesLists = scandir( "assets/pdf/maintenance/S50/$clientSelected/$thisYear/$visite/" );
+        $directoriesLists = scandir( "assets/pdf/maintenance/S50/$clientSelected/$thisYear/$visite" );
         $results = [];
         foreach($directoriesLists as $fichier){
 
