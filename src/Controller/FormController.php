@@ -145,7 +145,7 @@ class FormController extends AbstractController
     {
         $formRepository->savePdfInAssetsPdfFolder($cache);
         
-        // return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
+        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments');
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
     }
     /**
