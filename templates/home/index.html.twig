@@ -124,6 +124,11 @@
         text-align: center;
         margin-bottom: 3px;
     }
+    thead th{
+        position: sticky;
+        top: 0;
+        background-color: rgb(6, 22, 37);
+    }
     td{
         border: 1px solid black;
         width: 20rem;
@@ -588,11 +593,19 @@
 
     <table class="table-equipement-client  table-bordered">
         <thead>
-            <tr>
+            <tr class="sticky">
                 <th>Visite</th>
                 <th>Trigramme interne</th>
                 <th>Libelle</th>
                 <th>Dernière visite</th>
+                <th>Repère site client</th>
+                <th>Mise en service</th>
+                <th>Numéro de série</th>
+                <th>Marque</th>
+                <th>Hauteur</th>
+                <th>Largeur</th>
+                <th>Longueur</th>
+                <th>Date d'enregistrement</th>
                 <th>État</th>
                 <th>Statut de Maintenance</th>
                 <th>Options</th>
@@ -606,6 +619,14 @@
                     <td>{{ equipment.getNumeroEquipement() }}</td>
                     <td>{{ equipment.getLibelleEquipement() }}</td>
                     <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getRepereSiteClient() }}</td>
+                    <td>{{ equipment.getMiseEnService() }}</td>
+                    <td>{{ equipment.getNumeroDeSerie() }}</td>
+                    <td>{{ equipment.getMarque() }}</td>
+                    <td>{{ equipment.getHauteur() }}</td>
+                    <td>{{ equipment.getLargeur() }}</td>
+                    <td>{{ equipment.getLongueur() }}</td>
+                    <td>{{ equipment.getDateEnregistrement() }}</td>
                     <td>{{ equipment.getEtat() }}</td>
                     {%if equipment.statutDeMaintenance == "Vert" %}
                         <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -656,6 +677,14 @@
                     <td>{{ equipment.getNumeroEquipement() }}</td>
                     <td>{{ equipment.getLibelleEquipement() }}</td>
                     <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getRepereSiteClient() }}</td>
+                    <td>{{ equipment.getMiseEnService() }}</td>
+                    <td>{{ equipment.getNumeroDeSerie() }}</td>
+                    <td>{{ equipment.getMarque() }}</td>
+                    <td>{{ equipment.getHauteur() }}</td>
+                    <td>{{ equipment.getLargeur() }}</td>
+                    <td>{{ equipment.getLongueur() }}</td>
+                    <td>{{ equipment.getDateEnregistrement() }}</td>
                     <td>{{ equipment.getEtat() }}</td>
                     {%if equipment.statutDeMaintenance == "Vert" %}
                         <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -706,6 +735,14 @@
                     <td>{{ equipment.getNumeroEquipement() }}</td>
                     <td>{{ equipment.getLibelleEquipement() }}</td>
                     <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getRepereSiteClient() }}</td>
+                    <td>{{ equipment.getMiseEnService() }}</td>
+                    <td>{{ equipment.getNumeroDeSerie() }}</td>
+                    <td>{{ equipment.getMarque() }}</td>
+                    <td>{{ equipment.getHauteur() }}</td>
+                    <td>{{ equipment.getLargeur() }}</td>
+                    <td>{{ equipment.getLongueur() }}</td>
+                    <td>{{ equipment.getDateEnregistrement() }}</td>
                     <td>{{ equipment.getEtat() }}</td>
                     {%if equipment.statutDeMaintenance == "Vert" %}
                         <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -756,6 +793,14 @@
                     <td>{{ equipment.getNumeroEquipement() }}</td>
                     <td>{{ equipment.getLibelleEquipement() }}</td>
                     <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getRepereSiteClient() }}</td>
+                    <td>{{ equipment.getMiseEnService() }}</td>
+                    <td>{{ equipment.getNumeroDeSerie() }}</td>
+                    <td>{{ equipment.getMarque() }}</td>
+                    <td>{{ equipment.getHauteur() }}</td>
+                    <td>{{ equipment.getLargeur() }}</td>
+                    <td>{{ equipment.getLongueur() }}</td>
+                    <td>{{ equipment.getDateEnregistrement() }}</td>
                     <td>{{ equipment.getEtat() }}</td>
                     {%if equipment.statutDeMaintenance == "Vert" %}
                         <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -806,6 +851,14 @@
                     <td>{{ equipment.getNumeroEquipement() }}</td>
                     <td>{{ equipment.getLibelleEquipement() }}</td>
                     <td>{{ equipment.getDerniereVisite() }}</td>
+                    <td>{{ equipment.getRepereSiteClient() }}</td>
+                    <td>{{ equipment.getMiseEnService() }}</td>
+                    <td>{{ equipment.getNumeroDeSerie() }}</td>
+                    <td>{{ equipment.getMarque() }}</td>
+                    <td>{{ equipment.getHauteur() }}</td>
+                    <td>{{ equipment.getLargeur() }}</td>
+                    <td>{{ equipment.getLongueur() }}</td>
+                    <td>{{ equipment.getDateEnregistrement() }}</td>
                     <td>{{ equipment.getEtat() }}</td>
                     {%if equipment.statutDeMaintenance == "Vert" %}
                         <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
