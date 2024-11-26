@@ -32,7 +32,7 @@ class HomeRepository{
             array_push($listSplitted, preg_split("/[:|]/",$client));
         }
         foreach ($listSplitted as $clientFiltered) {
-            array_push($listClientsFiltered, $clientFiltered[0]);
+            array_push($listClientsFiltered, $clientFiltered[6] . "-" . $clientFiltered[0] . " - " . $clientFiltered[8]);
         }
         return $listClientsFiltered;
     }
