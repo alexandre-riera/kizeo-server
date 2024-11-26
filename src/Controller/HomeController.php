@@ -113,6 +113,7 @@ class HomeController extends AbstractController
         // ENLEVER LE NOM DE L'AGENCE ET L'ESPACE A LA FIN DU NOM DU CLIENT SÉLECTIONNÉ
         $clientSelected = rtrim($clientSelected, "\S10\S40\S50\S60\S70\S80\S100\S120\S130\S140\S150\S160\S170\ ");
         dump($clientSelected);
+        $visiteDuClient = "";
         if ($clientSelected != NULL) {
             switch ($agenceSelected) {
                 case 'S10':
@@ -164,6 +165,7 @@ class HomeController extends AbstractController
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $visiteDuClient =  $equipment->getVisite();
                         }
                     }
                     // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
@@ -176,6 +178,7 @@ class HomeController extends AbstractController
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $visiteDuClient =  $equipment->getVisite();
                         }
                     }
                     // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
@@ -406,7 +409,8 @@ class HomeController extends AbstractController
             'clientSelectedInformations'  => $clientSelectedInformations, // Selected Entity Contact
             'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
             'totalClientSelectedEquipmentsFiltered'  => count($clientSelectedEquipmentsFiltered), // Total Selected Entity Equipement where last visit is superior 3 months ago
-            'directoriesLists'  => $directoriesLists, // Total Selected Entity Equipement where last visit is superior 3 months ago
+            'directoriesLists' => $directoriesLists, // Total Selected Entity Equipement where last visit is superior 3 months ago
+            'visiteDuClient' =>  $visiteDuClient, 
         ]);
     }
 
