@@ -132,6 +132,8 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
                         }
                     }
                     break;
@@ -143,7 +145,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -155,7 +157,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -167,7 +169,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -179,7 +181,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -192,7 +194,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -205,7 +207,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -217,7 +219,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -229,7 +231,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -241,7 +243,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -253,7 +255,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -265,7 +267,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -277,7 +279,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -289,7 +291,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -301,7 +303,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -313,7 +315,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -325,7 +327,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -337,7 +339,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -349,7 +351,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -361,7 +363,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -373,7 +375,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -385,7 +387,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -397,7 +399,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -409,7 +411,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -421,7 +423,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -433,7 +435,7 @@ class HomeController extends AbstractController
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -444,6 +446,20 @@ class HomeController extends AbstractController
             }
         }
         
+        // Récupération de la visite sélectionnée, du libellé selectionné et du statut de maintenance
+        if(isset($_POST['filtersSubmit'])){
+            if(!empty($_POST['visit-dropdown']) && !empty($_POST['libelle-dropdown']) && !empty($_POST['statutdemaintenance-dropdown'])) {  
+                $visitSelected = $_POST['visit-dropdown'];
+                $libelleSelected = $_POST['libelle-dropdown'];
+                $statutDeMaintenanceSelected = $_POST['statutdemaintenance-dropdown'];
+                dump($visitSelected, $libelleSelected,$statutDeMaintenanceSelected);
+                $rows = $_POST['hiddenname'];
+                dump($rows);
+            } else {  
+                dump('Please select the value');
+            }  
+        }
+
         return $this->render('home/index.html.twig', [
             'clientsGroup' => $clientsGroup,  // Array of Contacts
             'clientsStEtienne' => $clientsStEtienne,  // Array of Contacts

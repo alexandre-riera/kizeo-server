@@ -540,27 +540,27 @@
 {% block clientEquipements %}
 {% if clientSelectedInformations != NULL and clientSelectedEquipmentsFiltered != NULL  %}
 <div>
-    <div class="filters-table">
-        <h3>Filtres</h3>
+
+    {# Try add three filters together #}
+    <form action="" method="post" class="row row-cols-lg-auto g-3 align-items-center">
         {# Filtre sur les visites #}
         <div id="filtre-visite">
             <button type="button" class="btn btn-danger" onClick="resetVisite()">X</button>
             <label for="choix-visite">Visite</label>
-            <select id="visit-dropdown" name="visit-dropdown" class="select_visite form-control">
-                <option class="select_visite_option" data-visite="CE1" value="Tous" selected>Tous</option>
+            <select id="visit-dropdown" name="visit-dropdown" class="select_visite form-select">
+                <option class="select_visite_option" value="Tous" selected>Tous</option>
                 <option class="select_visite_option" data-visite="CE1" value="CE1">CE1</option>
                 <option class="select_visite_option" data-visite="CE2" value="CE2">CE2</option>
                 <option class="select_visite_option" data-visite="CE3" value="CE3">CE3</option>
                 <option class="select_visite_option" data-visite="CE4" value="CE4">CE4</option>
                 <option class="select_visite_option" data-visite="CEA" value="CEA">CEA</option>
             </select>
-            <input type="button"  class="btn btn-primary" name="submitVisite" value="OK"  onClick="filtrerVisite()">
         </div>
         {# Filtre sur les libelles equipements #}
         <div id="filtre-trigramme">
             <button type="button" class="btn btn-danger" onClick="resetLibelle()">X</button>
             <label for="choix-libelle">Trigramme</label>
-            <select id="libelle-dropdown" name="libelle-dropdown"  class="select_libelle form-control" size="1">
+            <select id="libelle-dropdown" name="libelle-dropdown"  class="select_libelle form-select" size="1">
                 <option class="select_visite_option" data-visite="CE1" value="Tous" selected>Tous</option>
                 <option class="select_libelle_option" data-libelle="SEC" value="SEC" title="Porte sectionnelle">SEC</option>
                 <option class="select_libelle_option" data-libelle="RAP" value="RAP" title="Porte rapide">RAP</option>
@@ -573,13 +573,12 @@
                 <option class="select_libelle_option" data-libelle="PRO" value="PRO" title="Protection">PRO</option>
                 <option class="select_libelle_option" data-libelle="TEL" value="TEL" title="Table élevatrice">TEL</option>
             </select>
-            <input type="button"  class="btn btn-primary" name="submitLibelle" value="OK"  onClick="filtrerLibelle()">
         </div>
         {# Filtre sur le statut de maintenance #}
-        <div id="filtre-statutdemaintenance">
+        <div class="col-12" id="filtre-statutdemaintenance">
             <button type="button" class="btn btn-danger" onClick="resetStatutDeMaintenance()">X</button>
             <label for="choix-statutdemaintenance">Statut</label>
-            <select id="statutdemaintenance-dropdown" name="statutdemaintenance-dropdown"  class="select_statutdemaintenance form-control" size="1">
+            <select id="statutdemaintenance-dropdown" name="statutdemaintenance-dropdown"  class="select_statutdemaintenance form-select" size="1">
                 <option class="select_visite_option" data-visite="CE1" value="Tous" selected>Tous</option>
                 <option class="select_statutdemaintenance_option" data-statut="Vert" value="Vert" >Vert</option>
                 <option class="select_statutdemaintenance_option" data-statut="Orange" value="Orange" >Orange</option>
@@ -587,326 +586,330 @@
                 <option class="select_statutdemaintenance_option" data-statut="A l'arrêt" value="A l'arrêt" >A l'arrêt</option>
                 <option class="select_statutdemaintenance_option" data-statut="Inaccessible" value="Inaccessible" >Inaccessible</option>
             </select>
-            <input type="button"  class="btn btn-primary" name="submitStatutDeMaintenance" value="OK"  onClick="filtrerStatutDeMaintenance()">
         </div>
-    </div>
+      
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary" name="filtersSubmit">Submit</button>
+        </div>
+   
 
-    <table class="table-equipement-client  table-bordered">
-        <thead>
-            <tr class="sticky">
-                <th>Visite</th>
-                <th>Trigramme interne</th>
-                <th>Libelle</th>
-                <th>Dernière visite</th>
-                <th>Repère site client</th>
-                <th>Mise en service</th>
-                <th>Numéro de série</th>
-                <th>Marque</th>
-                <th>Hauteur</th>
-                <th>Largeur</th>
-                <th>Longueur</th>
-                <th>Date d'enregistrement</th>
-                <th>État</th>
-                <th>Statut de Maintenance</th>
-                <th>Options</th>
-            </tr>
-        </thead>
-    {% for equipment in clientSelectedEquipmentsFiltered %}
-        <tbody>
-            {% if equipment.visite == "CE1" %}
-                <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
-                    <td>{{ equipment.getVisite() }}</td>
-                    <td>{{ equipment.getNumeroEquipement() }}</td>
-                    <td>{{ equipment.getLibelleEquipement() }}</td>
-                    <td>{{ equipment.getDerniereVisite() }}</td>
-                    <td>{{ equipment.getRepereSiteClient() }}</td>
-                    <td>{{ equipment.getMiseEnService() }}</td>
-                    <td>{{ equipment.getNumeroDeSerie() }}</td>
-                    <td>{{ equipment.getMarque() }}</td>
-                    <td>{{ equipment.getHauteur() }}</td>
-                    <td>{{ equipment.getLargeur() }}</td>
-                    <td>{{ equipment.getLongueur() }}</td>
-                    <td>{{ equipment.getDateEnregistrement() }}</td>
-                    <td>{{ equipment.getEtat() }}</td>
-                    {%if equipment.statutDeMaintenance == "Vert" %}
-                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
-                    {% endif %}
-                    <td><button onclick="editEquipement(
-                        '{{ equipment.getId() }}',
-                        '{{ equipment.getLibelleEquipement() }}',
-                        '{{ equipment.getVisite() }}',
-                        '{{ equipment.getRaisonSociale() }}',
-                        '{{ equipment.getModeleNacelle() }}',
-                        '{{ equipment.getHauteurNacelle() }}',
-                        '{{ equipment.getIfExistDB() }}',
-                        '{{ equipment.getSignatureTech() }}',
-                        '{{ equipment.getTrigrammeTech() }}',
-                        '{{ equipment.getAnomalies() }}',
-                        '{{ equipment.getIdContact() }}',
-                        '{{ equipment.getCodeSociete() }}',
-                        '{{ equipment.getCodeAgence() }}',
-                        '{{ equipment.getNumeroEquipement() }}',
-                        '{{ equipment.getModeFonctionnement() }}',
-                        '{{ equipment.getRepereSiteClient() }}',
-                        '{{ equipment.getMiseEnService() }}',
-                        '{{ equipment.getNumeroDeSerie() }}',
-                        '{{ equipment.getMarque() }}',
-                        '{{ equipment.getHauteur() }}',
-                        '{{ equipment.getLargeur() }}',
-                        '{{ equipment.getLongueur() }}',
-                        '{{ equipment.getPlaqueSignaletique() }}',
-                        '{{ equipment.getEtat() }}',
-                        '{{ equipment.getDerniereVisite() }}',
-                        '{{ equipment.getStatutDeMaintenance() }}',
-                        '{{ equipment.getPresenceCarnetEntretien() }}',
-                        '{{ equipment.getStatutConformite() }}'
-                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                    </button></td>
+        <table name="hiddenname" class="table-equipement-client  table-bordered">
+            <thead>
+                <tr class="sticky">
+                    <th>Visite</th>
+                    <th>Trigramme interne</th>
+                    <th>Libelle</th>
+                    <th>Dernière visite</th>
+                    <th>Repère site client</th>
+                    <th>Mise en service</th>
+                    <th>Numéro de série</th>
+                    <th>Marque</th>
+                    <th>Hauteur</th>
+                    <th>Largeur</th>
+                    <th>Longueur</th>
+                    <th>Date d'enregistrement</th>
+                    <th>État</th>
+                    <th>Statut de Maintenance</th>
+                    <th>Options</th>
                 </tr>
-            {% elseif  equipment.visite  == "CE2" %}
-                <tr class="bkg_row_visite_2" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
-                    <td>{{ equipment.getVisite() }}</td>
-                    <td>{{ equipment.getNumeroEquipement() }}</td>
-                    <td>{{ equipment.getLibelleEquipement() }}</td>
-                    <td>{{ equipment.getDerniereVisite() }}</td>
-                    <td>{{ equipment.getRepereSiteClient() }}</td>
-                    <td>{{ equipment.getMiseEnService() }}</td>
-                    <td>{{ equipment.getNumeroDeSerie() }}</td>
-                    <td>{{ equipment.getMarque() }}</td>
-                    <td>{{ equipment.getHauteur() }}</td>
-                    <td>{{ equipment.getLargeur() }}</td>
-                    <td>{{ equipment.getLongueur() }}</td>
-                    <td>{{ equipment.getDateEnregistrement() }}</td>
-                    <td>{{ equipment.getEtat() }}</td>
-                    {%if equipment.statutDeMaintenance == "Vert" %}
-                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
-                    {% endif %}
-                    <td><button onclick="editEquipement(
-                        '{{ equipment.getId() }}',
-                        '{{ equipment.getLibelleEquipement() }}',
-                        '{{ equipment.getVisite() }}',
-                        '{{ equipment.getRaisonSociale() }}',
-                        '{{ equipment.getModeleNacelle() }}',
-                        '{{ equipment.getHauteurNacelle() }}',
-                        '{{ equipment.getIfExistDB() }}',
-                        '{{ equipment.getSignatureTech() }}',
-                        '{{ equipment.getTrigrammeTech() }}',
-                        '{{ equipment.getAnomalies() }}',
-                        '{{ equipment.getIdContact() }}',
-                        '{{ equipment.getCodeSociete() }}',
-                        '{{ equipment.getCodeAgence() }}',
-                        '{{ equipment.getNumeroEquipement() }}',
-                        '{{ equipment.getModeFonctionnement() }}',
-                        '{{ equipment.getRepereSiteClient() }}',
-                        '{{ equipment.getMiseEnService() }}',
-                        '{{ equipment.getNumeroDeSerie() }}',
-                        '{{ equipment.getMarque() }}',
-                        '{{ equipment.getHauteur() }}',
-                        '{{ equipment.getLargeur() }}',
-                        '{{ equipment.getLongueur() }}',
-                        '{{ equipment.getPlaqueSignaletique() }}',
-                        '{{ equipment.getEtat() }}',
-                        '{{ equipment.getDerniereVisite() }}',
-                        '{{ equipment.getStatutDeMaintenance() }}',
-                        '{{ equipment.getPresenceCarnetEntretien() }}',
-                        '{{ equipment.getStatutConformite() }}'
-                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                    </button></td>
-                </tr>
-            {% elseif  equipment.visite  == "CE3" %}
-                <tr class="bkg_row_visite_3" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
-                    <td>{{ equipment.getVisite() }}</td>
-                    <td>{{ equipment.getNumeroEquipement() }}</td>
-                    <td>{{ equipment.getLibelleEquipement() }}</td>
-                    <td>{{ equipment.getDerniereVisite() }}</td>
-                    <td>{{ equipment.getRepereSiteClient() }}</td>
-                    <td>{{ equipment.getMiseEnService() }}</td>
-                    <td>{{ equipment.getNumeroDeSerie() }}</td>
-                    <td>{{ equipment.getMarque() }}</td>
-                    <td>{{ equipment.getHauteur() }}</td>
-                    <td>{{ equipment.getLargeur() }}</td>
-                    <td>{{ equipment.getLongueur() }}</td>
-                    <td>{{ equipment.getDateEnregistrement() }}</td>
-                    <td>{{ equipment.getEtat() }}</td>
-                    {%if equipment.statutDeMaintenance == "Vert" %}
-                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
-                    {% endif %}
-                    <td><button onclick="editEquipement(
-                        '{{ equipment.getId() }}',
-                        '{{ equipment.getLibelleEquipement() }}',
-                        '{{ equipment.getVisite() }}',
-                        '{{ equipment.getRaisonSociale() }}',
-                        '{{ equipment.getModeleNacelle() }}',
-                        '{{ equipment.getHauteurNacelle() }}',
-                        '{{ equipment.getIfExistDB() }}',
-                        '{{ equipment.getSignatureTech() }}',
-                        '{{ equipment.getTrigrammeTech() }}',
-                        '{{ equipment.getAnomalies() }}',
-                        '{{ equipment.getIdContact() }}',
-                        '{{ equipment.getCodeSociete() }}',
-                        '{{ equipment.getCodeAgence() }}',
-                        '{{ equipment.getNumeroEquipement() }}',
-                        '{{ equipment.getModeFonctionnement() }}',
-                        '{{ equipment.getRepereSiteClient() }}',
-                        '{{ equipment.getMiseEnService() }}',
-                        '{{ equipment.getNumeroDeSerie() }}',
-                        '{{ equipment.getMarque() }}',
-                        '{{ equipment.getHauteur() }}',
-                        '{{ equipment.getLargeur() }}',
-                        '{{ equipment.getLongueur() }}',
-                        '{{ equipment.getPlaqueSignaletique() }}',
-                        '{{ equipment.getEtat() }}',
-                        '{{ equipment.getDerniereVisite() }}',
-                        '{{ equipment.getStatutDeMaintenance() }}',
-                        '{{ equipment.getPresenceCarnetEntretien() }}',
-                        '{{ equipment.getStatutConformite() }}'
-                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                    </button></td>
-                </tr>
-            {% elseif  equipment.visite  == "CE4" %}
-                <tr class="bkg_row_visite_4" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
-                    <td>{{ equipment.getVisite() }}</td>
-                    <td>{{ equipment.getNumeroEquipement() }}</td>
-                    <td>{{ equipment.getLibelleEquipement() }}</td>
-                    <td>{{ equipment.getDerniereVisite() }}</td>
-                    <td>{{ equipment.getRepereSiteClient() }}</td>
-                    <td>{{ equipment.getMiseEnService() }}</td>
-                    <td>{{ equipment.getNumeroDeSerie() }}</td>
-                    <td>{{ equipment.getMarque() }}</td>
-                    <td>{{ equipment.getHauteur() }}</td>
-                    <td>{{ equipment.getLargeur() }}</td>
-                    <td>{{ equipment.getLongueur() }}</td>
-                    <td>{{ equipment.getDateEnregistrement() }}</td>
-                    <td>{{ equipment.getEtat() }}</td>
-                    {%if equipment.statutDeMaintenance == "Vert" %}
-                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
-                    {% endif %}
-                    <td><button onclick="editEquipement(
-                        '{{ equipment.getId() }}',
-                        '{{ equipment.getLibelleEquipement() }}',
-                        '{{ equipment.getVisite() }}',
-                        '{{ equipment.getRaisonSociale() }}',
-                        '{{ equipment.getModeleNacelle() }}',
-                        '{{ equipment.getHauteurNacelle() }}',
-                        '{{ equipment.getIfExistDB() }}',
-                        '{{ equipment.getSignatureTech() }}',
-                        '{{ equipment.getTrigrammeTech() }}',
-                        '{{ equipment.getAnomalies() }}',
-                        '{{ equipment.getIdContact() }}',
-                        '{{ equipment.getCodeSociete() }}',
-                        '{{ equipment.getCodeAgence() }}',
-                        '{{ equipment.getNumeroEquipement() }}',
-                        '{{ equipment.getModeFonctionnement() }}',
-                        '{{ equipment.getRepereSiteClient() }}',
-                        '{{ equipment.getMiseEnService() }}',
-                        '{{ equipment.getNumeroDeSerie() }}',
-                        '{{ equipment.getMarque() }}',
-                        '{{ equipment.getHauteur() }}',
-                        '{{ equipment.getLargeur() }}',
-                        '{{ equipment.getLongueur() }}',
-                        '{{ equipment.getPlaqueSignaletique() }}',
-                        '{{ equipment.getEtat() }}',
-                        '{{ equipment.getDerniereVisite() }}',
-                        '{{ equipment.getStatutDeMaintenance() }}',
-                        '{{ equipment.getPresenceCarnetEntretien() }}',
-                        '{{ equipment.getStatutConformite() }}'
-                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                    </button></td>
-                </tr>
-            {% elseif  equipment.visite  == "CEA" %}
-                <tr class="bkg_row_visite_A" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
-                    <td>{{ equipment.getVisite() }}</td>
-                    <td>{{ equipment.getNumeroEquipement() }}</td>
-                    <td>{{ equipment.getLibelleEquipement() }}</td>
-                    <td>{{ equipment.getDerniereVisite() }}</td>
-                    <td>{{ equipment.getRepereSiteClient() }}</td>
-                    <td>{{ equipment.getMiseEnService() }}</td>
-                    <td>{{ equipment.getNumeroDeSerie() }}</td>
-                    <td>{{ equipment.getMarque() }}</td>
-                    <td>{{ equipment.getHauteur() }}</td>
-                    <td>{{ equipment.getLargeur() }}</td>
-                    <td>{{ equipment.getLongueur() }}</td>
-                    <td>{{ equipment.getDateEnregistrement() }}</td>
-                    <td>{{ equipment.getEtat() }}</td>
-                    {%if equipment.statutDeMaintenance == "Vert" %}
-                        <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                        <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                        <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                        <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
-                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                        <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
-                    {% endif %}
-                    <td><button onclick="editEquipement(
-                        '{{ equipment.getId() }}',
-                        '{{ equipment.getLibelleEquipement() }}',
-                        '{{ equipment.getVisite() }}',
-                        '{{ equipment.getRaisonSociale() }}',
-                        '{{ equipment.getModeleNacelle() }}',
-                        '{{ equipment.getHauteurNacelle() }}',
-                        '{{ equipment.getIfExistDB() }}',
-                        '{{ equipment.getSignatureTech() }}',
-                        '{{ equipment.getTrigrammeTech() }}',
-                        '{{ equipment.getAnomalies() }}',
-                        '{{ equipment.getIdContact() }}',
-                        '{{ equipment.getCodeSociete() }}',
-                        '{{ equipment.getCodeAgence() }}',
-                        '{{ equipment.getNumeroEquipement() }}',
-                        '{{ equipment.getModeFonctionnement() }}',
-                        '{{ equipment.getRepereSiteClient() }}',
-                        '{{ equipment.getMiseEnService() }}',
-                        '{{ equipment.getNumeroDeSerie() }}',
-                        '{{ equipment.getMarque() }}',
-                        '{{ equipment.getHauteur() }}',
-                        '{{ equipment.getLargeur() }}',
-                        '{{ equipment.getLongueur() }}',
-                        '{{ equipment.getPlaqueSignaletique() }}',
-                        '{{ equipment.getEtat() }}',
-                        '{{ equipment.getDerniereVisite() }}',
-                        '{{ equipment.getStatutDeMaintenance() }}',
-                        '{{ equipment.getPresenceCarnetEntretien() }}',
-                        '{{ equipment.getStatutConformite() }}'
-                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                    </button></td>
-                </tr>
-            {% endif %}
-        </tbody>
-    {% endfor %}
-    </table>
+            </thead>
+        {% for equipment in clientSelectedEquipmentsFiltered %}
+            <tbody>
+                {% if equipment.visite == "CE1" %}
+                    <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                        <td>{{ equipment.getVisite() }}</td>
+                        <td>{{ equipment.getNumeroEquipement() }}</td>
+                        <td>{{ equipment.getLibelleEquipement() }}</td>
+                        <td>{{ equipment.getDerniereVisite() }}</td>
+                        <td>{{ equipment.getRepereSiteClient() }}</td>
+                        <td>{{ equipment.getMiseEnService() }}</td>
+                        <td>{{ equipment.getNumeroDeSerie() }}</td>
+                        <td>{{ equipment.getMarque() }}</td>
+                        <td>{{ equipment.getHauteur() }}</td>
+                        <td>{{ equipment.getLargeur() }}</td>
+                        <td>{{ equipment.getLongueur() }}</td>
+                        <td>{{ equipment.getDateEnregistrement() }}</td>
+                        <td>{{ equipment.getEtat() }}</td>
+                        {%if equipment.statutDeMaintenance == "Vert" %}
+                            <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Orange" %}
+                            <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                            <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                            <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                            <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% endif %}
+                        <td><button onclick="editEquipement(
+                            '{{ equipment.getId() }}',
+                            '{{ equipment.getLibelleEquipement() }}',
+                            '{{ equipment.getVisite() }}',
+                            '{{ equipment.getRaisonSociale() }}',
+                            '{{ equipment.getModeleNacelle() }}',
+                            '{{ equipment.getHauteurNacelle() }}',
+                            '{{ equipment.getIfExistDB() }}',
+                            '{{ equipment.getSignatureTech() }}',
+                            '{{ equipment.getTrigrammeTech() }}',
+                            '{{ equipment.getAnomalies() }}',
+                            '{{ equipment.getIdContact() }}',
+                            '{{ equipment.getCodeSociete() }}',
+                            '{{ equipment.getCodeAgence() }}',
+                            '{{ equipment.getNumeroEquipement() }}',
+                            '{{ equipment.getModeFonctionnement() }}',
+                            '{{ equipment.getRepereSiteClient() }}',
+                            '{{ equipment.getMiseEnService() }}',
+                            '{{ equipment.getNumeroDeSerie() }}',
+                            '{{ equipment.getMarque() }}',
+                            '{{ equipment.getHauteur() }}',
+                            '{{ equipment.getLargeur() }}',
+                            '{{ equipment.getLongueur() }}',
+                            '{{ equipment.getPlaqueSignaletique() }}',
+                            '{{ equipment.getEtat() }}',
+                            '{{ equipment.getDerniereVisite() }}',
+                            '{{ equipment.getStatutDeMaintenance() }}',
+                            '{{ equipment.getPresenceCarnetEntretien() }}',
+                            '{{ equipment.getStatutConformite() }}'
+                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                        </button></td>
+                    </tr>
+                {% elseif  equipment.visite  == "CE2" %}
+                    <tr class="bkg_row_visite_2" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                        <td>{{ equipment.getVisite() }}</td>
+                        <td>{{ equipment.getNumeroEquipement() }}</td>
+                        <td>{{ equipment.getLibelleEquipement() }}</td>
+                        <td>{{ equipment.getDerniereVisite() }}</td>
+                        <td>{{ equipment.getRepereSiteClient() }}</td>
+                        <td>{{ equipment.getMiseEnService() }}</td>
+                        <td>{{ equipment.getNumeroDeSerie() }}</td>
+                        <td>{{ equipment.getMarque() }}</td>
+                        <td>{{ equipment.getHauteur() }}</td>
+                        <td>{{ equipment.getLargeur() }}</td>
+                        <td>{{ equipment.getLongueur() }}</td>
+                        <td>{{ equipment.getDateEnregistrement() }}</td>
+                        <td>{{ equipment.getEtat() }}</td>
+                        {%if equipment.statutDeMaintenance == "Vert" %}
+                            <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Orange" %}
+                            <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                            <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                            <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                            <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% endif %}
+                        <td><button onclick="editEquipement(
+                            '{{ equipment.getId() }}',
+                            '{{ equipment.getLibelleEquipement() }}',
+                            '{{ equipment.getVisite() }}',
+                            '{{ equipment.getRaisonSociale() }}',
+                            '{{ equipment.getModeleNacelle() }}',
+                            '{{ equipment.getHauteurNacelle() }}',
+                            '{{ equipment.getIfExistDB() }}',
+                            '{{ equipment.getSignatureTech() }}',
+                            '{{ equipment.getTrigrammeTech() }}',
+                            '{{ equipment.getAnomalies() }}',
+                            '{{ equipment.getIdContact() }}',
+                            '{{ equipment.getCodeSociete() }}',
+                            '{{ equipment.getCodeAgence() }}',
+                            '{{ equipment.getNumeroEquipement() }}',
+                            '{{ equipment.getModeFonctionnement() }}',
+                            '{{ equipment.getRepereSiteClient() }}',
+                            '{{ equipment.getMiseEnService() }}',
+                            '{{ equipment.getNumeroDeSerie() }}',
+                            '{{ equipment.getMarque() }}',
+                            '{{ equipment.getHauteur() }}',
+                            '{{ equipment.getLargeur() }}',
+                            '{{ equipment.getLongueur() }}',
+                            '{{ equipment.getPlaqueSignaletique() }}',
+                            '{{ equipment.getEtat() }}',
+                            '{{ equipment.getDerniereVisite() }}',
+                            '{{ equipment.getStatutDeMaintenance() }}',
+                            '{{ equipment.getPresenceCarnetEntretien() }}',
+                            '{{ equipment.getStatutConformite() }}'
+                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                        </button></td>
+                    </tr>
+                {% elseif  equipment.visite  == "CE3" %}
+                    <tr class="bkg_row_visite_3" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                        <td>{{ equipment.getVisite() }}</td>
+                        <td>{{ equipment.getNumeroEquipement() }}</td>
+                        <td>{{ equipment.getLibelleEquipement() }}</td>
+                        <td>{{ equipment.getDerniereVisite() }}</td>
+                        <td>{{ equipment.getRepereSiteClient() }}</td>
+                        <td>{{ equipment.getMiseEnService() }}</td>
+                        <td>{{ equipment.getNumeroDeSerie() }}</td>
+                        <td>{{ equipment.getMarque() }}</td>
+                        <td>{{ equipment.getHauteur() }}</td>
+                        <td>{{ equipment.getLargeur() }}</td>
+                        <td>{{ equipment.getLongueur() }}</td>
+                        <td>{{ equipment.getDateEnregistrement() }}</td>
+                        <td>{{ equipment.getEtat() }}</td>
+                        {%if equipment.statutDeMaintenance == "Vert" %}
+                            <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Orange" %}
+                            <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                            <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                            <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                            <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% endif %}
+                        <td><button onclick="editEquipement(
+                            '{{ equipment.getId() }}',
+                            '{{ equipment.getLibelleEquipement() }}',
+                            '{{ equipment.getVisite() }}',
+                            '{{ equipment.getRaisonSociale() }}',
+                            '{{ equipment.getModeleNacelle() }}',
+                            '{{ equipment.getHauteurNacelle() }}',
+                            '{{ equipment.getIfExistDB() }}',
+                            '{{ equipment.getSignatureTech() }}',
+                            '{{ equipment.getTrigrammeTech() }}',
+                            '{{ equipment.getAnomalies() }}',
+                            '{{ equipment.getIdContact() }}',
+                            '{{ equipment.getCodeSociete() }}',
+                            '{{ equipment.getCodeAgence() }}',
+                            '{{ equipment.getNumeroEquipement() }}',
+                            '{{ equipment.getModeFonctionnement() }}',
+                            '{{ equipment.getRepereSiteClient() }}',
+                            '{{ equipment.getMiseEnService() }}',
+                            '{{ equipment.getNumeroDeSerie() }}',
+                            '{{ equipment.getMarque() }}',
+                            '{{ equipment.getHauteur() }}',
+                            '{{ equipment.getLargeur() }}',
+                            '{{ equipment.getLongueur() }}',
+                            '{{ equipment.getPlaqueSignaletique() }}',
+                            '{{ equipment.getEtat() }}',
+                            '{{ equipment.getDerniereVisite() }}',
+                            '{{ equipment.getStatutDeMaintenance() }}',
+                            '{{ equipment.getPresenceCarnetEntretien() }}',
+                            '{{ equipment.getStatutConformite() }}'
+                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                        </button></td>
+                    </tr>
+                {% elseif  equipment.visite  == "CE4" %}
+                    <tr class="bkg_row_visite_4" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                        <td>{{ equipment.getVisite() }}</td>
+                        <td>{{ equipment.getNumeroEquipement() }}</td>
+                        <td>{{ equipment.getLibelleEquipement() }}</td>
+                        <td>{{ equipment.getDerniereVisite() }}</td>
+                        <td>{{ equipment.getRepereSiteClient() }}</td>
+                        <td>{{ equipment.getMiseEnService() }}</td>
+                        <td>{{ equipment.getNumeroDeSerie() }}</td>
+                        <td>{{ equipment.getMarque() }}</td>
+                        <td>{{ equipment.getHauteur() }}</td>
+                        <td>{{ equipment.getLargeur() }}</td>
+                        <td>{{ equipment.getLongueur() }}</td>
+                        <td>{{ equipment.getDateEnregistrement() }}</td>
+                        <td>{{ equipment.getEtat() }}</td>
+                        {%if equipment.statutDeMaintenance == "Vert" %}
+                            <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Orange" %}
+                            <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                            <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                            <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                            <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% endif %}
+                        <td><button onclick="editEquipement(
+                            '{{ equipment.getId() }}',
+                            '{{ equipment.getLibelleEquipement() }}',
+                            '{{ equipment.getVisite() }}',
+                            '{{ equipment.getRaisonSociale() }}',
+                            '{{ equipment.getModeleNacelle() }}',
+                            '{{ equipment.getHauteurNacelle() }}',
+                            '{{ equipment.getIfExistDB() }}',
+                            '{{ equipment.getSignatureTech() }}',
+                            '{{ equipment.getTrigrammeTech() }}',
+                            '{{ equipment.getAnomalies() }}',
+                            '{{ equipment.getIdContact() }}',
+                            '{{ equipment.getCodeSociete() }}',
+                            '{{ equipment.getCodeAgence() }}',
+                            '{{ equipment.getNumeroEquipement() }}',
+                            '{{ equipment.getModeFonctionnement() }}',
+                            '{{ equipment.getRepereSiteClient() }}',
+                            '{{ equipment.getMiseEnService() }}',
+                            '{{ equipment.getNumeroDeSerie() }}',
+                            '{{ equipment.getMarque() }}',
+                            '{{ equipment.getHauteur() }}',
+                            '{{ equipment.getLargeur() }}',
+                            '{{ equipment.getLongueur() }}',
+                            '{{ equipment.getPlaqueSignaletique() }}',
+                            '{{ equipment.getEtat() }}',
+                            '{{ equipment.getDerniereVisite() }}',
+                            '{{ equipment.getStatutDeMaintenance() }}',
+                            '{{ equipment.getPresenceCarnetEntretien() }}',
+                            '{{ equipment.getStatutConformite() }}'
+                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                        </button></td>
+                    </tr>
+                {% elseif  equipment.visite  == "CEA" %}
+                    <tr class="bkg_row_visite_A" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
+                        <td>{{ equipment.getVisite() }}</td>
+                        <td>{{ equipment.getNumeroEquipement() }}</td>
+                        <td>{{ equipment.getLibelleEquipement() }}</td>
+                        <td>{{ equipment.getDerniereVisite() }}</td>
+                        <td>{{ equipment.getRepereSiteClient() }}</td>
+                        <td>{{ equipment.getMiseEnService() }}</td>
+                        <td>{{ equipment.getNumeroDeSerie() }}</td>
+                        <td>{{ equipment.getMarque() }}</td>
+                        <td>{{ equipment.getHauteur() }}</td>
+                        <td>{{ equipment.getLargeur() }}</td>
+                        <td>{{ equipment.getLongueur() }}</td>
+                        <td>{{ equipment.getDateEnregistrement() }}</td>
+                        <td>{{ equipment.getEtat() }}</td>
+                        {%if equipment.statutDeMaintenance == "Vert" %}
+                            <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Orange" %}
+                            <td class="bkg_orange">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                            <td class="bkg_rouge">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                            <td class="bkg_arret">{{ equipment.getStatutDeMaintenance() }}</td>
+                            {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                            <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
+                        {% endif %}
+                        <td><button onclick="editEquipement(
+                            '{{ equipment.getId() }}',
+                            '{{ equipment.getLibelleEquipement() }}',
+                            '{{ equipment.getVisite() }}',
+                            '{{ equipment.getRaisonSociale() }}',
+                            '{{ equipment.getModeleNacelle() }}',
+                            '{{ equipment.getHauteurNacelle() }}',
+                            '{{ equipment.getIfExistDB() }}',
+                            '{{ equipment.getSignatureTech() }}',
+                            '{{ equipment.getTrigrammeTech() }}',
+                            '{{ equipment.getAnomalies() }}',
+                            '{{ equipment.getIdContact() }}',
+                            '{{ equipment.getCodeSociete() }}',
+                            '{{ equipment.getCodeAgence() }}',
+                            '{{ equipment.getNumeroEquipement() }}',
+                            '{{ equipment.getModeFonctionnement() }}',
+                            '{{ equipment.getRepereSiteClient() }}',
+                            '{{ equipment.getMiseEnService() }}',
+                            '{{ equipment.getNumeroDeSerie() }}',
+                            '{{ equipment.getMarque() }}',
+                            '{{ equipment.getHauteur() }}',
+                            '{{ equipment.getLargeur() }}',
+                            '{{ equipment.getLongueur() }}',
+                            '{{ equipment.getPlaqueSignaletique() }}',
+                            '{{ equipment.getEtat() }}',
+                            '{{ equipment.getDerniereVisite() }}',
+                            '{{ equipment.getStatutDeMaintenance() }}',
+                            '{{ equipment.getPresenceCarnetEntretien() }}',
+                            '{{ equipment.getStatutConformite() }}'
+                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                        </button></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        {% endfor %}
+        </table>
+    </form>
 </div>
 {%endif%}
 {% endblock %}
