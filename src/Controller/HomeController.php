@@ -447,7 +447,8 @@ class HomeController extends AbstractController
                     break;
             }
         }
-
+        $agenceSelected = trim($agenceSelected);
+        
         // // --------------------------------------------------              test filters 
         // if(isset( $_GET['visit-dropdown']) || isset( $_GET['libelle-dropdown']) || isset( $_GET['statutdemaintenance-dropdown'])){ 
         //     $visitSelected = $_GET['visit-dropdown'];
