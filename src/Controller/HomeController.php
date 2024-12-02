@@ -42,9 +42,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class HomeController extends AbstractController
 {
+
     #[Route('/', name: 'app_front')]
     public function index(CacheInterface $cache,EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request, HomeRepository $homeRepository): Response
     {
@@ -445,20 +447,64 @@ class HomeController extends AbstractController
                     break;
             }
         }
+
+        // // --------------------------------------------------              test filters 
+        // if(isset( $_GET['visit-dropdown']) || isset( $_GET['libelle-dropdown']) || isset( $_GET['statutdemaintenance-dropdown'])){ 
+        //     $visitSelected = $_GET['visit-dropdown'];
+        //     $libelleSelected = $_GET['libelle-dropdown'];
+        //     $statutDeMaintenanceSelected = $_GET['statutdemaintenance-dropdown'];
+            
+        //     $idClientSelected = trim($idClientSelected);
+        //     $agenceSelected = trim($agenceSelected);
+        //     $visitSelected = trim($visitSelected);
+        //     switch ($agenceSelected) {
+        //         case 'S50':
+        //             $conn = $entityManager->getConnection();
+        //             $sql = 'SELECT * FROM equipement_s50 WHERE equipement_s50.id_contact = "' . $idClientSelected . '" AND equipement_s50.derniere_visite IS NOT NULL '; 
+        //             // Append conditions based on filters
+        //             if ($visitSelected != '') {
+        //                 $sql .= " AND equipement_s50.visite = " . $visitSelected;
+        //             }
+        //             if ($libelleSelected != '') {
+        //                 $sql .= " AND equipement_s50.numero_equipement = " . $libelleSelected;
+        //             }
+        //             if ($statutDeMaintenanceSelected != '') {
+        //                 $sql .= " AND equipement_s50.statut_de_maintenance = " . $statutDeMaintenanceSelected . "";
+        //             }
+
+        //             $stmt = $conn->prepare($sql);
+        //             $result = $stmt->executeQuery();
+        //             dump("passe sans espace");
+        //             dd($result->fetchAssociative());
+        //             break;
+        //         case '_S50':
+        //             $conn = $entityManager->getConnection();
+        //             $sql = 'SELECT * FROM equipement_s50 WHERE equipement_s50.id_contact = "' . $idClientSelected . '" AND equipement_s50.derniere_visite IS NOT NULL '; 
+        //             // Append conditions based on filters
+        //             if ($visitSelected != '') {
+        //                 $sql .= " AND equipement_s50.visite = " . $visitSelected;
+        //             }
+        //             if ($libelleSelected != '') {
+        //                 $sql .= " AND equipement_s50.numero_equipement = " . $libelleSelected;
+        //             }
+        //             if ($statutDeMaintenanceSelected != '') {
+        //                 $sql .= " AND equipement_s50.statut_de_maintenance = " . $statutDeMaintenanceSelected . "";
+        //             }
+
+        //             $stmt = $conn->prepare($sql);
+        //             $result = $stmt->executeQuery();
+        //             dump("passe avec espace");
+        //             dd($result->fetchAssociative());
+        //             break;
+                
+        //         default:
+        //             # code...
+        //             break;
+        //     }
+
+        // }
         
-        // Récupération de la visite sélectionnée, du libellé selectionné et du statut de maintenance
-        if(isset($_POST['filtersSubmit'])){
-            if(!empty($_POST['visit-dropdown']) && !empty($_POST['libelle-dropdown']) && !empty($_POST['statutdemaintenance-dropdown'])) {  
-                $visitSelected = $_POST['visit-dropdown'];
-                $libelleSelected = $_POST['libelle-dropdown'];
-                $statutDeMaintenanceSelected = $_POST['statutdemaintenance-dropdown'];
-                dump($visitSelected, $libelleSelected,$statutDeMaintenanceSelected);
-                $rows = $_POST['hiddenname'];
-                dump($rows);
-            } else {  
-                dump('Please select the value');
-            }  
-        }
+        
 
         return $this->render('home/index.html.twig', [
             'clientsGroup' => $clientsGroup,  // Array of Contacts
@@ -481,7 +527,8 @@ class HomeController extends AbstractController
             'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
             'totalClientSelectedEquipmentsFiltered'  => count($clientSelectedEquipmentsFiltered), // Total Selected Entity Equipement where last visit is superior 3 months ago
             'directoriesLists' => $directoriesLists, // Total Selected Entity Equipement where last visit is superior 3 months ago
-            'visiteDuClient' =>  $visiteDuClient, 
+            'visiteDuClient' =>  $visiteDuClient,
+            'idClientSelected' =>  $idClientSelected,
         ]);
     }
 
@@ -614,6 +661,7 @@ class HomeController extends AbstractController
             $entityManager->flush();
 
         }
-        return new Response("L'équipement édité dans la modal a bien été enregistré en base de données", Response::HTTP_OK, [], true);
+        // return new Response("L'équipement édité dans la modal a bien été enregistré en base de données", Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_front');
     }
 }
