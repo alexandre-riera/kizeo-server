@@ -52,35 +52,92 @@ class HomeController extends AbstractController
     {
         // GET CONTACTS KIZEO BY AGENCY
         // $clientsGroup  =  $homeRepository->getListClientFromKizeoById();
-        $clientsStEtienne  =  $homeRepository->getListClientFromKizeoById(427441);
-        $clientsGrenoble  =  $homeRepository->getListClientFromKizeoById(409466);
-        $clientsLyon  =  $homeRepository->getListClientFromKizeoById(427443);
+        
+        $clientsStEtienne  =  $cache->get('client_st_etienne', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(427441);
+            return $clients;
+        });
+        $clientsGrenoble  =  $cache->get('client_grenoble', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(409466);
+            return $clients;
+        });
+        $clientsLyon  =  $cache->get('client_lyon', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(427443);
+            return $clients;
+        });
         // $clientsBordeaux  =  $homeRepository->getListClientFromKizeoById();
-        $clientsParisNord  =  $homeRepository->getListClientFromKizeoById(421994);
-        $clientsMontpellier  =  $homeRepository->getListClientFromKizeoById(423852);
+        $clientsParisNord  =  $cache->get('client_paris_nord', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(421994);
+            return $clients;
+        });
+        $clientsMontpellier =  $cache->get('client_montpellier', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(423852);
+            return $clients;
+        });
         // $clientsHautsDeFrance  =  $homeRepository->getListClientFromKizeoById();
         // $clientsToulouse  =  $homeRepository->getListClientFromKizeoById();
-        $clientsEpinal  =  $homeRepository->getListClientFromKizeoById(427681);
+        $clientsEpinal =  $cache->get('client_epinal', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(427681);
+            return $clients;
+        });
         // $clientsPaca  =  $homeRepository->getListClientFromKizeoById();
-        $clientsRouen  =  $homeRepository->getListClientFromKizeoById(427677);
+        $clientsRouen =  $cache->get('client_rouen', function (ItemInterface $item) use ($homeRepository)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $homeRepository->getListClientFromKizeoById(427677);
+            return $clients;
+        });
         // $clientsRennes  =  $homeRepository->getListClientFromKizeoById();
         
         // GET CONTACTS GESTAN BY AGENCY
-        $clientsGroup  =  $entityManager->getRepository(ContactS10::class)->findAll();
+        $clientsGroup =  $cache->get('client_group', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS10::class)->findAll();
+            return $clients;
+        });
         // $clientsStEtienne  =  $entityManager->getRepository(ContactS40::class)->findAll();
         // $clientsGrenoble  =  $entityManager->getRepository(ContactS50::class)->findAll();
         // $clientsLyon  =  $entityManager->getRepository(ContactS60::class)->findAll();
-        $clientsBordeaux  =  $entityManager->getRepository(ContactS70::class)->findAll();
+        $clientsBordeaux =  $cache->get('client_bordeaux', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS70::class)->findAll();
+            return $clients;
+        });
         // $clientsParisNord  =  $entityManager->getRepository(ContactS80::class)->findAll();
         // $clientsMontpellier  =  $entityManager->getRepository(ContactS100::class)->findAll();
-        $clientsHautsDeFrance  =  $entityManager->getRepository(ContactS120::class)->findAll();
-        $clientsToulouse  =  $entityManager->getRepository(ContactS130::class)->findAll();
+        $clientsHautsDeFrance =  $cache->get('client_hauts_de_france', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS120::class)->findAll();
+            return $clients;
+        });
+        $clientsToulouse =  $cache->get('client_toulouse', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS130::class)->findAll();
+            return $clients;
+        });
         // $clientsEpinal  =  $entityManager->getRepository(ContactS140::class)->findAll();
-        $clientsPaca  =  $entityManager->getRepository(ContactS150::class)->findAll();
+        $clientsPaca =  $cache->get('client_paca', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS150::class)->findAll();
+            return $clients;
+        });
         // $clientsRouen  =  $entityManager->getRepository(ContactS160::class)->findAll();
-        $clientsRennes  =  $entityManager->getRepository(ContactS170::class)->findAll();
+        $clientsRennes =  $cache->get('client_rennes', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $clients = $entityManager->getRepository(ContactS170::class)->findAll();
+            return $clients;
+        });
         
-        $agenciesArray = $entityManager->getRepository(Agency::class)->findAll();
+        $agenciesArray =  $cache->get('agency_array', function (ItemInterface $item) use ($entityManager)  {
+            $item->expiresAfter(2629800 ); // 1 month in cache
+            $agencies = $entityManager->getRepository(Agency::class)->findAll();
+            return $agencies;
+        });
 
         // GET CLIENT SELECTED INFORMATION BY AGENCY BY HIS RAISON_SOCIALE
         $clientSelectedInformations  = "";
@@ -448,64 +505,6 @@ class HomeController extends AbstractController
             }
         }
         $agenceSelected = trim($agenceSelected);
-        
-        // // --------------------------------------------------              test filters 
-        // if(isset( $_GET['visit-dropdown']) || isset( $_GET['libelle-dropdown']) || isset( $_GET['statutdemaintenance-dropdown'])){ 
-        //     $visitSelected = $_GET['visit-dropdown'];
-        //     $libelleSelected = $_GET['libelle-dropdown'];
-        //     $statutDeMaintenanceSelected = $_GET['statutdemaintenance-dropdown'];
-            
-        //     $idClientSelected = trim($idClientSelected);
-        //     $agenceSelected = trim($agenceSelected);
-        //     $visitSelected = trim($visitSelected);
-        //     switch ($agenceSelected) {
-        //         case 'S50':
-        //             $conn = $entityManager->getConnection();
-        //             $sql = 'SELECT * FROM equipement_s50 WHERE equipement_s50.id_contact = "' . $idClientSelected . '" AND equipement_s50.derniere_visite IS NOT NULL '; 
-        //             // Append conditions based on filters
-        //             if ($visitSelected != '') {
-        //                 $sql .= " AND equipement_s50.visite = " . $visitSelected;
-        //             }
-        //             if ($libelleSelected != '') {
-        //                 $sql .= " AND equipement_s50.numero_equipement = " . $libelleSelected;
-        //             }
-        //             if ($statutDeMaintenanceSelected != '') {
-        //                 $sql .= " AND equipement_s50.statut_de_maintenance = " . $statutDeMaintenanceSelected . "";
-        //             }
-
-        //             $stmt = $conn->prepare($sql);
-        //             $result = $stmt->executeQuery();
-        //             dump("passe sans espace");
-        //             dd($result->fetchAssociative());
-        //             break;
-        //         case '_S50':
-        //             $conn = $entityManager->getConnection();
-        //             $sql = 'SELECT * FROM equipement_s50 WHERE equipement_s50.id_contact = "' . $idClientSelected . '" AND equipement_s50.derniere_visite IS NOT NULL '; 
-        //             // Append conditions based on filters
-        //             if ($visitSelected != '') {
-        //                 $sql .= " AND equipement_s50.visite = " . $visitSelected;
-        //             }
-        //             if ($libelleSelected != '') {
-        //                 $sql .= " AND equipement_s50.numero_equipement = " . $libelleSelected;
-        //             }
-        //             if ($statutDeMaintenanceSelected != '') {
-        //                 $sql .= " AND equipement_s50.statut_de_maintenance = " . $statutDeMaintenanceSelected . "";
-        //             }
-
-        //             $stmt = $conn->prepare($sql);
-        //             $result = $stmt->executeQuery();
-        //             dump("passe avec espace");
-        //             dd($result->fetchAssociative());
-        //             break;
-                
-        //         default:
-        //             # code...
-        //             break;
-        //     }
-
-        // }
-        
-        
 
         return $this->render('home/index.html.twig', [
             'clientsGroup' => $clientsGroup,  // Array of Contacts
