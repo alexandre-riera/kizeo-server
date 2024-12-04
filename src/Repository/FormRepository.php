@@ -439,31 +439,31 @@ class FormRepository extends ServiceEntityRepository
                 $equipement->setLongueur("NC");
             }
             $equipement->setPlaqueSignaletique($additionalEquipment['plaque_signaletique']['value']);
-
-            //Anomalies en fonction du libellé de l'équipement
-            switch($additionalEquipment['anomalie']['value']){
-                case 'niveleur':
-                    $equipement->setAnomalies($additionalEquipment['anomalie_niveleur']['value']);
-                    break;
-                case 'portail':
-                    $equipement->setAnomalies($additionalEquipment['anomalie_portail']['value']);
-                    break;
-                case 'porte rapide':
-                    $equipement->setAnomalies($additionalEquipment['anomalie_porte_rapide']['value']);
-                    break;
-                case 'porte pietonne':
-                    $equipement->setAnomalies($additionalEquipment['anomalie_porte_pietonne']['value']);
-                    break;
-                case 'barriere':
-                    $equipement->setAnomalies($additionalEquipment['anomalie_barriere']['value']);
-                    break;
-                case 'rideau':
-                    $equipement->setAnomalies($additionalEquipment['rid']['value']);
-                    break;
-                default:
-                    $equipement->setAnomalies($additionalEquipment['anomalie']['value']);
+            // dd($additionalEquipment);
+            // //Anomalies en fonction du libellé de l'équipement
+            // switch($additionalEquipment['anomalie']['value']){
+            //     case 'niveleur':
+            //         $equipement->setAnomalies($additionalEquipment['anomalie_niveleur']['value']);
+            //         break;
+            //     case 'portail':
+            //         $equipement->setAnomalies($additionalEquipment['anomalie_portail']['value']);
+            //         break;
+            //     case 'porte rapide':
+            //         $equipement->setAnomalies($additionalEquipment['anomalie_porte_rapide']['value']);
+            //         break;
+            //     case 'porte pietonne':
+            //         $equipement->setAnomalies($additionalEquipment['anomalie_porte_pietonne']['value']);
+            //         break;
+            //     case 'barriere':
+            //         $equipement->setAnomalies($additionalEquipment['anomalie_barriere']['value']);
+            //         break;
+            //     case 'rideau':
+            //         $equipement->setAnomalies($additionalEquipment['rid']['value']);
+            //         break;
+            //     default:
+            //         $equipement->setAnomalies($additionalEquipment['anomalie']['value']);
                 
-            }
+            // }
             $equipement->setEtat($additionalEquipment['etat']['value']);
             if (isset($additionalEquipment['hauteur_de_nacelle_necessaire']['value'])) {
                 $equipement->setHauteurNacelle($additionalEquipment['hauteur_de_nacelle_necessaire']['value']);
