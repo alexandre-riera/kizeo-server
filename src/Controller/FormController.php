@@ -22,10 +22,12 @@ use App\Entity\EquipementS140;
 use App\Entity\EquipementS150;
 use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
+use Doctrine\ORM\EntityManager;
 use App\Repository\FormRepository;
 use App\Entity\PortailEnvironement;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,7 +35,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Contracts\Cache\CacheInterface;
 
 class FormController extends AbstractController
 {
@@ -123,9 +124,10 @@ class FormController extends AbstractController
         
         return new JsonResponse("Formulaires parc client sur API KIZEO : " . count($formList) . " | Formulaires parc client en BDD : " . count($allFormsInDatabase) . "\n", Response::HTTP_OK, [], true);
     }
+
     /**
      * 
-     * Save PDF maintenance on remote server
+     * Save maintenance equipments in local database then call save equipments to KIZEO
      */
     #[Route('/api/forms/save/maintenance/equipments', name: 'app_api_form_save_maintenance_equipments', methods: ['GET'])]
     public function saveEquipementsInDatabase(FormRepository $formRepository, CacheInterface $cache)
@@ -134,8 +136,131 @@ class FormController extends AbstractController
         
         
         // return new JsonResponse("Les équipements de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_update_lists_equipements');
+    }
+
+    /**
+     * UPDATE LIST OF EQUIPMENTS ON KIZEO THEN CALL SAVE IN PUBLIC/PDF/MAINTENANCE FOLDER
+     * 
+     */
+    #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
+    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository, CacheInterface $cache){
+        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance($cache);
+
+        // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
+        // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        $equipmentsGrenoble = $cache->get('equipments_grenoble', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
+            return $result;
+        });
+        $equipmentsLyon = $cache->get('equipments_lyon', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(427444);
+            return $result;
+        });
+        $equipmentsParis = $cache->get('equipments_paris', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
+            return $result;
+        });
+        $equipmentsMontpellier = $cache->get('equipments_montpellier', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(423853);
+            return $result;
+        });
+        $equipmentsStEtienne = $cache->get('equipments_st_etienne', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(427442);
+            return $result;
+        });
+        $equipmentsSmp = $cache->get('equipments_smp', function(ItemInterface $item) use ($formRepository){
+            $item->expiresAfter(2419200);
+            $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(427682);
+            return $result;
+        });
+        
+        // $equipmentsBordeaux = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        // $equipmentsHautsDeFrance = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        // $equipmentsToulouse = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        // $equipmentsSogefi = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        // $equipmentsRouen = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        // $equipmentsRennes = $formRepository->getAgencyListEquipementsFromKizeoByListId();
+        
+        foreach($dataOfFormList as $key=>$value){
+
+            switch ($dataOfFormList[$key]['code_agence']['value']) {
+                // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList,$key,$agencyEquipments,$agencyListId)
+                // case 'S10':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGroup, );
+                //     dump('Uploads S10 OK');
+                //     break;
+                case 'S40':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, 427442);
+                    dump('Uploads S40 OK');
+                    break;
+                case 'S50':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGrenoble, 414025);
+                    dump('Uploads S50 OK');
+                    break;
+                case 'S60':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, 427444);
+                    dump('Uploads S60 OK');
+                    break;
+                // case 'S70':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsBordeaux, );
+                //     dump('Uploads S70 OK');
+                //     break;
+                
+                case 'S80':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsParis, 421993);
+                    dump('Uploads for S80 OK');
+                    break;
+                
+                case 'S100':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsMontpellier, 423853);
+                    dump('Uploads for S100 OK');
+                    break;
+                
+                // case 'S120':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsHautsDeFrance, );
+                //     dump('Uploads for S120 OK');
+                //     break;
+                
+                // case 'S130':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsToulouse, );
+                //     dump('Uploads for S130 OK');
+                //     break;
+                
+                case 'S140':
+                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSmp, 427682);
+                    dump('Uploads for S140 OK');
+                    break;
+                
+                // case 'S150':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSogefi, );
+                //     dump('Uploads for S150 OK');
+                //     break;
+                
+                // case 'S160':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRouen, );
+                //     dump('Uploads for S160 OK');
+                //     break;
+                
+                // case 'S170':
+                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRennes, );
+                //     dump('Uploads for S170 OK');
+                //     break;
+                
+                default:
+                    return new JsonResponse('this not for our agencies', Response::HTTP_OK, [], true);
+                    break;
+            }
+        }
+        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
         return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
     }
+
     /**
      * 
      * Save PDF maintenance on remote server
@@ -160,6 +285,8 @@ class FormController extends AbstractController
         
         return new JsonResponse("Les pdf de maintenance ont bien été mis en non lu ", Response::HTTP_OK, [], true);
     }
+
+
     /**
      * 
      * Save PDF etat des lieux portails on remote server
@@ -435,107 +562,6 @@ class FormController extends AbstractController
         
         return "Les portails d'états des lieux portails sont bien enregistrés en base !";
         // return $this->redirectToRoute('app_api_form_update_lists_equipements');
-    }
-
-    /**
-     * UPDATE LIST OF EQUIPMENTS ON KIZEO AND FLUSH NEW EQUIPMENTS IN LOCAL DATABASE    --------------- OK POUR TOUTES LES AGENCES DE S10 à S170
-     * 
-     */
-    #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
-    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository, CacheInterface $cache){
-        $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance($cache);
-
-        // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
-        // $equipmentsGroup = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        $equipmentsGrenoble = $formRepository->getAgencyListEquipementsFromKizeoByListId(414025);
-        $equipmentsLyon = $formRepository->getAgencyListEquipementsFromKizeoByListId(427444);
-        // $equipmentsBordeaux = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        $equipmentsParis = $formRepository->getAgencyListEquipementsFromKizeoByListId(421993);
-        $equipmentsMontpellier = $formRepository->getAgencyListEquipementsFromKizeoByListId(423853);
-        $equipmentsStEtienne = $formRepository->getAgencyListEquipementsFromKizeoByListId(427442);
-        // $equipmentsHautsDeFrance = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        // $equipmentsToulouse = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        $equipmentsSmp = $formRepository->getAgencyListEquipementsFromKizeoByListId(427682);
-        // $equipmentsSogefi = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        // $equipmentsRouen = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        // $equipmentsRennes = $formRepository->getAgencyListEquipementsFromKizeoByListId();
-        
-        foreach($dataOfFormList as $key=>$value){
-
-            switch ($dataOfFormList[$key]['code_agence']['value']) {
-                // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList,$key,$agencyEquipments,$agencyListId)
-                // case 'S10':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGroup, );
-                //     dump('Uploads S10 OK');
-                //     break;
-                case 'S40':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, 427442);
-                    dump('Uploads S40 OK');
-                    break;
-                case 'S50':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGrenoble, 414025);
-                    dump('Uploads S50 OK');
-                    break;
-                case 'S60':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, 427444);
-                    dump('Uploads S60 OK');
-                    break;
-                // case 'S70':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsBordeaux, );
-                //     dump('Uploads S70 OK');
-                //     break;
-                
-                case 'S80':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsParis, 421993);
-                    dump('Uploads for S80 OK');
-                    break;
-                
-                case 'S100':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsMontpellier, 423853);
-                    dump('Uploads for S100 OK');
-                    break;
-                
-                // case 'S120':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsHautsDeFrance, );
-                //     dump('Uploads for S120 OK');
-                //     break;
-                
-                // case 'S130':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsToulouse, );
-                //     dump('Uploads for S130 OK');
-                //     break;
-                
-                case 'S140':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSmp, 427682);
-                    dump('Uploads for S140 OK');
-                    break;
-                
-                // case 'S150':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSogefi, );
-                //     dump('Uploads for S150 OK');
-                //     break;
-                
-                // case 'S160':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRouen, );
-                //     dump('Uploads for S160 OK');
-                //     break;
-                
-                // case 'S170':
-                //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRennes, );
-                //     dump('Uploads for S170 OK');
-                //     break;
-                
-                default:
-                    return new JsonResponse('this not for our agencies', Response::HTTP_OK, [], true);
-                    break;
-            }
-        }
-
-        // ----------------------                 Save new equipements in database from all agencies
-        
-
-        return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
-        // return $this->redirectToRoute('app_api_form_update');
     }
 
     /**

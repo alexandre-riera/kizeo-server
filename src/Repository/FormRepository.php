@@ -196,55 +196,92 @@ class FormRepository extends ServiceEntityRepository
     */
    public function getDataOfFormsMaintenance($cache): array
    {    
-        //Global variables
-        $allFormsMaintenanceArray = [];
-        $allFormsMaintenanceDataArray = [];
-
-        // -----------------------------   Return all forms in an array | cached for 604800 seconds 1 semaine
+        // -----------------------------   Return all forms in an array | cached for 2419200 seconds 1 month
         $allFormsArray = $cache->get('all-forms-on-kizeo', function(ItemInterface $item){
-            $item->expiresAfter(604800);
+            $item->expiresAfter(2419200);
             $result = FormRepository::getForms();
             return $result['forms'];
         });
 
-        // -----------------------------   Return all forms with class "MAINTENANCE"
+        // $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
+        // $unreadFormCounter = 0;
+        $formMaintenanceUnread = [];
+        $dataOfFormMaintenanceUnread = [];
+        $allFormsKeyId = [];
+        
+        
+        // ----------------------------- DÉBUT Return all forms with class "MAINTENANCE" WITH CACHE  1 week
         foreach ($allFormsArray as $key => $value) {
             if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
-                
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                    ]
-                );
-                $content = $response->getContent();
-                $content = $response->toArray();
-                foreach ($content['data'] as $key => $value) {
-                    array_push($allFormsMaintenanceArray, $value);
-                }
+                // Récuperation des forms ID
+                array_push($allFormsKeyId, $allFormsArray[$key]['id']);
+                // $allFormsMaintenanceArray = $cache->get('allFormsMaintenanceArray', function(ItemInterface $item) use ($allFormsArray, $key, $allFormsMaintenanceArray) {
+                //     $item->expiresAfter(604800); // 1 week
+
+                //     $response = $this->client->request(
+                //         'POST',
+                //         'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+                //             'headers' => [
+                //                 'Accept' => 'application/json',
+                //                 'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                //             ],
+                //         ]
+                //     );
+                //     $content = $response->getContent();
+                //     $content = $response->toArray();
+                    
+                //     foreach ($content['data'] as $key => $value) {
+                //         array_push($allFormsMaintenanceArray, $value);
+                //     }
+                    
+                // });
             }
         }
-        // -----------------------------   Get data of forms with class "MAINTENANCE" 
-        // C'EST EN DESSOUS QU'ON DEVRAIT APPELER LES NON LUS
+        // -----------------------------  FIN Return all forms with class "MAINTENANCE"
 
-        foreach ($allFormsMaintenanceArray as $key => $value) {
-            $responseDataOfForm = $this->client->request(
+        // ----------------------------------------------------------------------- Début d'appel KIZEO aux formulaires non lus par ID de leur liste
+        // ----------------------------------------------------------- Appel de 5 formulaires à la fois en mettant le paramètre LIMIT à 5 en fin d'url
+        // --------------- Remise à zéro du tableau $formMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec les prochains 5 formulaires non lus  ------------------
+        $formMaintenanceUnread = [];
+        foreach ($allFormsKeyId as $key) {
+            $responseUnread = $this->client->request(
                 'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $allFormsMaintenanceArray[$key]['_form_id'] . '/data/' . $allFormsMaintenanceArray[$key]['_id'], [
+                'https://forms.kizeo.com/rest/v3/forms/' .  $key . '/data/unread/read/5', [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
                 ]
             );
-            $content = $responseDataOfForm->getContent();
-            $content = $responseDataOfForm->toArray();
-            array_push($allFormsMaintenanceDataArray, $content['data']['fields']);
+
+            $result = $responseUnread->getContent();
+            $result = $responseUnread->toArray();
+            array_push($formMaintenanceUnread, $result);
+            
         }
-        return $allFormsMaintenanceDataArray;
+       
+        // ----------------------------------------------------------------------- Début d'appel data des formulaires non lus
+        // --------------- Remise à zéro du tableau $dataOfFormMaintenanceUnread  ------------------
+        // --------------- Avant de le recharger avec la data des 5 formulaires non lus  ------------------
+        $dataOfFormMaintenanceUnread = [];
+        foreach ($formMaintenanceUnread as $formUnread) {
+            foreach ($formUnread['data'] as $form) {
+                $response = $this->client->request(
+                    'GET',
+                    'https://forms.kizeo.com/rest/v3/forms/' .  $form['_form_id'] . '/data/' . $form['_id'], [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]
+                );
+                $result= $response->getContent();
+                $result= $response->toArray();
+                array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
+            }
+        }
+        return $dataOfFormMaintenanceUnread;
    }
 
     //      ----------------------------------------------------------------------------------------------------------------------
@@ -882,7 +919,7 @@ class FormRepository extends ServiceEntityRepository
                 
                 foreach ($dataOfFormMaintenanceUnread as $OneFormMaintenanceUnread) {
                         
-                    $pathStructureToFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $OneFormMaintenanceUnread['nom_client']['value'] . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4);
+                    $pathStructureToFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $OneFormMaintenanceUnread['nom_client']['value'] . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4);
                     $normalNameOfTheFile = $OneFormMaintenanceUnread['nom_client']['value'] . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
                     
                     // Ajouté pour voir si cela fix le mauvais nommage des dossiers PDF sur le nom de la visite de maintenance. Ex: SDCC est enregistré en CE2 au lieu de CEA
@@ -902,7 +939,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4) . '/CE1';
+                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4) . '/CE1';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -949,7 +986,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE2';
+                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE2';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -997,7 +1034,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE3';
+                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE3';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1045,7 +1082,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value']['value'], 0, 4)  . '/CE4';
+                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value']['value'], 0, 4)  . '/CE4';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1093,7 +1130,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = 'assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CEA';
+                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CEA';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1489,7 +1526,7 @@ class FormRepository extends ServiceEntityRepository
         // -----------------------------  FIN Return all forms with class "MAINTENANCE"
 
         // ----------------------------------------------------------------------- Début d'appel KIZEO aux formulaires non lus par ID de leur liste
-        // ----------------------------------------------------------- Appel de 10 formulaires à la fois en mettant le paramètre LIMIT à 10 en fin d'url
+        // ----------------------------------------------------------- Appel de 5 formulaires à la fois en mettant le paramètre LIMIT à 5 en fin d'url
         // --------------- Remise à zéro du tableau $formMaintenanceUnread  ------------------
         // --------------- Avant de le recharger avec les prochains 5 formulaires non lus  ------------------
         $formMaintenanceUnread = [];
