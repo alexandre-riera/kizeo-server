@@ -40,7 +40,7 @@ class HomeRepository{
     public function getListOfPdf($clientSelected, $visite, $agenceSelected){
         $thisYear = date('Y');
         $agenceSelected = trim($agenceSelected);
-        $directoriesLists = scandir( "pdf/maintenance/$agenceSelected/$clientSelected/$thisYear/$visite" );
+        $directoriesLists = scandir( "../pdf/maintenance/$agenceSelected/$clientSelected/$thisYear/$visite" );
         $results = [];
         foreach($directoriesLists as $fichier){
 
