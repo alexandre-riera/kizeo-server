@@ -8,7 +8,3 @@
 /var/
 /vendor/
 /maintenance
-
-###> symfony/asset-mapper ###
-/assets/vendor/
-###< symfony/asset-mapper ###
