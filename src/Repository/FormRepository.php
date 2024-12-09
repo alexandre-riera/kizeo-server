@@ -919,7 +919,7 @@ class FormRepository extends ServiceEntityRepository
                 
                 foreach ($dataOfFormMaintenanceUnread as $OneFormMaintenanceUnread) {
                         
-                    $pathStructureToFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $OneFormMaintenanceUnread['nom_client']['value'] . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4);
+                    $pathStructureToFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $OneFormMaintenanceUnread['nom_client']['value'] . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4);
                     $normalNameOfTheFile = $OneFormMaintenanceUnread['nom_client']['value'] . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
                     
                     // Ajouté pour voir si cela fix le mauvais nommage des dossiers PDF sur le nom de la visite de maintenance. Ex: SDCC est enregistré en CE2 au lieu de CEA
@@ -939,7 +939,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4) . '/CE1';
+                                $cleanPathStructureToTheFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4) . '/CE1';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE1-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -986,7 +986,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE2';
+                                $cleanPathStructureToTheFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE2';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE2-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1034,7 +1034,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE3';
+                                $cleanPathStructureToTheFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CE3';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE3-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1082,7 +1082,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value']['value'], 0, 4)  . '/CE4';
+                                $cleanPathStructureToTheFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value']['value'], 0, 4)  . '/CE4';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CE4-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){
@@ -1130,7 +1130,7 @@ class FormRepository extends ServiceEntityRepository
                             case true:
                                 $nomClient = $OneFormMaintenanceUnread['nom_client']['value'];
                                 $nomClientClean = str_replace("/", "", $nomClient);
-                                $cleanPathStructureToTheFile = '../assets/pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CEA';
+                                $cleanPathStructureToTheFile = '../pdf/maintenance/' . $OneFormMaintenanceUnread['code_agence']['value']  . '/' . $nomClientClean . '/' . substr($OneFormMaintenanceUnread['date_et_heure1']['value'], 0, 4)  . '/CEA';
                                 $cleanNameOfTheFile = $cleanPathStructureToTheFile . '/' . "CEA-" . $nomClientClean . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
             
                                 if (!file_exists($cleanNameOfTheFile)){

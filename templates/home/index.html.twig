@@ -439,7 +439,7 @@
                             <h4 class="card-title">Compte-rendu</h4>
                             <ul>
                                 {% for file in directoriesLists %}
-                                <li><a href="{{ asset('../assets/pdf/maintenance/'~agenceSelected~'/'~clientSelected~'/2024/'~visiteDuClient~'/'~file) }}">{{ file }}</a></li>
+                                <li><a href="{{ asset('../pdf/maintenance/'~agenceSelected~'/'~clientSelected~'/2024/'~visiteDuClient~'/'~file) }}">{{ file }}</a></li>
                                 {% endfor %}
                             </ul>
                         </div>
