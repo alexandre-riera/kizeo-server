@@ -1567,7 +1567,7 @@ class FormRepository extends ServiceEntityRepository
                 array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
             }
         }
-
+        dd($dataOfFormMaintenanceUnread);
         // ------------- Selon le code agence, enregistrement des equipements en BDD local
         foreach ($dataOfFormMaintenanceUnread as $equipements){
                 // if ($unreadFormCounter != 0) {
