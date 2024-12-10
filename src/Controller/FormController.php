@@ -266,7 +266,7 @@ class FormController extends AbstractController
      * Save PDF maintenance on remote server
      */
     #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
-    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache)
+    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
         $formRepository->savePdfInAssetsPdfFolder($cache);
         
