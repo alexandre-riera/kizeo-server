@@ -33,7 +33,6 @@ function editEquipement(idEquipementAndIdRow,libelleEquipement,visite,raisonSoci
     document.getElementById("modal_carnetEntretien").value = presenceCarnetEntretien;
     document.getElementById("modal_statutConformite").value = statutConformite;
 
-    console.log("id equipement et id row: " + idEquipementAndIdRow);
     // console.log("libelleEquipement: " +libelleEquipement);
     // console.log("visite: " +visite);
     // console.log("raisonSociale: " +raisonSociale);
