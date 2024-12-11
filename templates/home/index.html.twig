@@ -559,9 +559,7 @@
                     </div>
                 </div>
             </div>
-        {% endblock %}
-        {% block modal_show_equipment_details %}
-        <!-- Modal -->
+        <!-- Modal show euipment details -->
             <div class="modal fade" id="showEquipmentDetails" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -653,8 +651,8 @@
                     </div>
                 </div>
             </div>
-        {% endblock %}
         </div>
+        {% endblock %}
 
         {% block clientEquipements %}
         {% if clientSelectedInformations != NULL and clientSelectedEquipmentsFiltered != NULL  %}
