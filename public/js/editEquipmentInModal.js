@@ -32,4 +32,33 @@ function editEquipement(idEquipementAndIdRow,libelleEquipement,visite,raisonSoci
     document.getElementById("modal_statut").value = statutDeMaintenance;
     document.getElementById("modal_carnetEntretien").value = presenceCarnetEntretien;
     document.getElementById("modal_statutConformite").value = statutConformite;
+
+    // console.log("libelleEquipement: " +libelleEquipement);
+    // console.log("visite: " +visite);
+    // console.log("raisonSociale: " +raisonSociale);
+    // console.log("modeleNacelle: " +modeleNacelle);
+    // console.log("hauteurNacelle: " +hauteurNacelle);
+    // console.log("ifExistDB: " +ifExistDB);
+    // console.log("signatureTech: " +signatureTech);
+    // console.log("trigrammeTech: " +trigrammeTech);
+    // console.log("anomalies: " +anomalies);
+    // console.log("idContact: " +idContact);
+    // console.log("idSociete: " +idSociete);
+    // console.log("codeAgence: " +codeAgence);
+    // console.log("numeroEquipement: " +numeroEquipement);
+    // console.log("modeFonctionnement: " +modeFonctionnement);
+    // console.log("repereSiteClient: " +repereSiteClient);
+    // console.log("miseEnService: " +miseEnService);
+    // console.log("numeroDeSerie: " +numeroDeSerie);
+    // console.log("marque: " +marque);
+    // console.log("hauteur: " +hauteur);
+    // console.log("largeur: " +largeur);
+    // console.log("longueur: " +longueur);
+    // console.log("plaqueSignaletique: " +plaqueSignaletique);
+    // console.log("etat: " +etat);
+    // console.log("derniereVisite: " +derniereVisite);
+    // console.log("statutDeMaintenance: " +statutDeMaintenance);
+    // console.log("presenceCarnetEntretien: " +presenceCarnetEntretien);
+    // console.log("statutConformite: " +statutConformite);
+
 }
