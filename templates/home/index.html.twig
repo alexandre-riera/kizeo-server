@@ -567,7 +567,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="showEquipmentDetailsLabel"><i class=" fa-solid fa-pen-to-square"></i>Fiche équipement</h1>
+                            <h1 class="modal-title fs-5" id="showEquipmentDetailsLabel">Fiche équipement</h1>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -578,21 +578,17 @@
                                 <label for="codeAgence" class="form-label">Code Agence</label>
                                 <input type="text" class="form-control" id="modal_codeAgence" value="" name="codeAgence" />
                             </div>
-                            <div class="col-md-6">
-                                <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
-                                <input type="text" class="form-control" id="modal_modeFonctionnement" value="" name="modefonctionnement" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="repereCiteClient" class="form-label">Repère site client</label>
-                                <input type="text" id="modal_repereSiteClient" class="form-control" value="" name="reperesiteclient" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="miseEnService" class="form-label">Mise en service</label>
-                                <input type="text" id="modal_miseEnService" class="form-control" value="" name="miseenservice" />
+                            <div class="col-6">
+                                <label for="dateDerniereVisite" class="form-label">Dernière visite de maintenance</label>
+                                <input type="text" id="modal_derniereVisite"class="form-control" value="" name="dernierevisitedemaintenance" />
                             </div>
                             <div class="col-md-6">
                                 <label for="numeroDeSerie" class="form-label">Numéro de série</label>
                                 <input type="text" id="modal_numeroDeSerie" class="form-control" value="" name="numerodeserie" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="miseEnService" class="form-label">Année d'installation</label>
+                                <input type="text" id="modal_miseEnService" class="form-control" value="" name="miseenservice" />
                             </div>
                             <div class="col-md-6">
                                 <label for="marque" class="form-label">Marque</label>
@@ -610,21 +606,27 @@
                                 <label for="longueur" class="form-label">Longueur</label>
                                 <input type="text" id="modal_longueur" class="form-control" value="" name="longueur" />
                             </div>
-                            <div class="col-md-12">
-                                <label for="plaqueSignaletique" class="form-label">Plaque signalétique</label>
-                                <input type="text" id="modal_plaqueSignaletique" class="form-control" value="" name="plaquesignaletique"/>
-                            </div>
                             <div class="col-12">
                                 <label for="etat" class="form-label">État de l'équipement</label>
                                 <textarea id="modal_etat" class="form-control " value="" name="etat" ></textarea>
                             </div>
                             <div class="col-6">
-                                <label for="dateDerniereVisite" class="form-label">Dernière visite de maintenance</label>
-                                <input type="text" id="modal_derniereVisite"class="form-control" value="" name="dernierevisitedemaintenance" />
-                            </div>
-                            <div class="col-6">
                                 <label for="statut-actuel" class="form-label">Statut actuel de l'équipement</label>
                                 <input type="text" id="modal_statut" class="form-control" value="" name="oldstatut" />
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
+                                <input type="text" class="form-control" id="modal_modeFonctionnement" value="" name="modefonctionnement" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="repereCiteClient" class="form-label">Repère site client</label>
+                                <input type="text" id="modal_repereSiteClient" class="form-control" value="" name="reperesiteclient" />
+                            </div>
+                            <div class="col-md-12">
+                                <label for="plaqueSignaletique" class="form-label">Plaque signalétique</label>
+                                <input type="text" id="modal_plaqueSignaletique" class="form-control" value="" name="plaquesignaletique"/>
                             </div>
                             <div class="col-6">
                                 <label for="statut" class="form-label">Statut de l'équipement</label>
