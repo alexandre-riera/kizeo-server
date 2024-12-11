@@ -118,6 +118,9 @@ class Form
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $data_id = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $equipment_id = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -527,6 +530,18 @@ class Form
     public function setDataId(?string $data_id): static
     {
         $this->data_id = $data_id;
+
+        return $this;
+    }
+
+    public function getEquipmentId(): ?string
+    {
+        return $this->equipment_id;
+    }
+
+    public function setEquipmentId(?string $equipment_id): static
+    {
+        $this->equipment_id = $equipment_id;
 
         return $this;
     }
