@@ -445,38 +445,132 @@
         {% endblock %}
         {% block modal %}
         <!-- Modal -->
-        <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class=" fa-solid fa-pen-to-square"></i> Édition de l'équipement</h1>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class=" fa-solid fa-pen-to-square"></i> Édition de l'équipement</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="/save/modal/equipement" method="post" class="row g-12">
+                                <input type="hidden" class="form-control" id="modal_libelle" value="" name="libelle" />
+                                <input type="hidden" class="form-control" id="modal_idContact" value="" name="idContact" />
+                                <input type="hidden" class="form-control" id="modal_idSociete" value="" name="idSociete" />
+                                <input type="hidden" class="form-control" id="modal_anomalies" value="" name="anomalies" />
+                                <input type="hidden" class="form-control" id="modal_trigrammeTech" value="" name="trigrammeTech" />
+                                <input type="hidden" class="form-control" id="modal_signatureTech" value="" name="signatureTech" />
+                                <input type="hidden" class="form-control" id="modal_ifExistDB" value="" name="ifExistDB" />
+                                <input type="hidden" class="form-control" id="modal_hauteurNacelle" value="" name="hauteurNacelle" />
+                                <input type="hidden" class="form-control" id="modal_modeleNacelle" value="" name="modeleNacelle" />
+                                <input type="hidden" class="form-control" id="modal_raisonSociale" value="" name="raisonSociale" />
+                                <input type="hidden" class="form-control" id="modal_visite" value="" name="visite" />
+                                <input type="hidden" class="form-control" id="modal_id" value="" name="id" />
+                                <div class="col-md-12">
+                                    <h3>Personne modifiant l'équipement</h3>
+                                    <div class="col-md-6">
+                                        <label for="nom" class="form-label">Votre nom</label>
+                                        <input type="text" class="form-control" id="modal_nom" value="" name="nom" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="prenom" class="form-label">Votre prénom</label>
+                                        <input type="text" class="form-control" id="modal_prenom" value="" name="prenom" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                <label for="trigramme" class="form-label">Équipement cible</label>
+                                <input type="text" class="form-control" id="modal_trigramme" value="" name="trigramme" />
+                                <label for="codeAgence" class="form-label">Code Agence</label>
+                                <input type="text" class="form-control" id="modal_codeAgence" value="" name="codeAgence" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
+                                <input type="text" class="form-control" id="modal_modeFonctionnement" value="" name="modefonctionnement" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="repereCiteClient" class="form-label">Repère site client</label>
+                                <input type="text" id="modal_repereSiteClient" class="form-control" value="" name="reperesiteclient" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="miseEnService" class="form-label">Mise en service</label>
+                                <input type="text" id="modal_miseEnService" class="form-control" value="" name="miseenservice" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="numeroDeSerie" class="form-label">Numéro de série</label>
+                                <input type="text" id="modal_numeroDeSerie" class="form-control" value="" name="numerodeserie" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="marque" class="form-label">Marque</label>
+                                <input type="text" id="modal_marque" class="form-control" value="" name="marque" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="hauteur" class="form-label">Hauteur</label>
+                                <input type="text" id="modal_hauteur" class="form-control" value="" name="hauteur" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="Largeur" class="form-label">Largeur</label>
+                                <input type="text" id="modal_largeur" class="form-control" value="" name="largeur" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="longueur" class="form-label">Longueur</label>
+                                <input type="text" id="modal_longueur" class="form-control" value="" name="longueur" />
+                                </div>
+                                <div class="col-md-12">
+                                <label for="plaqueSignaletique" class="form-label">Plaque signalétique</label>
+                                <input type="text" id="modal_plaqueSignaletique" class="form-control" value="" name="plaquesignaletique"/>
+                                </div>
+                                <div class="col-12">
+                                <label for="etat" class="form-label">État de l'équipement</label>
+                                <textarea id="modal_etat" class="form-control " value="" name="etat" ></textarea>
+                                </div>
+                                <div class="col-6">
+                                <label for="dateDerniereVisite" class="form-label">Dernière visite de maintenance</label>
+                                <input type="text" id="modal_derniereVisite"class="form-control" value="" name="dernierevisitedemaintenance" />
+                                </div>
+                                <div class="col-6">
+                                    <label for="statut-actuel" class="form-label">Statut actuel de l'équipement</label>
+                                    <input type="text" id="modal_statut" class="form-control" value="" name="oldstatut" />
+                                </div>
+                                <div class="col-6">
+                                <label for="statut" class="form-label">Statut de l'équipement</label>
+                                <select id="modal_prochain_statut" class="form-select"  name="newstatutclient">
+                                    <option selected>Choose...</option>
+                                    <option value="Vert">Vert</option>
+                                    <option value="Orange">Orange</option>
+                                    <option value="Rouge">Rouge</option>
+                                    <option value="A l'arrêt">A l'arrêt</option>
+                                    <option value="Innaccessible">Inaccessible</option>
+                                </select>
+                                </div>
+                                <div class="col-md-6">
+                                <label for="carnetEntretien" class="form-label">Présence carnet d'entretien</label>
+                                <input type="text" id="modal_carnetEntretien" class="form-control" value="" name="carnetentretien" />
+                                </div>
+                                <div class="col-md-6">
+                                <label for="statutConformite" class="form-label">Statut conformité</label>
+                                <input type="text" id="modal_statutConformite" class="form-control" value="" name="statutconformite" />
+                                </div>
+                                
+                                <button type="submit" id="saveEquipmentFromModal" class="btn btn-primary" name="saveEquipmentFromModal">Enregistrer</button>
+                            </form>
+                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
                     </div>
-                    <div class="modal-body">
-                        <form action="/save/modal/equipement" method="post" class="row g-12">
-                            <input type="hidden" class="form-control" id="modal_libelle" value="" name="libelle" />
-                            <input type="hidden" class="form-control" id="modal_idContact" value="" name="idContact" />
-                            <input type="hidden" class="form-control" id="modal_idSociete" value="" name="idSociete" />
-                            <input type="hidden" class="form-control" id="modal_anomalies" value="" name="anomalies" />
-                            <input type="hidden" class="form-control" id="modal_trigrammeTech" value="" name="trigrammeTech" />
-                            <input type="hidden" class="form-control" id="modal_signatureTech" value="" name="signatureTech" />
-                            <input type="hidden" class="form-control" id="modal_ifExistDB" value="" name="ifExistDB" />
-                            <input type="hidden" class="form-control" id="modal_hauteurNacelle" value="" name="hauteurNacelle" />
-                            <input type="hidden" class="form-control" id="modal_modeleNacelle" value="" name="modeleNacelle" />
-                            <input type="hidden" class="form-control" id="modal_raisonSociale" value="" name="raisonSociale" />
-                            <input type="hidden" class="form-control" id="modal_visite" value="" name="visite" />
-                            <input type="hidden" class="form-control" id="modal_id" value="" name="id" />
-                            <div class="col-md-12">
-                                <h3>Personne modifiant l'équipement</h3>
-                                <div class="col-md-6">
-                                    <label for="nom" class="form-label">Votre nom</label>
-                                    <input type="text" class="form-control" id="modal_nom" value="" name="nom" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="prenom" class="form-label">Votre prénom</label>
-                                    <input type="text" class="form-control" id="modal_prenom" value="" name="prenom" />
-                                </div>
-                            </div>
+                </div>
+            </div>
+        {% endblock %}
+        {% block modal %}
+        <!-- Modal -->
+            <div class="modal fade" id="showEquipmentDetails" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class=" fa-solid fa-pen-to-square"></i> Édition de l'équipement</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h3>Fiche équipement</h3>
                             <div class="col-md-6">
                             <label for="trigramme" class="form-label">Équipement cible</label>
                             <input type="text" class="form-control" id="modal_trigramme" value="" name="trigramme" />
@@ -552,15 +646,15 @@
                             </div>
                             
                             <button type="submit" id="saveEquipmentFromModal" class="btn btn-primary" name="saveEquipmentFromModal">Enregistrer</button>
-                        </form>
+                            
+                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
                     </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
                 </div>
             </div>
-        </div>
-        </div>
         {% endblock %}
+        </div>
 
         {% block clientEquipements %}
         {% if clientSelectedInformations != NULL and clientSelectedEquipmentsFiltered != NULL  %}
@@ -644,6 +738,37 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button></td>
+                            <td><button onclick="getImagesFromIdEquipement(
+                                '{{ equipment.getId() }}',
+                                '{{ equipment.getLibelleEquipement() }}',
+                                '{{ equipment.getVisite() }}',
+                                '{{ equipment.getRaisonSociale() }}',
+                                '{{ equipment.getModeleNacelle() }}',
+                                '{{ equipment.getHauteurNacelle() }}',
+                                '{{ equipment.getIfExistDB() }}',
+                                '{{ equipment.getSignatureTech() }}',
+                                '{{ equipment.getTrigrammeTech() }}',
+                                '{{ equipment.getAnomalies() }}',
+                                '{{ equipment.getIdContact() }}',
+                                '{{ equipment.getCodeSociete() }}',
+                                '{{ equipment.getCodeAgence() }}',
+                                '{{ equipment.getNumeroEquipement() }}',
+                                '{{ equipment.getModeFonctionnement() }}',
+                                '{{ equipment.getRepereSiteClient() }}',
+                                '{{ equipment.getMiseEnService() }}',
+                                '{{ equipment.getNumeroDeSerie() }}',
+                                '{{ equipment.getMarque() }}',
+                                '{{ equipment.getHauteur() }}',
+                                '{{ equipment.getLargeur() }}',
+                                '{{ equipment.getLongueur() }}',
+                                '{{ equipment.getPlaqueSignaletique() }}',
+                                '{{ equipment.getEtat() }}',
+                                '{{ equipment.getDerniereVisite() }}',
+                                '{{ equipment.getStatutDeMaintenance() }}',
+                                '{{ equipment.getPresenceCarnetEntretien() }}',
+                                '{{ equipment.getStatutConformite() }}'
+                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
+                            </button></td>
                         </tr>
                     {% elseif  equipment.visite  == "CE2" %}
                         <tr class="bkg_row_visite_2" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
@@ -701,6 +826,37 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                            </button></td>
+                            <td><button onclick="getImagesFromIdEquipement(
+                                '{{ equipment.getId() }}',
+                                '{{ equipment.getLibelleEquipement() }}',
+                                '{{ equipment.getVisite() }}',
+                                '{{ equipment.getRaisonSociale() }}',
+                                '{{ equipment.getModeleNacelle() }}',
+                                '{{ equipment.getHauteurNacelle() }}',
+                                '{{ equipment.getIfExistDB() }}',
+                                '{{ equipment.getSignatureTech() }}',
+                                '{{ equipment.getTrigrammeTech() }}',
+                                '{{ equipment.getAnomalies() }}',
+                                '{{ equipment.getIdContact() }}',
+                                '{{ equipment.getCodeSociete() }}',
+                                '{{ equipment.getCodeAgence() }}',
+                                '{{ equipment.getNumeroEquipement() }}',
+                                '{{ equipment.getModeFonctionnement() }}',
+                                '{{ equipment.getRepereSiteClient() }}',
+                                '{{ equipment.getMiseEnService() }}',
+                                '{{ equipment.getNumeroDeSerie() }}',
+                                '{{ equipment.getMarque() }}',
+                                '{{ equipment.getHauteur() }}',
+                                '{{ equipment.getLargeur() }}',
+                                '{{ equipment.getLongueur() }}',
+                                '{{ equipment.getPlaqueSignaletique() }}',
+                                '{{ equipment.getEtat() }}',
+                                '{{ equipment.getDerniereVisite() }}',
+                                '{{ equipment.getStatutDeMaintenance() }}',
+                                '{{ equipment.getPresenceCarnetEntretien() }}',
+                                '{{ equipment.getStatutConformite() }}'
+                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
                             </button></td>
                         </tr>
                     {% elseif  equipment.visite  == "CE3" %}
@@ -760,6 +916,37 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button></td>
+                            <td><button onclick="getImagesFromIdEquipement(
+                                '{{ equipment.getId() }}',
+                                '{{ equipment.getLibelleEquipement() }}',
+                                '{{ equipment.getVisite() }}',
+                                '{{ equipment.getRaisonSociale() }}',
+                                '{{ equipment.getModeleNacelle() }}',
+                                '{{ equipment.getHauteurNacelle() }}',
+                                '{{ equipment.getIfExistDB() }}',
+                                '{{ equipment.getSignatureTech() }}',
+                                '{{ equipment.getTrigrammeTech() }}',
+                                '{{ equipment.getAnomalies() }}',
+                                '{{ equipment.getIdContact() }}',
+                                '{{ equipment.getCodeSociete() }}',
+                                '{{ equipment.getCodeAgence() }}',
+                                '{{ equipment.getNumeroEquipement() }}',
+                                '{{ equipment.getModeFonctionnement() }}',
+                                '{{ equipment.getRepereSiteClient() }}',
+                                '{{ equipment.getMiseEnService() }}',
+                                '{{ equipment.getNumeroDeSerie() }}',
+                                '{{ equipment.getMarque() }}',
+                                '{{ equipment.getHauteur() }}',
+                                '{{ equipment.getLargeur() }}',
+                                '{{ equipment.getLongueur() }}',
+                                '{{ equipment.getPlaqueSignaletique() }}',
+                                '{{ equipment.getEtat() }}',
+                                '{{ equipment.getDerniereVisite() }}',
+                                '{{ equipment.getStatutDeMaintenance() }}',
+                                '{{ equipment.getPresenceCarnetEntretien() }}',
+                                '{{ equipment.getStatutConformite() }}'
+                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
+                            </button></td>
                         </tr>
                     {% elseif  equipment.visite  == "CE4" %}
                         <tr class="bkg_row_visite_4" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
@@ -818,6 +1005,37 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button></td>
+                            <td><button onclick="getImagesFromIdEquipement(
+                                '{{ equipment.getId() }}',
+                                '{{ equipment.getLibelleEquipement() }}',
+                                '{{ equipment.getVisite() }}',
+                                '{{ equipment.getRaisonSociale() }}',
+                                '{{ equipment.getModeleNacelle() }}',
+                                '{{ equipment.getHauteurNacelle() }}',
+                                '{{ equipment.getIfExistDB() }}',
+                                '{{ equipment.getSignatureTech() }}',
+                                '{{ equipment.getTrigrammeTech() }}',
+                                '{{ equipment.getAnomalies() }}',
+                                '{{ equipment.getIdContact() }}',
+                                '{{ equipment.getCodeSociete() }}',
+                                '{{ equipment.getCodeAgence() }}',
+                                '{{ equipment.getNumeroEquipement() }}',
+                                '{{ equipment.getModeFonctionnement() }}',
+                                '{{ equipment.getRepereSiteClient() }}',
+                                '{{ equipment.getMiseEnService() }}',
+                                '{{ equipment.getNumeroDeSerie() }}',
+                                '{{ equipment.getMarque() }}',
+                                '{{ equipment.getHauteur() }}',
+                                '{{ equipment.getLargeur() }}',
+                                '{{ equipment.getLongueur() }}',
+                                '{{ equipment.getPlaqueSignaletique() }}',
+                                '{{ equipment.getEtat() }}',
+                                '{{ equipment.getDerniereVisite() }}',
+                                '{{ equipment.getStatutDeMaintenance() }}',
+                                '{{ equipment.getPresenceCarnetEntretien() }}',
+                                '{{ equipment.getStatutConformite() }}'
+                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
+                            </button></td>
                         </tr>
                     {% elseif  equipment.visite  == "CEA" %}
                         <tr class="bkg_row_visite_A" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
@@ -875,6 +1093,37 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                            </button></td>
+                            <td><button onclick="getImagesFromIdEquipement(
+                                '{{ equipment.getId() }}',
+                                '{{ equipment.getLibelleEquipement() }}',
+                                '{{ equipment.getVisite() }}',
+                                '{{ equipment.getRaisonSociale() }}',
+                                '{{ equipment.getModeleNacelle() }}',
+                                '{{ equipment.getHauteurNacelle() }}',
+                                '{{ equipment.getIfExistDB() }}',
+                                '{{ equipment.getSignatureTech() }}',
+                                '{{ equipment.getTrigrammeTech() }}',
+                                '{{ equipment.getAnomalies() }}',
+                                '{{ equipment.getIdContact() }}',
+                                '{{ equipment.getCodeSociete() }}',
+                                '{{ equipment.getCodeAgence() }}',
+                                '{{ equipment.getNumeroEquipement() }}',
+                                '{{ equipment.getModeFonctionnement() }}',
+                                '{{ equipment.getRepereSiteClient() }}',
+                                '{{ equipment.getMiseEnService() }}',
+                                '{{ equipment.getNumeroDeSerie() }}',
+                                '{{ equipment.getMarque() }}',
+                                '{{ equipment.getHauteur() }}',
+                                '{{ equipment.getLargeur() }}',
+                                '{{ equipment.getLongueur() }}',
+                                '{{ equipment.getPlaqueSignaletique() }}',
+                                '{{ equipment.getEtat() }}',
+                                '{{ equipment.getDerniereVisite() }}',
+                                '{{ equipment.getStatutDeMaintenance() }}',
+                                '{{ equipment.getPresenceCarnetEntretien() }}',
+                                '{{ equipment.getStatutConformite() }}'
+                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
                             </button></td>
                         </tr>
                     {% endif %}
