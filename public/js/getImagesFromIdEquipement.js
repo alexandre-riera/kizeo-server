@@ -37,7 +37,7 @@ function getImagesFromIdEquipement(idEquipementAndIdRow,libelleEquipement,visite
     // document.getElementById("modal_show_details_carnetEntretien").value = presenceCarnetEntretien;
     // document.getElementById("modal_show_details_statutConformite").value = statutConformite;
 
-    console.log("IdEquipement: " +libelleEquipement);
+    console.log("IdEquipement: " +idEquipementAndIdRow);
     console.log("libelleEquipement: " +libelleEquipement);
     console.log("visite: " +visite);
     console.log("raisonSociale: " +raisonSociale);
