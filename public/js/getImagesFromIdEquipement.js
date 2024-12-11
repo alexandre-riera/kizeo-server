@@ -1,7 +1,11 @@
 function getImagesFromIdEquipement(idEquipementAndIdRow,libelleEquipement,visite,raisonSociale,modeleNacelle,hauteurNacelle,ifExistDB,signatureTech,trigrammeTech,anomalies,idContact,idSociete,codeAgence,numeroEquipement,modeFonctionnement,repereSiteClient,miseEnService,numeroDeSerie,marque,hauteur,largeur,longueur,plaqueSignaletique,etat,derniereVisite,statutDeMaintenance,presenceCarnetEntretien,statutConformite){
     // Try get id_contact on equipment to prepare request save in DB
     // Populate MODAL fields from selected table row
-    document.getElementById("modal_show_details_id").value = idEquipementAndIdRow;
+    if (idEquipementAndIdRow != "") {
+        document.getElementById("modal_show_details_id").value = idEquipementAndIdRow;
+    }else{
+        document.getElementById("modal_show_details_id").value = "ID non remonté";
+    }
     document.getElementById("modal_show_details_libelle").value = libelleEquipement;
     document.getElementById("modal_show_details_visite").value = visite;
     document.getElementById("modal_show_details_raisonSociale").value = raisonSociale;
