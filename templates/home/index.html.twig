@@ -562,7 +562,9 @@
                     </div>
                 </div>
             </div>
-        <!-- Modal show equipment details -------------------------------------------------------->
+        {% endblock %}
+        {% modal2 %}
+            <!-- Modal show equipment details -------------------------------------------------------->
             <div class="modal fade" id="showEquipmentDetails" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="showEquipmentDetailsLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -728,8 +730,6 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            </td>
-                            <td>
                             <button style="margin-top:10px;" onclick="getImagesFromIdEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
