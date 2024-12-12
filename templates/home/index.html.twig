@@ -563,90 +563,6 @@
                 </div>
             </div>
         {% endblock %}
-        {% block modal2 %}
-            <!-- Modal show equipment details -->
-            <div class="modal fade" id="showEquipmentDetails" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="showEquipmentDetailsLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="showEquipmentDetailsLabel">Fiche équipement</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <h3>Détails équipement</h3>
-                            <div class="col-md-6">
-                                <label for="trigramme">Équipement cible</label>
-                                <input type="text" id="modal_show_trigramme" value="" name="trigramme" />
-                                <label for="codeAgence">Code Agence</label>
-                                <input type="text" id="modal_show_codeAgence" value="" name="codeAgence" />
-                            </div>
-                            <div class="col-6">
-                                <label for="dateDerniereVisite">Dernière visite de maintenance</label>
-                                <input type="text" id="modal_show_derniereVisite" value="" name="dernierevisitedemaintenance" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="numeroDeSerie">Numéro de série</label>
-                                <input type="text" id="modal_show_numeroDeSerie" value="" name="numerodeserie" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="miseEnService">Année d'installation</label>
-                                <input type="text" id="modal_show_miseEnService" value="" name="miseenservice" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="marque">Marque</label>
-                                <input type="text" id="modal_show_marque" value="" name="marque" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="hauteur">Hauteur</label>
-                                <input type="text" id="modal_show_hauteur" value="" name="hauteur" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="Largeur">Largeur</label>
-                                <input type="text" id="modal_show_largeur" value="" name="largeur" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="longueur">Longueur</label>
-                                <input type="text" id="modal_show_longueur" value="" name="longueur" />
-                            </div>
-                            <div class="col-12">
-                                <label for="etat">État de l'équipement</label>
-                                <textarea id="modal_show_etat" value="" name="etat" ></textarea>
-                            </div>
-                            <div class="col-6">
-                                <label for="statut-actuel">Statut actuel de l'équipement</label>
-                                <input type="text" id="modal_show_statut" value="" name="oldstatut" />
-                            </div>
-
-
-                            <div class="col-md-6">
-                                <label for="modeFonctionnement">Mode de fonctionnement</label>
-                                <input type="text" id="modal_show_modeFonctionnement" value="" name="modefonctionnement" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="repereCiteClient">Repère site client</label>
-                                <input type="text" id="modal_show_repereSiteClient" value="" name="reperesiteclient" />
-                            </div>
-                            <div class="col-md-12">
-                                <label for="plaqueSignaletique">Plaque signalétique</label>
-                                <input type="text" id="modal_show_plaqueSignaletique" value="" name="plaquesignaletique"/>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="carnetEntretien">Présence carnet d'entretien</label>
-                                <input type="text" id="modal_show_carnetEntretien" value="" name="carnetentretien" />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="statutConformite">Statut conformité</label>
-                                <input type="text" id="modal_show_statutConformite" value="" name="statutconformite" />
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endblock %}
-        
 
         {% block clientEquipements %}
         {% if clientSelectedInformations != NULL and clientSelectedEquipmentsFiltered != NULL  %}
@@ -730,37 +646,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <button style="margin-top:10px;" onclick="getImagesFromIdEquipement(
-                                '{{ equipment.getId() }}',
-                                '{{ equipment.getLibelleEquipement() }}',
-                                '{{ equipment.getVisite() }}',
-                                '{{ equipment.getRaisonSociale() }}',
-                                '{{ equipment.getModeleNacelle() }}',
-                                '{{ equipment.getHauteurNacelle() }}',
-                                '{{ equipment.getIfExistDB() }}',
-                                '{{ equipment.getSignatureTech() }}',
-                                '{{ equipment.getTrigrammeTech() }}',
-                                '{{ equipment.getAnomalies() }}',
-                                '{{ equipment.getIdContact() }}',
-                                '{{ equipment.getCodeSociete() }}',
-                                '{{ equipment.getCodeAgence() }}',
-                                '{{ equipment.getNumeroEquipement() }}',
-                                '{{ equipment.getModeFonctionnement() }}',
-                                '{{ equipment.getRepereSiteClient() }}',
-                                '{{ equipment.getMiseEnService() }}',
-                                '{{ equipment.getNumeroDeSerie() }}',
-                                '{{ equipment.getMarque() }}',
-                                '{{ equipment.getHauteur() }}',
-                                '{{ equipment.getLargeur() }}',
-                                '{{ equipment.getLongueur() }}',
-                                '{{ equipment.getPlaqueSignaletique() }}',
-                                '{{ equipment.getEtat() }}',
-                                '{{ equipment.getDerniereVisite() }}',
-                                '{{ equipment.getStatutDeMaintenance() }}',
-                                '{{ equipment.getPresenceCarnetEntretien() }}',
-                                '{{ equipment.getStatutConformite() }}'
-                            )" type="button" class="btn btn-primary show_equipement" data-bs-toggle="modal" data-bs-target="#showEquipmentDetails" ><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement
-                            </button>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
