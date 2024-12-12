@@ -715,7 +715,7 @@ class HomeController extends AbstractController
                 break;
         }
         return $this->render('home/show-equipment-details.html.twig', [
-            "" => $equipment,
+            "equipment" => $equipment,
         ]);
     }
 }
