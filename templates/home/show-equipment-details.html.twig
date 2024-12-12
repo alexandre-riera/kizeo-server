@@ -23,73 +23,70 @@
     {% if app.user %}
         <!-- Modal show equipment details -->
         <div id="showEquipmentDetails" >
-                <h3>Détails équipement</h3>
-                <div class="col-md-6">
-                    <label for="trigramme">Équipement cible</label>
-                    <input type="text" id="modal_show_trigramme" value="" name="trigramme" />
-                    <label for="codeAgence">Code Agence</label>
-                    <input type="text" id="modal_show_codeAgence" value="" name="codeAgence" />
-                </div>
-                <div class="col-6">
-                    <label for="dateDerniereVisite">Dernière visite de maintenance</label>
-                    <input type="text" id="modal_show_derniereVisite" value="" name="dernierevisitedemaintenance" />
-                </div>
-                <div class="col-md-6">
-                    <label for="numeroDeSerie">Numéro de série</label>
-                    <input type="text" id="modal_show_numeroDeSerie" value="" name="numerodeserie" />
-                </div>
-                <div class="col-md-6">
-                    <label for="miseEnService">Année d'installation</label>
-                    <input type="text" id="modal_show_miseEnService" value="" name="miseenservice" />
-                </div>
-                <div class="col-md-6">
-                    <label for="marque">Marque</label>
-                    <input type="text" id="modal_show_marque" value="" name="marque" />
-                </div>
-                <div class="col-md-6">
-                    <label for="hauteur">Hauteur</label>
-                    <input type="text" id="modal_show_hauteur" value="" name="hauteur" />
-                </div>
-                <div class="col-md-6">
-                    <label for="Largeur">Largeur</label>
-                    <input type="text" id="modal_show_largeur" value="" name="largeur" />
-                </div>
-                <div class="col-md-6">
-                    <label for="longueur">Longueur</label>
-                    <input type="text" id="modal_show_longueur" value="" name="longueur" />
-                </div>
-                <div class="col-12">
-                    <label for="etat">État de l'équipement</label>
-                    <textarea id="modal_show_etat" value="" name="etat" ></textarea>
-                </div>
-                <div class="col-6">
-                    <label for="statut-actuel">Statut actuel de l'équipement</label>
-                    <input type="text" id="modal_show_statut" value="" name="oldstatut" />
-                </div>
+            <h3>Détails équipement</h3>
+            <div class="col-md-6">
+                <h4>Équipement cible</h4>
+                <p type="text" id="modal_show_trigramme">{{ equipment.numero_equipement }}</p>
+                <h4>Code Agence</h4>
+                <p type="text" id="modal_show_codeAgence">{{ equipment.code_agence }}</p>
+            </div>
+            <div class="col-6">
+                <h4>Dernière visite de maintenance</h4>
+                <p type="text" id="modal_show_derniereVisite">{{ equipment.derniere_visite }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Numéro de série</h4>
+                <p type="text" id="modal_show_numeroDeSerie">{{ equipment.numero_de_serie }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Année d'installation</h4>
+                <p type="text" id="modal_show_miseEnService">{{ equipment.mise_en_service }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Marque</h4>
+                <p type="text" id="modal_show_marque">{{ equipment.marque }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Hauteur</h4>
+                <p type="text" id="modal_show_hauteur">{{ equipment.hauteur }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Largeur</h4>
+                <p type="text" id="modal_show_largeur">{{ equipment.largeur }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Longueur</h4>
+                <p type="text" id="modal_show_longueur">{{ equipment.longueur }}</p>
+            </div>
+            <div class="col-12">
+                <h4>État de l'équipement</h4>
+                <p id="modal_show_etat">{{ equipment.etat }}</p>
+            </div>
+            <div class="col-6">
+                <h4>Statut actuel de l'équipement</h4>
+                <p type="text" id="modal_show_statut">{{ equipment.statut_de_maintenance }}</p>
+            </div>
 
 
-                <div class="col-md-6">
-                    <label for="modeFonctionnement">Mode de fonctionnement</label>
-                    <input type="text" id="modal_show_modeFonctionnement" value="" name="modefonctionnement" />
-                </div>
-                <div class="col-md-6">
-                    <label for="repereCiteClient">Repère site client</label>
-                    <input type="text" id="modal_show_repereSiteClient" value="" name="reperesiteclient" />
-                </div>
-                <div class="col-md-12">
-                    <label for="plaqueSignaletique">Plaque signalétique</label>
-                    <input type="text" id="modal_show_plaqueSignaletique" value="" name="plaquesignaletique"/>
-                </div>
-                <div class="col-md-6">
-                    <label for="carnetEntretien">Présence carnet d'entretien</label>
-                    <input type="text" id="modal_show_carnetEntretien" value="" name="carnetentretien" />
-                </div>
-                <div class="col-md-6">
-                    <label for="statutConformite">Statut conformité</label>
-                    <input type="text" id="modal_show_statutConformite" value="" name="statutconformite" />
-                </div>
-            <div>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
+            <div class="col-md-6">
+                <h4>Mode de fonctionnement</h4>
+                <p type="text" id="modal_show_modeFonctionnement">{{ equipment.mode_fonctionnement }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Repère site client</h4>
+                <p type="text" id="modal_show_repereSiteClient">{{ equipment.repere_site_client }}</p>
+            </div>
+            <div class="col-md-12">
+                <h4>Plaque signalétique</h4>
+                <p type="text" id="modal_show_plaqueSignaletique">{{ equipment.plaque_signaletique }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Présence carnet d'entretien</h4>
+                <p type="text" id="modal_show_carnetEntretien">{{ equipment.presenceCarnetEntretien }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Statut conformité</h4>
+                <p type="text" id="modal_show_statutConformite">{{ equipment.statutConformite }}</p>
             </div>
         </div>
     {% endif %}
