@@ -667,7 +667,7 @@ class HomeController extends AbstractController
     }
 
     #[Route('/show/equipement/details/{agence}/{id}', name: 'app_show_equipement_details_by_id')]
-    public function showEquipmentDetailsById(string $agence, string $id, EntityManager $entityManager){
+    public function showEquipmentDetailsById(string $agence, string $id, EntityManagerInterface $entityManager){
         // $equipment = [];
         switch ($agence) {
             case 'S10':
