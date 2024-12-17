@@ -127,7 +127,7 @@ class FormController extends AbstractController
 
     /**
      * 
-     * Save maintenance equipments in local database then call save equipments to KIZEO
+     * Save maintenance equipments in local database then call save equipments to KIZEO  --  FIRST CALL IN CRON TASK
      */
     #[Route('/api/forms/save/maintenance/equipments', name: 'app_api_form_save_maintenance_equipments', methods: ['GET'])]
     public function saveEquipementsInDatabase(FormRepository $formRepository, CacheInterface $cache)
@@ -140,7 +140,7 @@ class FormController extends AbstractController
     }
 
     /**
-     * UPDATE LIST OF EQUIPMENTS ON KIZEO THEN CALL SAVE IN PUBLIC/PDF/MAINTENANCE FOLDER
+     * UPDATE LIST OF EQUIPMENTS ON KIZEO THEN CALL SAVE IN PUBLIC/PDF/MAINTENANCE FOLDER  --  SECOND CALL IN CRON TASK
      * 
      */
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
@@ -263,15 +263,15 @@ class FormController extends AbstractController
 
     /**
      * 
-     * Save PDF maintenance on remote server
+     * Save PDF maintenance on remote server --  THIRD CALL IN CRON TASK
      */
     #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
-    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
+    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache) //: JsonResponse
     {
         $formRepository->savePdfInAssetsPdfFolder($cache);
         
-        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments');
-        return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_save_maintenance_equipments');
+        // return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
     }
     /**
      * 
