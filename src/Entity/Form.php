@@ -121,6 +121,15 @@ class Form
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $equipment_id = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $update_time = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $code_equipement = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $raison_sociale_visite = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -542,6 +551,42 @@ class Form
     public function setEquipmentId(?string $equipment_id): static
     {
         $this->equipment_id = $equipment_id;
+
+        return $this;
+    }
+
+    public function getUpdateTime(): ?string
+    {
+        return $this->update_time;
+    }
+
+    public function setUpdateTime(?string $update_time): static
+    {
+        $this->update_time = $update_time;
+
+        return $this;
+    }
+
+    public function getCodeEquipement(): ?string
+    {
+        return $this->code_equipement;
+    }
+
+    public function setCodeEquipement(?string $code_equipement): static
+    {
+        $this->code_equipement = $code_equipement;
+
+        return $this;
+    }
+
+    public function getRaisonSocialeVisite(): ?string
+    {
+        return $this->raison_sociale_visite;
+    }
+
+    public function setRaisonSocialeVisite(?string $raison_sociale_visite): static
+    {
+        $this->raison_sociale_visite = $raison_sociale_visite;
 
         return $this;
     }

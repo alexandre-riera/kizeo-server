@@ -275,9 +275,9 @@ class FormController extends AbstractController
     }
     /**
      * 
-     * MARK PDF maintenance as UNREAD on kizeo
+     * MARK FORMS maintenance as UNREAD on kizeo
      */
-    #[Route('/api/forms/markasunread/maintenance/pdf', name: 'app_api_form_markasunread_maintenance_pdf', methods: ['GET'])]
+    #[Route('/api/forms/markasunread', name: 'app_api_form_markasunread', methods: ['GET'])]
     public function markMaintenanceFormsAsUnread(FormRepository $formRepository): JsonResponse
     {
         // $formRepository->saveEquipementPdfInPublicFolder();
@@ -697,4 +697,11 @@ class FormController extends AbstractController
 
     // Ajouter ici la route de l'agence quand Margaux créera les listes équipements des agences
     // #[Route('/api/upload/list/equipements/nom_de_l_agence', name: 'app_api_upload_list_equipements_nom_de_l_agence', methods: ['GET'])]
+
+    #[Route('/api/save/forms/pictures', name: 'app_api_save_forms_pictures', methods: ['GET'])]
+    public function savePicturesFromForms(FormRepository $formRepository, CacheInterface $cache): JsonResponse {
+        $formRepository->savePicturesFromForms($cache);
+
+        return new JsonResponse("Les photos ont bien été mis en BDD", Response::HTTP_OK, [], true);
+    }    
 }
