@@ -1544,7 +1544,8 @@ class FormRepository extends ServiceEntityRepository
                 );
                 $result= $response->getContent();
                 $result= $response->toArray();
-                array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
+                // array_push($dataOfFormMaintenanceUnread, $result['data']['fields']);
+                array_push($dataOfFormMaintenanceUnread, $result);
             }
         }
         
@@ -1553,6 +1554,9 @@ class FormRepository extends ServiceEntityRepository
             $equipements = $equipements['data'];
             FormRepository::uploadPicturesInDatabase($equipements);
         }
+        
+        // DONE TO LET PICTURES LOOP WITH $dataOfFormMaintenanceUnread AS IS ROOTED
+        $dataOfFormMaintenanceUnread = $dataOfFormMaintenanceUnread['data']['fields'];
 
         // ------------- Selon le code agence, enregistrement des equipements en BDD local
         foreach ($dataOfFormMaintenanceUnread as $equipements){
