@@ -1,0 +1,31 @@
+.picture_container, #showEquipmentDetails{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+#showEquipmentDetails{
+    padding: 70px;
+    background-color: cadetblue;
+}
+/*Cards container*/
+.cards_container{
+    width: 80vw;
+    border: 1px solid black;
+}
+.card{
+    max-width: 18rem;
+    margin: 10px;
+}
+.card-body p{
+    font-size: x-large;
+    text-align: center;
+}
+.card-img, .card-img-bottom, .card-img-top {
+    width: 100%;
+    height: -webkit-fill-available;
+}
+.card-img-top:hover{
+    scale: 2;
+    position: absolute;
+    z-index: 4000;
+}
