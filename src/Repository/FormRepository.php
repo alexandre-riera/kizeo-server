@@ -717,18 +717,23 @@ class FormRepository extends ServiceEntityRepository
             '|' . 
             $dataOfFormList[$key]['id_agence']['value'] // Code agence
             ;
-
-            $theEquipment = $equipment['equipement']['path'] . "\\" . $columnsUpdate;
             
+            /* Le double antislash correspond à 1 antislash échappé avec un autre
+             $equipment['equipement']['path']  =  à LEROY MERLIN VALENCE LOGISITQUE\CE1 auquel on ajoute 1 antislash + les update au dessus
+             \NIV28|Niveleur|A RENSEIGNER|A RENSEIGNER|A RENSEIGNER|2200|2400||6257|5947|S50
+            */
+            $theEquipment = $equipment['equipement']['path'] . "\\" . $columnsUpdate; 
+            // dd($theEquipment);
             if (in_array($equipment['equipement']['path'], $agencyEquipments, true)) {
                 $keyEquipment = array_search($equipment['equipement']['path'], $agencyEquipments);
                 unset($agencyEquipments[$keyEquipment]);
-                array_push($agencyEquipments,  $theEquipment);
+                array_push($agencyEquipments, $theEquipment);
             }
         }
-        
+        dump(count($agencyEquipments));  // Sans le if on a 5797 équipements sinon avec le if on reste à 5710 équipements
         // J'enlève les doublons de la liste des equipements kizeo dans le tableau $agencyEquipments
-        $arrayEquipmentsToPutToKizeo = array_unique($agencyEquipments);
+        $arrayEquipmentsToPutToKizeo = array_unique($agencyEquipments); // array_unique n'enlève aucun équipement de la liste
+        dump(count($arrayEquipmentsToPutToKizeo));
 
         Request::enableHttpMethodParameterOverride(); // <-- add this line
         $client = new Client();
@@ -1446,9 +1451,9 @@ class FormRepository extends ServiceEntityRepository
     * Implementation du cache symfony pour améliorer la performance en remote
     */
     public function saveEquipmentsInDatabase($cache){
-        // -----------------------------   Return all forms in an array | cached for 2419200 seconds 1 month
+        // -----------------------------   Return all forms in an array | cached for 3600 seconds 1 hour
         $allFormsArray = $cache->get('all-forms-on-kizeo', function(ItemInterface $item){
-            $item->expiresAfter(2419200);
+            $item->expiresAfter(3600);
             $result = FormRepository::getForms();
             return $result['forms'];
         });
@@ -1544,11 +1549,11 @@ class FormRepository extends ServiceEntityRepository
                 // Passer à la fonction createAndSaveInDatabaseByAgency()
                 // les variables $equipements avec les nouveaux équipements des formulaires de maintenance, le tableau des résumés de l'agence et son entité ex: $entiteEquipementS10
                 case 'S10':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS10);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS10);
                     break;
                 
                 case 'S40':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS40);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS40);
                     break;
                 
                 case 'S50':
@@ -1557,17 +1562,17 @@ class FormRepository extends ServiceEntityRepository
                 
                 
                 case 'S60':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS60);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS60);
                     break;
                 
                 
                 case 'S70':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS70);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS70);
                     break;
                 
                 
                 case 'S80':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS80);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS80);
                     break;
                 
                 
@@ -1577,32 +1582,32 @@ class FormRepository extends ServiceEntityRepository
                 
                 
                 case 'S120':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS120);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS120);
                     break;
                 
                 
                 case 'S130':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS130);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS130);
                     break;
                 
                 
                 case 'S140':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS140);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS140);
                     break;
                 
                 
                 case 'S150':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS150);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS150);
                     break;
                 
                 
                 case 'S160':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS160);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS160);
                     break;
                 
                 
                 case 'S170':
-                    FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS170);
+                    // FormRepository::createAndSaveInDatabaseByAgency($equipements, $entiteEquipementS170);
                     break;
                 
                 default:
@@ -1854,33 +1859,64 @@ class FormRepository extends ServiceEntityRepository
             // }
         }
     }
-    public function getJpgPictureFromStringName($value){
-        $response = $this->client->request(
-            'GET',
-            'https://forms.kizeo.com/rest/v3/forms/' .  $value->form_id . '/data/' . $value->data_id . '/medias/' . $value->photo_plaque, [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-            ]
-        );
-        $photoJpg= $response->getContent();
-        // $photoJpg = file_get_contents($photoJpg);
-        return $photoJpg;
+
+    public function getJpgPictureFromStringName($value, $entityManager){
+        dump($value);
+        $picturesNames = [$value->photo_plaque, $value->photo_choc, $value->photo_choc_montant, $value->photo_panneau_intermediaire_i, $value->photo_panneau_bas_inter_ext, $value->photo_lame_basse__int_ext, $value->photo_lame_intermediaire_int_, $value->photo_envirronement_eclairage, $value->photo_bache, $value->photo_marquage_au_sol, $value->photo_environnement_equipement1, $value->photo_coffret_de_commande, $value->photo_carte, $value->photo_rail, $value->photo_equerre_rail, $value->photo_fixation_coulisse, $value->photo_moteur, $value->photo_deformation_plateau, $value->photo_deformation_plaque, $value->photo_deformation_structure, $value->photo_deformation_chassis, $value->photo_deformation_levre, $value->photo_fissure_cordon, $value->photo_joue, $value->photo_butoir, $value->photo_vantail, $value->photo_linteau, $value->photo_barriere, $value->photo_tourniquet, $value->photo_sas, $value->photo_marquage_au_sol_, $value->photo_marquage_au_sol_2, $value->photo_2];
+        
+        $the_picture = [];
+        
+        foreach ($picturesNames as $pictureName) {
+            dump('Je suis picture name ligne 1870 : ' . $pictureName);
+            if (!str_contains($pictureName, ", ")) {
+                if ($pictureName != "" || $pictureName != null) {
+                    $response = $this->client->request(
+                        'GET',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $value->form_id . '/data/' . $value->data_id . '/medias/' . $pictureName, [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                        ]
+                    );
+                    $photoJpg = $response->getContent();
+                    array_push($the_picture, $photoJpg);
+                }
+            }
+            else{
+                $photosSupplementaires = explode(", ", $pictureName);
+                foreach ($photosSupplementaires as $photo) {
+                    // dump('Je suis la photo supplémentaire ligne 1889 : ' . $photo);
+                    // Call kizeo url to get jpeg here and encode the result
+                    $response = $this->client->request(
+                        'GET',
+                        'https://forms.kizeo.com/rest/v3/forms/' .  $value->form_id . '/data/' . $value->data_id . '/medias/' . $photo, [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                        ]
+                    );
+                    $photoJpg = $response->getContent();
+                    array_push($the_picture, $photoJpg);
+                }
+            }
+        }
+        return $the_picture;
     }
-    public function getPictureArrayByIdEquipment($picturesArray, $entityManager){
-        // $picturesNames = [];
+
+    public function getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment){
         $picturesdata = [];
         $photoJpg ="";
         foreach ($picturesArray as $key => $value) {
-            if ($value->photo_plaque != "" || $value->photo_plaque != null) {
-                $photoJpg = $entityManager->getRepository(Form::class)->getJpgPictureFromStringName($value);
-                $pictureEncoded = base64_encode($photoJpg);
-                array_push($picturesdata, $pictureEncoded);
-            }
+            // if ($equipment->getRaisonSociale() . "\\" . $equipment->getVisite() === $value->raison_sociale_visite) {
+                $photoJpg = $entityManager->getRepository(Form::class)->getJpgPictureFromStringName($value, $entityManager); // It's an array now
+                foreach ($photoJpg as $photo) {
+                    $pictureEncoded = base64_encode($photo);
+                    array_push($picturesdata, $pictureEncoded);
+                }
+            // }
         }
-        // dump(exif_read_data("data://image/jpeg;base64," . base64_encode($photoJpg)));
-        // dump($picturesdata);
         return $picturesdata;
     }
     
