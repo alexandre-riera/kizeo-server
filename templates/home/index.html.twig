@@ -434,8 +434,11 @@
                         <div class="card-body">
                             <h4 class="card-title">Compte-rendu</h4>
                             <ul>
-                                {% for file in directoriesLists %}
-                                <li><a href="{{ asset('../pdf/maintenance/'~agenceSelected~'/'~clientSelected~'/2024/'~visiteDuClient~'/'~file) }}">{{ file }}</a></li>
+                                {% for objectFile in directoriesLists %}
+                                    {% if  "{{ asset('../pdf/maintenance/'~agenceSelected~'/'~clientSelected~'/' ~ objectFile.annee~'/'~visiteDuClient~'/'~objectFile.path) }}" %}
+                                        <span>{{ objectFile.annee }}</span>
+                                        <li><a href="{{ asset('../pdf/maintenance/'~agenceSelected~'/'~clientSelected~'/'~objectFile.annee~'/'~visiteDuClient~'/'~objectFile.path) }}">{{ objectFile.path }}</a></li>
+                                    {% endif %}
                                 {% endfor %}
                             </ul>
                         </div>
@@ -646,7 +649,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
@@ -707,7 +710,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
@@ -768,7 +771,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
@@ -829,7 +832,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
@@ -890,7 +893,7 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button>
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
                         </tr>
