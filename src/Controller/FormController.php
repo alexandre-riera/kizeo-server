@@ -139,16 +139,17 @@ class FormController extends AbstractController
         
         
         // return new JsonResponse("Les équipements de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
-        // return $this->redirectToRoute('app_api_form_update_lists_equipements'); // Remettre quand la nouvelle liste d'équipements n'écrasera plus l'ancienne sur KIZEO
-        return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
+        return $this->redirectToRoute('app_api_form_update_lists_equipements'); // Remettre quand la nouvelle liste d'équipements n'écrasera plus l'ancienne sur KIZEO
+        // return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
     }
 
     /**
-     * UPDATE LIST OF EQUIPMENTS ON KIZEO THEN CALL SAVE IN PUBLIC/PDF/MAINTENANCE FOLDER  --  SECOND CALL IN CRON TASK
+     * UPDATE LIST OF EQUIPMENTS ON KIZEO THEN CALL SAVE IN PDF/MAINTENANCE FOLDER  --  SECOND CALL IN CRON TASK
      * 
      */
     #[Route('/api/forms/update/lists/equipements', name: 'app_api_form_update_lists_equipements', methods: ['GET','PUT'])]
-    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository, CacheInterface $cache): JsonResponse {
+    public function putUpdatesListsEquipementsFromKizeoForms(FormRepository $formRepository, CacheInterface $cache)//: JsonResponse 
+    {
         $dataOfFormList  =  $formRepository->getDataOfFormsMaintenance($cache);
 
         // GET equipments des agences de Grenoble, Paris et Montpellier en apellant la fonction getAgencyListEquipementsFromKizeoByListId($list_id) avec leur ID de list sur KIZEO
@@ -188,6 +189,7 @@ class FormController extends AbstractController
             $result = $formRepository->getAgencyListEquipementsFromKizeoByListId(434252);
             return $result;
         });
+        // dd($equipmentsGrenoble); On a bien 5710 équipements sur Grenoble
         
         // $equipmentsBordeaux = $formRepository->getAgencyListEquipementsFromKizeoByListId();
         // $equipmentsToulouse = $formRepository->getAgencyListEquipementsFromKizeoByListId();
@@ -199,30 +201,30 @@ class FormController extends AbstractController
 
             switch ($dataOfFormList[$key]['code_agence']['value']) {
                 // Fonction uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList,$key,$agencyEquipments,$agencyListId)
-                // case 'S10':
+                case 'S10':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGroup, );
                 //     dump('Uploads S10 OK');
-                //     break;
+                    break;
                 case 'S40':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, 427442);
-                    dump('Uploads S40 OK');
+                    // $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsStEtienne, 427442);
+                    // dump('Uploads S40 OK');
                     break;
                 case 'S50':
                     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsGrenoble, 414025);
                     dump('Uploads S50 OK');
                     break;
                 case 'S60':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, 427444);
-                    dump('Uploads S60 OK');
+                    // $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsLyon, 427444);
+                    // dump('Uploads S60 OK');
                     break;
-                // case 'S70':
+                case 'S70':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsBordeaux, );
                 //     dump('Uploads S70 OK');
-                //     break;
+                    break;
                 
                 case 'S80':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsParis, 421993);
-                    dump('Uploads for S80 OK');
+                    // $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsParis, 421993);
+                    // dump('Uploads for S80 OK');
                     break;
                 
                 case 'S100':
@@ -231,42 +233,42 @@ class FormController extends AbstractController
                     break;
                 
                 case 'S120':
-                    $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsHautsDeFrance, 434252);
-                    dump('Uploads for S120 OK');
+                    // $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsHautsDeFrance, 434252);
+                    // dump('Uploads for S120 OK');
                     break;
                 
-                // case 'S130':
+                case 'S130':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsToulouse, );
                 //     dump('Uploads for S130 OK');
-                //     break;
+                    break;
                 
-                // case 'S140':
+                case 'S140':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSmp, 427682);
                 //     dump('Uploads for S140 OK');
-                //     break;
+                    break;
                 
-                // case 'S150':
+                case 'S150':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsSogefi, );
                 //     dump('Uploads for S150 OK');
-                //     break;
+                    break;
                 
-                // case 'S160':
+                case 'S160':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRouen, );
                 //     dump('Uploads for S160 OK');
-                //     break;
+                    break;
                 
-                // case 'S170':
+                case 'S170':
                 //     $formRepository->uploadListAgencyWithNewRecordsOnKizeo($dataOfFormList, $key, $equipmentsRennes, );
                 //     dump('Uploads for S170 OK');
-                //     break;
+                    break;
                 
                 default:
                     dump('this not for our agencies');
                     break;
             }
         }
-        return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
-        // return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
+        // return new JsonResponse('La mise à jour sur KIZEO s\'est bien déroulée !', Response::HTTP_OK, [], true);
+        return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
     }
 
     /**
@@ -274,12 +276,12 @@ class FormController extends AbstractController
      * Save PDF maintenance on remote server --  THIRD CALL IN CRON TASK
      */
     #[Route('/api/forms/save/maintenance/pdf', name: 'app_api_form_save_maintenance_pdf', methods: ['GET'])]
-    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache)//: JsonResponse
+    public function savePdfInAssetsPdfFolder(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
         $formRepository->savePdfInAssetsPdfFolder($cache);
         
-        return $this->redirectToRoute('app_api_form_save_maintenance_equipments');
-        // return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
+        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments');
+        return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés + on est à jour en BDD et sur KIZEO ", Response::HTTP_OK, [], true);
     }
     /**
      * 
