@@ -261,60 +261,59 @@
 
     </style>
 
-    {% block header %}
-        <header class="header">
-            <h1>Parc Équipements Kuehne & Nagel</h1>
-        </header>
-    {% endblock %}
-    <nav class="navbar bg-body-tertiary">
-        <div class="container">
-        <a class="navbar-brand" href="{{ path('app_kuehne') }}">
-            <i class="fa-solid fa-house"> </i>Accueil
-        </a>
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a href="{{ path('app_logout') }}" class="navbar-brand" >
-                    <i class="fa-solid fa-user"></i>Se déconnecter
-                </a>
-            </li>
-            {#
-            <li class="nav-item dropdown" style="margin-right: 75px;">
-                <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <img class="nav-profile-img rounded-circle" src="{{ asset('images/astronaut-profile.png') }}">
-                </a>
-                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="#">Profile</a>
-                    <a class="dropdown-item" href="#">Create Post</a>
-                    <a class="dropdown-item" href="#">Logout</a>
-                </div>
-            </li>
-            #}
-        </ul>
-        </div>
-    </nav>
-
-    {# Selection du site DEVRA ÊTRE PRECEDE PAR CHOIX DE LA REGION POUR FACILITER LE CHOIX DU SITE ET SON APPARTENANCE AUX RESPONSABLES DE REGION #}
-    <div class="selections-container">
-        <div class="selection-client" >
-            <!-- N'apparait que si le client n'est pas sélectionné et que l'agence n'est pas sélectionnée -->
-            {% if agenceSelected == NULL %}
-                <div>
-                    <h2><span class="number"> 1 - </span>Sélectionnez votre agence</h2>
-                    <form action="" method="post">
-                        <select class="form-control" id="agence-somafi" name="agenceName">
-                            <option value = "" selected> Select agence </option> 
-                            {% for agence in agenciesArray %}
-                                <option  value="{{ agence.getCode() }}" id="agence_selected">{{ agence.getAgence() }}</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit"  name ="submitAgence" class="btn btn-primary">Select Agence</button>
-                    </form>
-                </div>
-            {% endif %}
-            <!-- N'apparait que si l'agence est sélectionnée -->
-        </div>
-    </div>
-    {% if agenceSelected and clientSelectedInformations == NULL %}
+    {% if app.user %}
+        {% block header %}
+            <header class="header">
+                <h1>Parc Équipements Clients Somafi</h1>
+                    <h2>Bonjour {{ app.user.firstName }}</h2>
+            </header>
+        {% endblock %}
+        <nav class="navbar bg-body-tertiary">
+            <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fa-solid fa-house"> </i>Accueil
+            </a>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="{{ path('app_logout') }}" class="navbar-brand" >
+                        <i class="fa-solid fa-user"></i>Se déconnecter
+                    </a>
+                </li>
+                {#
+                <li class="nav-item dropdown" style="margin-right: 75px;">
+                    <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <img class="nav-profile-img rounded-circle" src="{{ asset('images/astronaut-profile.png') }}">
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                        <a class="dropdown-item" href="#">Profile</a>
+                        <a class="dropdown-item" href="#">Create Post</a>
+                        <a class="dropdown-item" href="#">Logout</a>
+                    </div>
+                </li>
+                #}
+            </ul>
+            </div>
+        </nav>
+        {% block clientsInformations %}
+        <div class="selections-container">
+            <div class="selection-client" >
+                <!-- N'apparait que si le client n'est pas sélectionné et que l'agence n'est pas sélectionnée -->
+                {% if agenceSelected == NULL %}
+                    <div>
+                        <h2><span class="number"> 1 - </span>Sélectionnez votre agence</h2>
+                        <form action="" method="post">
+                            <select class="form-control" id="agence-somafi" name="agenceName">
+                                <option value = "" selected> Select agence </option> 
+                                {% for agence in agenciesArray %}
+                                    <option  value="{{ agence.getCode() }}" id="agence_selected">{{ agence.getAgence() }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit"  name ="submitAgence" class="btn btn-primary">Select Agence</button>
+                        </form>
+                    </div>
+                {% endif %}
+                <!-- N'apparait que si l'agence est sélectionnée -->
+                {% if agenceSelected and clientSelectedInformations == NULL %}
                     <div>
                         <h2><span class="number"> 2 - </span>Sélectionnez maintenant votre client</h2>
                         <h3>Agence de rattachement : {{ agenceSelected }}</h3>
