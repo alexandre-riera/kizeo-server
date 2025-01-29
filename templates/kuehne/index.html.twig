@@ -313,7 +313,7 @@
                     </div>
                 {% endif %}
                 <!-- N'apparait que si l'agence est sélectionnée -->
-                {% if agenceSelected and clientSelectedInformations == NULL %} #}
+                {% if agenceSelected and clientSelectedInformations == NULL %}
                     <div>
                         <h2><span class="number"> 2 - </span>Sélectionnez votre site</h2>
                         {# <h3>Agence de rattachement : {{ agenceSelected }}</h3>
@@ -381,7 +381,7 @@
                             <button type="submit"  name ="submitClient" class="btn btn-primary">Select Client</button>
                         </form> 
                     </div>
-                {# {% endif %} #}
+                {% endif %}
             </div>
         </div>
         {% if clientSelectedInformations != NULL  %}
