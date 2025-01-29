@@ -298,7 +298,7 @@
         <div class="selections-container">
             <div class="selection-client" >
                 <!-- N'apparait que si le client n'est pas sélectionné et que l'agence n'est pas sélectionnée -->
-                {# {% if agenceSelected == NULL %}
+                {% if agenceSelected == NULL %}
                     <div>
                         <h2><span class="number"> 1 - </span>Sélectionnez votre agence</h2>
                         <form action="" method="post">
@@ -315,9 +315,9 @@
                 <!-- N'apparait que si l'agence est sélectionnée -->
                 {% if agenceSelected and clientSelectedInformations == NULL %} #}
                     <div>
-                        <h2><span class="number"> 2 - </span>Sélectionnez maintenant votre client</h2>
-                        <h3>Agence de rattachement : {{ agenceSelected }}</h3>
-                        <label class="selection-client-label" for="client-select">Client sous contrat</label>
+                        <h2><span class="number"> 2 - </span>Sélectionnez votre site</h2>
+                        {# <h3>Agence de rattachement : {{ agenceSelected }}</h3>
+                        <label class="selection-client-label" for="client-select">Client sous contrat</label> #}
                         <form action="" method="post">
                             <input type="text" class="form-control form-control-client" placeholder="Search.." id="myInput" onkeyup="filterFunction()" >
                             <select class="form-control" id="client-sous-contrat-select" name="clientName" onFocus="expand(this)" onBlur="unexpand(this)">
