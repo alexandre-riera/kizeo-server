@@ -298,7 +298,7 @@
         <div class="selections-container">
             <div class="selection-client" >
                 <!-- N'apparait que si le client n'est pas sélectionné et que l'agence n'est pas sélectionnée -->
-                {% if agenceSelected == NULL %}
+                {# {% if agenceSelected == NULL %}
                     <div>
                         <h2><span class="number"> 1 - </span>Sélectionnez votre agence</h2>
                         <form action="" method="post">
@@ -313,7 +313,7 @@
                     </div>
                 {% endif %}
                 <!-- N'apparait que si l'agence est sélectionnée -->
-                {% if agenceSelected and clientSelectedInformations == NULL %}
+                {% if agenceSelected and clientSelectedInformations == NULL %} #}
                     <div>
                         <h2><span class="number"> 2 - </span>Sélectionnez maintenant votre client</h2>
                         <h3>Agence de rattachement : {{ agenceSelected }}</h3>
@@ -381,7 +381,7 @@
                             <button type="submit"  name ="submitClient" class="btn btn-primary">Select Client</button>
                         </form> 
                     </div>
-                {% endif %}
+                {# {% endif %} #}
             </div>
         </div>
         {% if clientSelectedInformations != NULL  %}
