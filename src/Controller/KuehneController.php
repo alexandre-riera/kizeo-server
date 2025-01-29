@@ -173,7 +173,7 @@ class KuehneController extends AbstractController
             foreach ($clientSelectedEquipments as $equipment) {
                 if ($equipment->getDateEnregistrement() != NULL) {
                     array_push($clientSelectedEquipmentsFiltered, $equipment);
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                    $directoriesLists = $kuehneRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
                     $visiteDuClient =  $equipment->getVisite();
                 }
             }
