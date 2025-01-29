@@ -575,16 +575,16 @@
                     <tr class="sticky">
                         <th data-sortable="true" data-filter-control="select" data-field="visite">Visite</th>
                         <th data-sortable="true" data-filter-control="select" data-field="n°">N°</th>
-                        {# <th data-sortable="true" data-field="libelle">Libelle</th> #}
+                        <th data-sortable="true" data-field="libelle">Libelle</th>
                         <th data-sortable="true" data-field="derniere_visite">Date visite</th>
                         <th data-sortable="false" data-field="repere">Repère</th>
-                        {# <th data-sortable="false" data-field="installe_le">Installé le</th> #}
-                        {# <th data-sortable="false" data-field="num_serie">N° de série</th> #}
+                        <th data-sortable="false" data-field="installe_le">Installé le</th>
+                        <th data-sortable="false" data-field="num_serie">N° de série</th>
                         <th data-sortable="true" data-filter-control="select" data-field="marque">Marque</th>
-                        {# <th data-sortable="true" data-field="hauteur">h</th> #}
-                        {# <th data-sortable="true" data-field="largeur">l</th> #}
-                        {# <th data-sortable="true" data-field="longueur">L</th> #}
-                        {# <th data-sortable="true" data-field="date_enregistrement">Enregistré</th> #}
+                        <th data-sortable="true" data-field="hauteur">h</th>
+                        <th data-sortable="true" data-field="largeur">l</th>
+                        <th data-sortable="true" data-field="longueur">L</th>
+                        <th data-sortable="true" data-field="date_enregistrement">Enregistré</th>
                         <th data-sortable="true" data-filter-control="select" data-field="etat">État</th>
                         <th data-sortable="true" data-filter-control="select" data-field="statut_maintenance">Statut</th>
                         <th>Options</th>
@@ -596,16 +596,16 @@
                         <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
-                            {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
+                            <td>{{ equipment.getLibelleEquipement() }}</td>
                             <td>{{ equipment.getDerniereVisite() }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
-                            {# <td>{{ equipment.getMiseEnService() }}</td> #}
-                            {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
+                            <td>{{ equipment.getMiseEnService() }}</td>
+                            <td>{{ equipment.getNumeroDeSerie() }}</td>
                             <td>{{ equipment.getMarque() }}</td>
-                            {# <td>{{ equipment.getHauteur() }}</td> #}
-                            {# <td>{{ equipment.getLargeur() }}</td> #}
-                            {# <td>{{ equipment.getLongueur() }}</td> #}
-                            {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
+                            <td>{{ equipment.getHauteur() }}</td>
+                            <td>{{ equipment.getLargeur() }}</td>
+                            <td>{{ equipment.getLongueur() }}</td>
+                            <td>{{ equipment.getDateEnregistrement() }}</td>
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
                                 <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -618,8 +618,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
                             {% endif %}
-                            <td>
-                            {# <button onclick="editEquipement(
+                            <td><button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
                                 '{{ equipment.getVisite() }}',
@@ -649,7 +648,7 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                            </button> #}
+                            </button>
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
@@ -658,16 +657,16 @@
                         <tr class="bkg_row_visite_2" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
-                            {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
+                            <td>{{ equipment.getLibelleEquipement() }}</td>
                             <td>{{ equipment.getDerniereVisite() }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
-                            {# <td>{{ equipment.getMiseEnService() }}</td> #}
-                            {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
+                            <td>{{ equipment.getMiseEnService() }}</td>
+                            <td>{{ equipment.getNumeroDeSerie() }}</td>
                             <td>{{ equipment.getMarque() }}</td>
-                            {# <td>{{ equipment.getHauteur() }}</td> #}
-                            {# <td>{{ equipment.getLargeur() }}</td> #}
-                            {# <td>{{ equipment.getLongueur() }}</td> #}
-                            {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
+                            <td>{{ equipment.getHauteur() }}</td>
+                            <td>{{ equipment.getLargeur() }}</td>
+                            <td>{{ equipment.getLongueur() }}</td>
+                            <td>{{ equipment.getDateEnregistrement() }}</td>
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
                                 <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -680,8 +679,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
                             {% endif %}
-                            <td>
-                            {# <button onclick="editEquipement(
+                            <td><button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
                                 '{{ equipment.getVisite() }}',
@@ -711,7 +709,7 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                            </button> #}
+                            </button>
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
@@ -720,16 +718,16 @@
                         <tr class="bkg_row_visite_3" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
-                            {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
+                            <td>{{ equipment.getLibelleEquipement() }}</td>
                             <td>{{ equipment.getDerniereVisite() }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
-                            {# <td>{{ equipment.getMiseEnService() }}</td> #}
-                            {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
+                            <td>{{ equipment.getMiseEnService() }}</td>
+                            <td>{{ equipment.getNumeroDeSerie() }}</td>
                             <td>{{ equipment.getMarque() }}</td>
-                            {# <td>{{ equipment.getHauteur() }}</td> #}
-                            {# <td>{{ equipment.getLargeur() }}</td> #}
-                            {# <td>{{ equipment.getLongueur() }}</td> #}
-                            {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
+                            <td>{{ equipment.getHauteur() }}</td>
+                            <td>{{ equipment.getLargeur() }}</td>
+                            <td>{{ equipment.getLongueur() }}</td>
+                            <td>{{ equipment.getDateEnregistrement() }}</td>
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
                                 <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -742,8 +740,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
                             {% endif %}
-                            <td>
-                            {# <button onclick="editEquipement(
+                            <td><button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
                                 '{{ equipment.getVisite() }}',
@@ -773,7 +770,7 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                            </button> #}
+                            </button>
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
@@ -782,16 +779,16 @@
                         <tr class="bkg_row_visite_4" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
-                            {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
+                            <td>{{ equipment.getLibelleEquipement() }}</td>
                             <td>{{ equipment.getDerniereVisite() }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
-                            {# <td>{{ equipment.getMiseEnService() }}</td> #}
-                            {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
+                            <td>{{ equipment.getMiseEnService() }}</td>
+                            <td>{{ equipment.getNumeroDeSerie() }}</td>
                             <td>{{ equipment.getMarque() }}</td>
-                            {# <td>{{ equipment.getHauteur() }}</td> #}
-                            {# <td>{{ equipment.getLargeur() }}</td> #}
-                            {# <td>{{ equipment.getLongueur() }}</td> #}
-                            {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
+                            <td>{{ equipment.getHauteur() }}</td>
+                            <td>{{ equipment.getLargeur() }}</td>
+                            <td>{{ equipment.getLongueur() }}</td>
+                            <td>{{ equipment.getDateEnregistrement() }}</td>
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
                                 <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -804,8 +801,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
                             {% endif %}
-                            <td>
-                            {# <button onclick="editEquipement(
+                            <td><button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
                                 '{{ equipment.getVisite() }}',
@@ -835,7 +831,7 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                            </button> #}
+                            </button>
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
@@ -844,16 +840,16 @@
                         <tr class="bkg_row_visite_A" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
-                            {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
+                            <td>{{ equipment.getLibelleEquipement() }}</td>
                             <td>{{ equipment.getDerniereVisite() }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
-                            {# <td>{{ equipment.getMiseEnService() }}</td> #}
-                            {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
+                            <td>{{ equipment.getMiseEnService() }}</td>
+                            <td>{{ equipment.getNumeroDeSerie() }}</td>
                             <td>{{ equipment.getMarque() }}</td>
-                            {# <td>{{ equipment.getHauteur() }}</td> #}
-                            {# <td>{{ equipment.getLargeur() }}</td> #}
-                            {# <td>{{ equipment.getLongueur() }}</td> #}
-                            {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
+                            <td>{{ equipment.getHauteur() }}</td>
+                            <td>{{ equipment.getLargeur() }}</td>
+                            <td>{{ equipment.getLongueur() }}</td>
+                            <td>{{ equipment.getDateEnregistrement() }}</td>
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
                                 <td class="bkg_vert">{{ equipment.getStatutDeMaintenance() }}</td>
@@ -866,8 +862,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td class="bkg_inaccessible">{{ equipment.getStatutDeMaintenance() }}</td>
                             {% endif %}
-                            <td>
-                            {# <button onclick="editEquipement(
+                            <td><button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
                                 '{{ equipment.getVisite() }}',
@@ -897,7 +892,7 @@
                                 '{{ equipment.getPresenceCarnetEntretien() }}',
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                            </button> #}
+                            </button>
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
                             </td>
                             
