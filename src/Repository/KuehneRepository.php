@@ -8,7 +8,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * Repository de la page home
  */
-class HomeRepository{
+class KuehneRepository{
     public function __construct(private HttpClientInterface $client)
     {
         
@@ -35,6 +35,7 @@ class HomeRepository{
         foreach ($listSplitted as $clientFiltered) {
             array_push($listClientsFiltered, $clientFiltered[6] . "-" . $clientFiltered[0] . " - " . $clientFiltered[8]);
         }
+        dd($listClientsFiltered);
         return $listClientsFiltered;
     }
 

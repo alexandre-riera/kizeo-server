@@ -17,7 +17,7 @@ use App\Entity\ContactS150;
 use App\Entity\ContactS160;
 use App\Entity\ContactS170;
 use App\Entity\EquipementS10;
-use App\Repository\HomeRepository;
+use App\Repository\KuehneRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -28,56 +28,56 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class KuehneController extends AbstractController
 {
     #[Route('/kuehne', name: 'app_kuehne')]
-    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, HomeRepository $homeRepository): Response
+    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, KuehneRepository $kuehneRepository): Response
     {
         // GET CONTACTS KIZEO BY AGENCY
-        // $clientsGroup  =  $homeRepository->getListClientFromKizeoById();
+        // $clientsGroup  =  $kuehneRepository->getListClientFromKizeoById();
         
-        $clientsStEtienne  =  $cache->get('client_st_etienne', function (ItemInterface $item) use ($homeRepository)  {
+        $clientsStEtienne  =  $cache->get('client_st_etienne', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(427441);
+            $clients = $kuehneRepository->getListClientFromKizeoById(427441);
             return $clients;
         });
-        $clientsGrenoble  =  $cache->get('client_grenoble', function (ItemInterface $item) use ($homeRepository)  {
+        $clientsGrenoble  =  $cache->get('client_grenoble', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(409466);
+            $clients = $kuehneRepository->getListClientFromKizeoById(409466);
             return $clients;
         });
-        $clientsLyon  =  $cache->get('client_lyon', function (ItemInterface $item) use ($homeRepository)  {
+        $clientsLyon  =  $cache->get('client_lyon', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(427443);
+            $clients = $kuehneRepository->getListClientFromKizeoById(427443);
             return $clients;
         });
-        // $clientsBordeaux  =  $homeRepository->getListClientFromKizeoById();
-        $clientsParisNord  =  $cache->get('client_paris_nord', function (ItemInterface $item) use ($homeRepository)  {
+        // $clientsBordeaux  =  $kuehneRepository->getListClientFromKizeoById();
+        $clientsParisNord  =  $cache->get('client_paris_nord', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(421994);
+            $clients = $kuehneRepository->getListClientFromKizeoById(421994);
             return $clients;
         });
-        $clientsMontpellier =  $cache->get('client_montpellier', function (ItemInterface $item) use ($homeRepository)  {
+        $clientsMontpellier =  $cache->get('client_montpellier', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(423852);
+            $clients = $kuehneRepository->getListClientFromKizeoById(423852);
             return $clients;
         });
-        $clientsHautsDeFrance =  $cache->get('client_hauts_de_france', function (ItemInterface $item) use ($homeRepository)  {
+        $clientsHautsDeFrance =  $cache->get('client_hauts_de_france', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(434249);
+            $clients = $kuehneRepository->getListClientFromKizeoById(434249);
             return $clients;
         });
-        // $clientsHautsDeFrance  =  $homeRepository->getListClientFromKizeoById();
-        // $clientsToulouse  =  $homeRepository->getListClientFromKizeoById();
-        $clientsEpinal =  $cache->get('client_epinal', function (ItemInterface $item) use ($homeRepository)  {
+        // $clientsHautsDeFrance  =  $kuehneRepository->getListClientFromKizeoById();
+        // $clientsToulouse  =  $kuehneRepository->getListClientFromKizeoById();
+        $clientsEpinal =  $cache->get('client_epinal', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(427681);
+            $clients = $kuehneRepository->getListClientFromKizeoById(427681);
             return $clients;
         });
-        // $clientsPaca  =  $homeRepository->getListClientFromKizeoById();
-        $clientsRouen =  $cache->get('client_rouen', function (ItemInterface $item) use ($homeRepository)  {
+        // $clientsPaca  =  $kuehneRepository->getListClientFromKizeoById();
+        $clientsRouen =  $cache->get('client_rouen', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(2629800 ); // 1 month in cache
-            $clients = $homeRepository->getListClientFromKizeoById(427677);
+            $clients = $kuehneRepository->getListClientFromKizeoById(427677);
             return $clients;
         });
-        // $clientsRennes  =  $homeRepository->getListClientFromKizeoById();
+        // $clientsRennes  =  $kuehneRepository->getListClientFromKizeoById();
         
         // ---------------------       GET CONTACTS GESTAN BY AGENCY
         $clientsGroup =  $cache->get('client_group', function (ItemInterface $item) use ($entityManager)  {
