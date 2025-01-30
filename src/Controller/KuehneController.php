@@ -166,16 +166,352 @@ class KuehneController extends AbstractController
         dump($clientSelected);
         $visiteDuClient = "";
 
-        if ($clientSelected != NULL){
-            $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
-            $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+        if ($clientSelected != NULL) {
+            switch ($agenceSelected) {
+                case 'S10':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S10':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
 
-            foreach ($clientSelectedEquipments as $equipment) {
-                if ($equipment->getDateEnregistrement() != NULL) {
-                    array_push($clientSelectedEquipmentsFiltered, $equipment);
-                    $directoriesLists = $kuehneRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
-                    $visiteDuClient =  $equipment->getVisite();
-                }
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S40':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S40':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S50':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
+                    break;
+                case ' S50':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    // PUT HERE THE FUNCTION TO GET CLIENTSELECTED PDF
+                    break;
+                case 'S60':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S60':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S70':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S70':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S80':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S80':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S100':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S100':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S120':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S120':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S130':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S130':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S140':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S140':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S150':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S150':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S160':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S160':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case 'S170':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                case ' S170':
+                    $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
+                    $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                    
+                    
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDateEnregistrement() != NULL) {
+                            array_push($clientSelectedEquipmentsFiltered, $equipment);
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $equipment->getVisite(), $agenceSelected);
+                            $visiteDuClient =  $equipment->getVisite();
+                        }
+                    }
+                    break;
+                
+                default:
+                    break;
             }
         }
         $agenceSelected = trim($agenceSelected);
