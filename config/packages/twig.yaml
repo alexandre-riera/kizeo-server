@@ -1,7 +1,7 @@
 twig:
     file_name_pattern: '*.twig'
     globals:
-        image_dir: 'img/'
+        image_dir: 'public/img/'
 when@test:
     twig:
         strict_variables: true
