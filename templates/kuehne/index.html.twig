@@ -671,15 +671,15 @@
                             {# <td>{{ equipment.getDateEnregistrement() }}</td> #}
                             <td>{{ equipment.getEtat() }}</td>
                             {%if equipment.statutDeMaintenance == "Vert" %}
-                                <td><img src="{{asset('./img/logos/etat-equipement/vert.png')}}" alt="etat-equipement" /></td>
+                                <td><img src="{{asset('img/logos/etat-equipement/vert.png')}}" alt="etat-equipement" /></td>
                                 {% elseif equipment.statutDeMaintenance == "Orange" %}
-                                <td><img src="{{asset('./img/logos/etat-equipement/orange.png')}}" alt="etat-equipement" /></td>
+                                <td><img src="{{asset('img/logos/etat-equipement/orange.png')}}" alt="etat-equipement" /></td>
                                 {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                                <td><img src="{{asset('./img/logos/etat-equipement/rouge.png')}}" alt="etat-equipement" /></td>
+                                <td><img src="{{asset('img/logos/etat-equipement/rouge.png')}}" alt="etat-equipement" /></td>
                                 {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                                <td><img src="{{asset('./img/logos/etat-equipement/rouge.png')}}" alt="etat-equipement" /></td>
+                                <td><img src="{{asset('img/logos/etat-equipement/rouge.png')}}" alt="etat-equipement" /></td>
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                                <td><img src="{{asset('./img/logos/etat-equipement/noir.png')}}" alt="etat-equipement" /></td>
+                                <td><img src="{{asset('img/logos/etat-equipement/noir.png')}}" alt="etat-equipement" /></td>
                             {% endif %}
                             <td>
                             {# <button onclick="editEquipement(
