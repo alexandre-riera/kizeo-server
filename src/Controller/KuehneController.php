@@ -50,11 +50,12 @@ class KuehneController extends AbstractController
             $clients = $kuehneRepository->getListClientFromKizeoById(427441);
             return $clients;
         });
-        $clientsGrenoble  =  $cache->get('client_grenoble', function (ItemInterface $item) use ($kuehneRepository)  {
-            $item->expiresAfter(900 ); // 15 minutes in cache
-            $clients = $kuehneRepository->getListClientFromKizeoById(409466);
-            return $clients;
-        });
+        // $clientsGrenoble  =  $cache->get('client_grenoble', function (ItemInterface $item) use ($kuehneRepository)  {
+        //     $item->expiresAfter(900 ); // 15 minutes in cache
+        //     $clients = $kuehneRepository->getListClientFromKizeoById(409466);
+        //     return $clients;
+        // });
+        $clientsGrenoble = $kuehneRepository->getListClientFromKizeoById(409466);
         $clientsLyon  =  $cache->get('client_lyon', function (ItemInterface $item) use ($kuehneRepository)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $kuehneRepository->getListClientFromKizeoById(427443);
