@@ -42,7 +42,7 @@ class KuehneController extends AbstractController
     #[Route('/kuehne', name: 'app_kuehne')]
     public function index(CacheInterface $cache,EntityManagerInterface $entityManager, KuehneRepository $kuehneRepository): Response
     {
-        // ---------------------------------------------------------------------- GET CONTACTS KIZEO BY AGENCY
+        // ---------------------------------------------------------------------- GET KUEHNE CONTACTS KIZEO BY AGENCY
         $clientsStEtienne = $kuehneRepository->getListClientFromKizeoById(427441);
         $clientsGrenoble = $kuehneRepository->getListClientFromKizeoById(409466);
         $clientsLyon = $kuehneRepository->getListClientFromKizeoById(427443);
@@ -52,7 +52,7 @@ class KuehneController extends AbstractController
         $clientsEpinal = $kuehneRepository->getListClientFromKizeoById(427681);
         $clientsRouen = $kuehneRepository->getListClientFromKizeoById(427677);
         
-        // ---------------------------------------------------------------------- GET CONTACTS GESTAN BY AGENCY
+        // ---------------------------------------------------------------------- GET KUEHNE CONTACTS GESTAN BY AGENCY
         $clientsGroup =  $cache->get('client_group', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS10::class)->findAll();
@@ -63,6 +63,7 @@ class KuehneController extends AbstractController
             $clients = $entityManager->getRepository(ContactS70::class)->findAll();
             return $clients;
         });
+        dump($clientsBordeaux);
         $clientsToulouse =  $cache->get('client_toulouse', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS130::class)->findAll();
