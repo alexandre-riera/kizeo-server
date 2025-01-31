@@ -36,8 +36,8 @@ class KuehneRepository{
             if (str_contains($clientFiltered[0],"KUEHNE")) {
                 array_push($listClientsKuehne, $clientFiltered);
             }
+            dump($listClientsKuehne);
         }
-        dd($listClientsKuehne);
         return $listClientsKuehne;
     }
 
