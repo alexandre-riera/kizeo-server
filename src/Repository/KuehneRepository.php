@@ -33,7 +33,7 @@ class KuehneRepository{
             array_push($listSplitted, preg_split("/[:|]/",$client));
         }
         foreach ($listSplitted as $clientFiltered) {
-            if (str_contains($clientFiltered,"KUEHNE")) {
+            if (str_contains($clientFiltered[0],"KUEHNE")) {
                 array_push($listClientsKuehne, $clientFiltered);
             }
             dump($listClientsKuehne);
