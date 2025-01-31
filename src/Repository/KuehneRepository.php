@@ -34,7 +34,7 @@ class KuehneRepository{
         }
         foreach ($listSplitted as $clientFiltered) {
             if (str_contains($clientFiltered[0],"KUEHNE")) {
-                array_push($listClientsKuehne, $clientFiltered[0]);
+                array_push($listClientsKuehne, $clientFiltered[6] . "-" . $clientFiltered[0] . " - " . $clientFiltered[8]);
                 dump($listClientsKuehne);
             }
         }
