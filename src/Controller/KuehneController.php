@@ -136,7 +136,7 @@ class KuehneController extends AbstractController
             return $agencies;
         });
 
-        dd($clientsGrenoble);
+        dd(preg_split("[/-/]" , $clientsGrenoble[0]));
 
         // GET CLIENT SELECTED INFORMATION BY AGENCY BY HIS RAISON_SOCIALE
         $clientSelectedInformations  = "";
