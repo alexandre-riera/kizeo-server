@@ -136,7 +136,7 @@ class KuehneController extends AbstractController
             return $agencies;
         });
 
-        dd($clientsGrenoble);
+        
         // GET CLIENT SELECTED INFORMATION BY AGENCY BY HIS RAISON_SOCIALE
         $clientSelectedInformations  = "";
         // GET CLIENT SELECTED EQUIPMENTS BY AGENCY BY HIS ID_CONTACT

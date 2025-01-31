@@ -37,6 +37,7 @@ class KuehneRepository{
                 array_push($listClientsKuehne, $clientFiltered);
             }
         }
+        dd($listClientsKuehne);
         return $listClientsKuehne;
     }
 
