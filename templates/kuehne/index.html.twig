@@ -410,7 +410,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-2">
+                <div class="col-sm-3">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Date de fin de contrat</h4>
@@ -420,7 +420,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-2">
+                <div class="col-sm-3">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Nombre d'équipements</h4>
@@ -430,7 +430,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-2">
+                {# <div class="col-sm-2">
                     <div class="card downloadPdf">
                         <div class="card-body">
                             <h4 class="card-title">Compte-rendu</h4>
@@ -444,7 +444,7 @@
                             </ul>
                         </div>
                     </div>
-                </div>
+                </div> #}
             </div>
         {%endif%}
         {% endblock %}
@@ -588,7 +588,7 @@
                         {# <th data-sortable="true" data-field="date_enregistrement">Enregistré</th> #}
                         <th data-sortable="true" data-filter-control="select" data-field="etat">État</th>
                         <th data-sortable="true" data-filter-control="select" data-field="statut_maintenance">Statut</th>
-                        <th>Options</th>
+                        {# <th>Options</th> #}
                     </tr>
                 </thead>
                 <tbody>
@@ -619,7 +619,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                             {% endif %}
-                            <td>
+                            {# <td> #}
                             {# <button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
@@ -651,8 +651,8 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button> #}
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                            </td>
+                            {# <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a> #}
+                            {# </td> #}
                             
                         </tr>
                     {% elseif  equipment.visite  == "CE2" %}
@@ -681,7 +681,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                             {% endif %}
-                            <td>
+                            {# <td> #}
                             {# <button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
@@ -713,8 +713,8 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button> #}
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                            </td>
+                            {# <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a> #}
+                            {# </td> #}
                             
                         </tr>
                     {% elseif  equipment.visite  == "CE3" %}
@@ -743,7 +743,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                             {% endif %}
-                            <td>
+                            {# <td> #}
                             {# <button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
@@ -775,8 +775,8 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button> #}
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                            </td>
+                            {# <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a> #}
+                            {# </td> #}
                             
                         </tr>
                     {% elseif  equipment.visite  == "CE4" %}
@@ -805,7 +805,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                             {% endif %}
-                            <td>
+                            {# <td> #}
                             {# <button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
@@ -837,8 +837,8 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button> #}
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                            </td>
+                            {# <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a> #}
+                            {# </td> #}
                             
                         </tr>
                     {% elseif  equipment.visite  == "CEA" %}
@@ -867,7 +867,7 @@
                                 {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
                                 <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                             {% endif %}
-                            <td>
+                            {# <td> #}
                             {# <button onclick="editEquipement(
                                 '{{ equipment.getId() }}',
                                 '{{ equipment.getLibelleEquipement() }}',
@@ -899,8 +899,8 @@
                                 '{{ equipment.getStatutConformite() }}'
                             )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
                             </button> #}
-                            <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                            </td>
+                            {# <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a> #}
+                            {# </td> #}
                             
                         </tr>
                     {% endif %}
