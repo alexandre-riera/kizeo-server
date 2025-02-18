@@ -3,12 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Agency;
+use App\Entity\FilesCC;
 use App\Entity\ContactS10;
 use App\Entity\ContactS40;
 use App\Entity\ContactS50;
 use App\Entity\ContactS60;
 use App\Entity\ContactS70;
 use App\Entity\ContactS80;
+use App\Entity\ContactsCC;
 use App\Entity\ContactS100;
 use App\Entity\ContactS120;
 use App\Entity\ContactS130;
@@ -30,51 +32,55 @@ use App\Entity\EquipementS150;
 use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
 use App\Repository\KuehneRepository;
+use App\Repository\ContactsCCRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Test\Constraint\ResponseIsSuccessful;
 
 class KuehneController extends AbstractController
 {
     #[Route('/kuehne', name: 'app_kuehne')]
-    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, KuehneRepository $kuehneRepository): Response
-    {
+    public function index(CacheInterface $cache,EntityManagerInterface $entityManager, KuehneRepository $kuehneRepository, ContactsCCRepository $contactsCCRepository): Response
+    {   
         // ---------------------------------------------------------------------- GET KUEHNE CONTACTS KIZEO BY AGENCY
-        $clientsStEtienne = $kuehneRepository->getListClientFromKizeoById(427441);
-        $clientsGrenoble = $kuehneRepository->getListClientFromKizeoById(409466);
-        $clientsLyon = $kuehneRepository->getListClientFromKizeoById(427443);
-        $clientsParisNord = $kuehneRepository->getListClientFromKizeoById(421994);
-        $clientsMontpellier = $kuehneRepository->getListClientFromKizeoById(423852);
-        $clientsHautsDeFrance = $kuehneRepository->getListClientFromKizeoById(434249);
-        $clientsEpinal = $kuehneRepository->getListClientFromKizeoById(427681);
-        $clientsRouen = $kuehneRepository->getListClientFromKizeoById(427677);
+        // IMPORTANT  Return $listClientsKuehneFromKizeo array filled with ContactsCC object structured with his id_contact, raison_sociale and code_agence
+        $clientsKuehneStEtienne = $kuehneRepository->getListClientFromKizeoById(427441, $entityManager, $contactsCCRepository);
+        $clientsKuehneGrenoble = $kuehneRepository->getListClientFromKizeoById(409466, $entityManager, $contactsCCRepository);
+        $clientsKuehneLyon = $kuehneRepository->getListClientFromKizeoById(427443, $entityManager, $contactsCCRepository);
+        $clientsKuehneParisNord = $kuehneRepository->getListClientFromKizeoById(421994, $entityManager, $contactsCCRepository);
+        $clientsKuehneMontpellier = $kuehneRepository->getListClientFromKizeoById(423852, $entityManager, $contactsCCRepository);
+        $clientsKuehneHautsDeFrance = $kuehneRepository->getListClientFromKizeoById(434249, $entityManager, $contactsCCRepository);
+        $clientsKuehneEpinal = $kuehneRepository->getListClientFromKizeoById(427681, $entityManager, $contactsCCRepository);
+        $clientsKuehneRouen = $kuehneRepository->getListClientFromKizeoById(427677, $entityManager, $contactsCCRepository);
         
         // ---------------------------------------------------------------------- GET KUEHNE CONTACTS GESTAN BY AGENCY
-        $clientsGroup =  $cache->get('client_group', function (ItemInterface $item) use ($entityManager)  {
+        $clientsKuehneGroup =  $cache->get('client_group', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS10::class)->findAll();
             return $clients;
         });
-        $clientsBordeaux =  $cache->get('client_bordeaux', function (ItemInterface $item) use ($entityManager)  {
+        $clientsKuehneBordeaux =  $cache->get('client_bordeaux', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS70::class)->findAll();
             return $clients;
         });
-        dump($clientsBordeaux);
-        $clientsToulouse =  $cache->get('client_toulouse', function (ItemInterface $item) use ($entityManager)  {
+        $clientsKuehneToulouse =  $cache->get('client_toulouse', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS130::class)->findAll();
             return $clients;
         });
-        $clientsPaca =  $cache->get('client_paca', function (ItemInterface $item) use ($entityManager)  {
+        $clientsKuehnePaca =  $cache->get('client_paca', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS150::class)->findAll();
             return $clients;
         });
-        $clientsRennes =  $cache->get('client_rennes', function (ItemInterface $item) use ($entityManager)  {
+        $clientsKuehneRennes =  $cache->get('client_rennes', function (ItemInterface $item) use ($entityManager)  {
             $item->expiresAfter(900 ); // 15 minutes in cache
             $clients = $entityManager->getRepository(ContactS170::class)->findAll();
             return $clients;
@@ -86,7 +92,9 @@ class KuehneController extends AbstractController
             return $agencies;
         });
 
-        
+        // Merge all contacts arrays
+        $allKuehneContactsFromFrance = array_merge($clientsKuehneStEtienne, $clientsKuehneGrenoble, $clientsKuehneLyon, $clientsKuehneParisNord, $clientsKuehneMontpellier, $clientsKuehneHautsDeFrance, $clientsKuehneEpinal, $clientsKuehneRouen);
+
         // GET CLIENT SELECTED INFORMATION BY AGENCY BY HIS RAISON_SOCIALE
         $clientSelectedInformations  = "";
         // GET CLIENT SELECTED EQUIPMENTS BY AGENCY BY HIS ID_CONTACT
@@ -99,33 +107,41 @@ class KuehneController extends AbstractController
         // GET directories and files OF CLIENT SELECTED
         $directoriesLists = [];
 
-        // Récupération de l'agence sélectionnée nécessaire pour charger la liste client de l'agence
-        if(isset($_POST['submitAgence'])){  
-            if(!empty($_POST['agenceName'])) {
-                $agenceSelected = $_POST['agenceName'];
-            } else {  
-                echo 'Please select the value.';
-            }  
-        }
-        // Récupération du client sélectionné et SET de $agenceSelected par les 4 derniers caractères de $clientSelected
+        $idClientSelected ="";
+        // Récupération du client sélectionné et SET de $agenceSelected et $idClientSlected
         if(isset($_POST['submitClient'])){  
             if(!empty($_POST['clientName'])) {  
                 $clientSelected = $_POST['clientName'];
-                $agenceSelected = substr($clientSelected, -4);
+                foreach ($allKuehneContactsFromFrance as $kuehneContact) {
+                    if ($clientSelected == $kuehneContact->raison_sociale) {
+                        $agenceSelected = $kuehneContact->code_agence;
+                        $idClientSelected = $kuehneContact->id_contact;
+                    }
+                }
             } else {  
                 echo 'Please select the value.';
             }  
         }
-
-        // ENLEVER LE NOM DE L'AGENCE ET L'ESPACE A LA FIN DU NOM DU CLIENT SÉLECTIONNÉ
-        $clientSelectedRTrimmed = rtrim($clientSelected, "\S10\S40\S50\S60\S70\S80\S100\S120\S130\S140\S150\S160\S170\ \-");
-        $clientSelectedSplitted = preg_split("/[-]/",$clientSelectedRTrimmed);
-        $idClientSelected = $clientSelectedSplitted[0];
-        foreach ($clientSelectedSplitted as $key) {
-            $clientSelected = $key;
-        }
-        $idClientSelected = rtrim($idClientSelected, "\ ");
-        dump($idClientSelected);
+        // Récupération du fichier sélectionné 
+        // if(isset($_POST['submitFile'])){  
+        //     if(!empty($_POST['fileselected'])) {  
+        //         $fileSelected = $_POST['fileselected'];
+        //         dd($fileSelected);
+                
+        //     } else {  
+        //         echo 'Please select the value.';
+        //     }  
+        // }
+        
+        // // ENLEVER LE NOM DE L'AGENCE ET L'ESPACE A LA FIN DU NOM DU CLIENT SÉLECTIONNÉ
+        // $clientSelectedRTrimmed = rtrim($clientSelected, "\S10\S40\S50\S60\S70\S80\S100\S120\S130\S140\S150\S160\S170\ \-");
+        // $clientSelectedSplitted = preg_split("/[-]/",$clientSelectedRTrimmed);
+        // $idClientSelected = $clientSelectedSplitted[0];
+        // foreach ($clientSelectedSplitted as $key) {
+        //     $clientSelected = $key;
+        // }
+        
+        dump($agenceSelected);
         dump($clientSelected);
         $visiteDuClient = "";
 
@@ -480,19 +496,19 @@ class KuehneController extends AbstractController
         $agenceSelected = trim($agenceSelected);
 
         return $this->render('kuehne/index.html.twig', [
-            'clientsGroup' => $clientsGroup,  // Array of Contacts
-            'clientsStEtienne' => $clientsStEtienne,  // Array of Contacts
-            'clientsGrenoble' => $clientsGrenoble,  // Array of Contacts
-            'clientsLyon' => $clientsLyon,  // Array of Contacts
-            'clientsBordeaux' => $clientsBordeaux,  // Array of Contacts
-            'clientsParisNord' => $clientsParisNord,  // Array of Contacts
-            'clientsMontpellier' => $clientsMontpellier,  // Array of Contacts
-            'clientsHautsDeFrance' => $clientsHautsDeFrance,  // Array of Contacts
-            'clientsToulouse' => $clientsToulouse,  // Array of Contacts
-            'clientsEpinal' => $clientsEpinal,  // Array of Contacts
-            'clientsPaca' => $clientsPaca,  // Array of Contacts
-            'clientsRouen' => $clientsRouen,  // Array of Contacts
-            'clientsRennes' => $clientsRennes,  // Array of Contacts
+            'clientsGroup' => $clientsKuehneGroup,  // Array of Contacts
+            'clientsStEtienne' => $clientsKuehneStEtienne,  // Array of Contacts
+            'clientsGrenoble' => $clientsKuehneGrenoble,  // Array of Contacts
+            'clientsLyon' => $clientsKuehneLyon,  // Array of Contacts
+            'clientsBordeaux' => $clientsKuehneBordeaux,  // Array of Contacts
+            'clientsParisNord' => $clientsKuehneParisNord,  // Array of Contacts
+            'clientsMontpellier' => $clientsKuehneMontpellier,  // Array of Contacts
+            'clientsHautsDeFrance' => $clientsKuehneHautsDeFrance,  // Array of Contacts
+            'clientsToulouse' => $clientsKuehneToulouse,  // Array of Contacts
+            'clientsEpinal' => $clientsKuehneEpinal,  // Array of Contacts
+            'clientsPaca' => $clientsKuehnePaca,  // Array of Contacts
+            'clientsRouen' => $clientsKuehneRouen,  // Array of Contacts
+            'clientsRennes' => $clientsKuehneRennes,  // Array of Contacts
             'clientSelected' => $clientSelected, // String
             'agenceSelected' => $agenceSelected, // String
             'agenciesArray' => $agenciesArray, // Array of all agencies (params : code, agence)
@@ -502,6 +518,35 @@ class KuehneController extends AbstractController
             'directoriesLists' => $directoriesLists, // Array with Objects $myFile with path and annee properties in it
             'visiteDuClient' =>  $visiteDuClient,
             'idClientSelected' =>  $idClientSelected,
+            'allKuehneContactsFromFrance' =>  $allKuehneContactsFromFrance,
         ]);
+    }
+
+    #[Route("/kuehne/upload/file", name:"kuehne_upload_file")]
+    public function temporaryUploadAction(Request $request, EntityManagerInterface $entityManager, ContactsCCRepository $contactsCCRepository) : Response
+    {
+        // Récupération du client sélectionné et SET de $agenceSelected et $idClientSlected
+        if(isset($_POST['submitFile'])){  
+            if(!empty($_POST['id_client']) && !empty($_POST['client_name'])) {
+                /** @var UploadedFile $uploadedFile */
+                $uploadedFile = $request->files->get('fileselected');
+                $destination = $this->getParameter('kernel.project_dir').'/public/uploads/documents_cc/'. $_POST['client_name'];
+                $uploadedFile->move($destination, $uploadedFile->getClientOriginalName());
+                // Fetch the Contact entity
+                $contact = $contactsCCRepository->findOneBy(array('id_contact' => $_POST['id_client']));
+                // Create a new FileCC in BDD
+                $fileCC = new FilesCC();
+                $fileCC->setName($uploadedFile->getClientOriginalName());
+                $fileCC->setPath($this->getParameter('kernel.project_dir').'/public/uploads/documents_cc/'. $_POST['client_name']);
+                $fileCC->setIdContactCc($contact);
+                $entityManager->persist($fileCC);
+                $entityManager->flush();
+                echo 'Le fichier a été téléchargé avec succès.';
+            } else {  
+                echo 'Merci de sélectionner un fichier';
+                
+            }  
+        }
+        return $this->redirectToRoute('app_kuehne');
     }
 }

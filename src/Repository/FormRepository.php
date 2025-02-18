@@ -796,9 +796,10 @@ class FormRepository extends ServiceEntityRepository
                 $result = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
                 return $result;
             });
-
+            
             // Comparer et mettre à jour la liste Kizeo
             $this->comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $structuredEquipements, $kizeoEquipments);
+            
 
             // Envoyer la liste d'équipements mise à jour à Kizeo
             $this->envoyerListeKizeo($kizeoEquipments, $idListeKizeo); 
@@ -806,19 +807,91 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * Compare les équipements de la BDD avec ceux de Kizeo et met à jour la liste Kizeo
+     * Compare les équipements de la BDD avec ceux de Kizeo et met à jour la liste Kizeo || LA LISTE KIZEO CONTIENT LES ANCIENNES ET LES NOUVELLES LIGNES
      */
-    private function comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $structuredEquipements, &$kizeoEquipments)
+    // private function comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $fullStructuredEquipements, &$kizeoEquipments)
+    // {
+    //     foreach ($kizeoEquipments as $key => $kizeoEquipment) {
+    //         foreach ($structuredEquipementsSplitted as $keyStructure => $littleStructuredEquipement) {
+    //             if (str_starts_with($kizeoEquipment, $littleStructuredEquipement)) {
+    //                 unset($kizeoEquipment); // Supprimer l'équipement de la liste Kizeo s'il existe déjà
+    //                 $kizeoEquipments[] = $fullStructuredEquipements[$keyStructure]; // Ajouter l'équipement à la liste Kizeo
+    //                 break;
+    //             }
+    //             if ($kizeoEquipment == $fullStructuredEquipements[$keyStructure]) {
+    //                 unset($kizeoEquipment); // Supprimer l'équipement de la liste Kizeo s'il existe déjà pour être sûr qu'il n'y est pas de doublons
+    //             }
+    //         }
+    //     }
+    // }
+
+    /**
+     * La liste Kizeo qui remonte ne contient plus aucun résultat
+     */
+    // private function comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $fullStructuredEquipements, &$kizeoEquipments)
+    // {
+    //     $newKizeoEquipments = [];
+
+    //     foreach ($structuredEquipementsSplitted as $keyStructure => $littleStructuredEquipement) {
+    //         $found = false;
+    //         foreach ($kizeoEquipments as $kizeoEquipment) {
+    //             if (str_starts_with($kizeoEquipment, $littleStructuredEquipement) || $kizeoEquipment === $fullStructuredEquipements[$keyStructure]) {
+    //                 $found = true;
+    //                 break;
+    //             }
+    //         }
+
+    //         if (!$found) {
+    //             $newKizeoEquipments[] = $fullStructuredEquipements[$keyStructure];
+    //         }
+    //     }
+
+    //     $kizeoEquipments = $newKizeoEquipments;
+    // }
+    /**
+     * La liste Kizeo qui remonte contient la liste d'origine + le début des lignes = 6735 résultats pour 5710 à la base
+     * Le problème vient que les valeurs testées ne sont pas les même lors de l'incrémentation.
+     */
+    // private function comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $fullStructuredEquipements, &$kizeoEquipments)
+    // {
+    //     // Pour chaque ligne d'équipement Kizeo dans le tableau $kizeoEquipments, on parcours le tableau de $fullStructuredEquipements
+    //     foreach($kizeoEquipments as $keyKizeo => $kizeoEquipmentLine){
+    //         foreach ($structuredEquipementsSplitted as $keySplitted => $equipementSplitted) {
+    //             if (str_starts_with($kizeoEquipmentLine, preg_replace('/ :/', ':', $equipementSplitted))) {
+    //                 unset($kizeoEquipments[array_search(preg_replace('/ :/', ':', $fullStructuredEquipements[$keySplitted]), $kizeoEquipments)]);
+    //             }
+    //             $kizeoEquipments[] = preg_replace('/ :/', ':', $fullStructuredEquipements[$keySplitted]);
+    //         }
+    //     }
+    // }
+
+    /**
+     *  Cette fonction ne compare pas les bons éléments 
+     *  avec les autres donc les nouveaux sont ajoutés aux anciens et cela provoque 
+     *  des doublons d'équipement avec 1 ancien pas mis à jour et le nouveau qui devrait être seul
+     */
+    private function comparerEtMettreAJourListeKizeo($structuredEquipementsSplitted, $fullStructuredEquipements, &$kizeoEquipments)
     {
-        foreach ($structuredEquipementsSplitted as $index => $equipmentSplitted) {
-            foreach ($kizeoEquipments as $key => $kizeoEquipment) {
-                if (str_starts_with($kizeoEquipment, $structuredEquipementsSplitted[0])) {
-                    $kizeoEquipments[] = $structuredEquipements[$index -= 1]; // Ajouter l'équipement à la liste Kizeo
-                    unset($kizeoEquipments[$key]); // Supprimer l'équipement de la liste Kizeo s'il existe déjà
-                    break;
+        $regex = '/ :/'; // Compile the regular expression once
+        $kizeoEquipments = array_map(function ($equipment) use ($regex) {
+            return preg_replace($regex, ':', $equipment); 
+        }, $kizeoEquipments); 
+
+        $updatedKizeoEquipments = [];
+        $elementsKeysToDeleteFromKizeoEquipments = [];
+        foreach ($structuredEquipementsSplitted as $keySplitted => $equipementSplitted) {
+            $equipementSplitted = preg_replace($regex, ':', $equipementSplitted);
+            foreach ($kizeoEquipments as $kizeoKey => $kizeoEquipment) {
+                if (str_starts_with($kizeoEquipment, $equipementSplitted)) {
+                    dd(gettype($kizeoKey)) ; // Return integer
+                    unset($kizeoEquipment[$kizeoKey]);
+                    // $kizeoEquipment[] = $fullStructuredEquipements[$keySplitted];
+                    // continue 2; // Break out of the inner loop
                 }
             }
+            $updatedKizeoEquipments[] = $fullStructuredEquipements[$keySplitted];
         }
+        $kizeoEquipments = $updatedKizeoEquipments;
     }
 
     /**
@@ -1041,7 +1114,7 @@ class FormRepository extends ServiceEntityRepository
             ucfirst($equipement->getLibelleEquipement()) . ":" . ucfirst($equipement->getLibelleEquipement()) . "|" .
             $equipement->getMiseEnService() . ":" . $equipement->getMiseEnService() . "|" .
             $equipement->getNumeroDeSerie() . ":" . $equipement->getNumeroDeSerie() . "|" .
-            $equipement->getMarque() . ":" . $equipement->getMarque() . "|" .
+            trim($equipement->getMarque()) . ":" . $equipement->getMarque() . "|" .
             $equipement->getHauteur() . ":" . $equipement->getHauteur() . "|" .
             $equipement->getLargeur() . ":" . $equipement->getLargeur() . "|" .
             $equipement->getRepereSiteClient() . ":" . $equipement->getRepereSiteClient() . "|" .
@@ -1228,7 +1301,7 @@ class FormRepository extends ServiceEntityRepository
                     $normalNameOfTheFile = $OneFormMaintenanceUnread['nom_client']['value'] . '-' . $OneFormMaintenanceUnread['code_agence']['value'] . '.pdf';
                     
                     // Ajouté pour voir si cela fix le mauvais nommage des dossiers PDF sur le nom de la visite de maintenance. Ex: SDCC est enregistré en CE2 au lieu de CEA
-                    // SDDCC bon en BDD mais pas en enregistrement des pdf
+                    // SDCC bon en BDD mais pas en enregistrement des pdf
                     // for ($i=0; $i < count($dataOfFormMaintenanceUnread); $i++) { 
                         # code...
                     if (str_contains($OneFormMaintenanceUnread['contrat_de_maintenance']['value'][0]['equipement']['path'], 'CE1')) {
