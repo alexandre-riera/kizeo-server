@@ -352,7 +352,10 @@
                             <span class="card-text"><b>Id client</b> : {{ clientSelectedInformations.getIdContact() }} </span><br>
                             <span class="card-text"><b>Id société</b> : {{ clientSelectedInformations.getIdSociete() }}</span><br>
                             <span class="card-text"><b>Agence</b> : {{ agenceSelected }}</span><br>
-                            <span class="card-text"><b>Téléphone</b> : {{ clientSelectedInformations.getTelephone() }} </span>
+                            <span class="card-text"><b>Téléphone</b> : {{ clientSelectedInformations.getTelephone() }} </span><br>
+                            {% if clientSelectedEquipmentsFiltered is not empty %}
+                                <span class="card-text"><b>Date de dernière visite</b> : {{ clientSelectedEquipmentsFiltered[0].getDerniereVisite()|date("d/m/Y", false) }} </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -562,7 +565,7 @@
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
                             {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
-                            <td>{{ equipment.getDerniereVisite() }}</td>
+                            <td>{{ equipment.getDerniereVisite()|date("d/m/Y", false) }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
                             {# <td>{{ equipment.getMiseEnService() }}</td> #}
                             {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
@@ -624,7 +627,7 @@
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
                             {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
-                            <td>{{ equipment.getDerniereVisite() }}</td>
+                            <td>{{ equipment.getDerniereVisite()|date("d/m/Y", false) }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
                             {# <td>{{ equipment.getMiseEnService() }}</td> #}
                             {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
@@ -686,7 +689,7 @@
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
                             {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
-                            <td>{{ equipment.getDerniereVisite() }}</td>
+                            <td>{{ equipment.getDerniereVisite()|date("d/m/Y", false) }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
                             {# <td>{{ equipment.getMiseEnService() }}</td> #}
                             {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
@@ -748,7 +751,7 @@
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
                             {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
-                            <td>{{ equipment.getDerniereVisite() }}</td>
+                            <td>{{ equipment.getDerniereVisite()|date("d/m/Y", false) }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
                             {# <td>{{ equipment.getMiseEnService() }}</td> #}
                             {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
@@ -810,7 +813,7 @@
                             <td>{{ equipment.getVisite() }}</td>
                             <td>{{ equipment.getNumeroEquipement() }}</td>
                             {# <td>{{ equipment.getLibelleEquipement() }}</td> #}
-                            <td>{{ equipment.getDerniereVisite() }}</td>
+                            <td>{{ equipment.getDerniereVisite()|date("d/m/Y", false) }}</td>
                             <td>{{ equipment.getRepereSiteClient() }}</td>
                             {# <td>{{ equipment.getMiseEnService() }}</td> #}
                             {# <td>{{ equipment.getNumeroDeSerie() }}</td> #}
