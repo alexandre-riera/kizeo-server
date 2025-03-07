@@ -928,10 +928,11 @@ class FormRepository extends ServiceEntityRepository
             $equipement->setIfExistDB($theProcessedEquipment);
             array_push($equipmentsList, $theProcessedEquipment);
 
-            // tell Doctrine you want to (eventually) save the Product (no queries yet)
-            $this->getEntityManager()->persist($equipement);
-            // actually executes the queries (i.e. the INSERT query)
-            $this->getEntityManager()->flush();
+            // Trying to update without 
+            // // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            // $this->getEntityManager()->persist($equipement);
+            // // actually executes the queries (i.e. the INSERT query)
+            // $this->getEntityManager()->flush();
         }
         
         return $equipmentsList;
