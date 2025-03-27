@@ -281,7 +281,7 @@ class FormController extends AbstractController
         $formRepository->updateKizeoWithEquipmentsListFromBdd($entityManager, $formRepository, $cache);
 
         return new JsonResponse('La mise à jour sur KIZEO a été réalisée !', Response::HTTP_OK, [], true);
-        // return $this->redirectToRoute('app_api_form_save_maintenance_pdf');
+        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // A remettre pour faire tourner la boucle des 2 URL
     }
     /**
      * 
