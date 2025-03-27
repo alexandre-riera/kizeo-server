@@ -110,6 +110,15 @@ class EquipementS10
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $visite = null;
 
+    #[ORM\ManyToOne(inversedBy: 'equipements')]
+    private ?ContratS10 $contratS10 = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $remplace_par = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $numero_identification = null;
+
 
     public function getId(): ?int
     {
@@ -496,6 +505,42 @@ class EquipementS10
     public function setVisite(string $visite): static
     {
         $this->visite = $visite;
+
+        return $this;
+    }
+
+    public function getContratS10(): ?ContratS10
+    {
+        return $this->contratS10;
+    }
+
+    public function setContratS10(?ContratS10 $contratS10): static
+    {
+        $this->contratS10 = $contratS10;
+
+        return $this;
+    }
+
+    public function getRemplacePar(): ?string
+    {
+        return $this->remplace_par;
+    }
+
+    public function setRemplacePar(?string $remplace_par): static
+    {
+        $this->remplace_par = $remplace_par;
+
+        return $this;
+    }
+
+    public function getNumeroIdentification(): ?string
+    {
+        return $this->numero_identification;
+    }
+
+    public function setNumeroIdentification(?string $numero_identification): static
+    {
+        $this->numero_identification = $numero_identification;
 
         return $this;
     }

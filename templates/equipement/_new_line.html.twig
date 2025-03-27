@@ -1,0 +1,33 @@
+<div style="display:flex; margin-top: 20px;" class="equipement-ligne">
+    <div class="col-sm-2">
+        <label for="agence">Nombre d'équipements :</label>
+        <input type="text" class="form-control" name="nombre_equipements[]">
+    </div>
+    <div class="col-sm-2">
+        <label for="type_equipements">Type d'équipements :</label>
+        <select class="form-control" name="type_equipement[]">
+            <option value="" selected>---------</option>
+            {% for type in typesEquipements %}
+                <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-sm-2">
+        <label for="mode_fonctionnement">Mode de fonctionnement :</label>
+        <select class="form-control" name="mode_fonctionnement[]">
+            <option value="" selected>---------</option>
+            {% for mode in modesFonctionnement %}
+                <option value="{{ mode }}">{{ mode }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-sm-2">
+        <label for="visite_equipement">Visite(s) :</label>
+        <select class="form-control" name="visite_equipement[]" id="choix_visites">
+            <option value="" selected>---------</option>
+            {% for visite in visites %}
+                <option value="{{ visite }}">{{ visite }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
