@@ -184,22 +184,23 @@ class HomeController extends AbstractController
             $idClientSelected = rtrim($idClientSelected, "\ ");
             dump($idClientSelected);
         }
-        $visiteDuClient = [];
+        $visiteDuClient = "";
         if ($clientSelected != NULL) {
             switch ($agenceSelected) {
                 case 'S10':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -208,7 +209,7 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-
+                    $dateArray = [];
                     
                     
                     foreach ($clientSelectedEquipments as $equipment) {
@@ -216,8 +217,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -226,15 +228,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -243,15 +246,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -260,15 +264,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -277,15 +282,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -294,14 +300,15 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -310,12 +317,13 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement());
                             $visiteDuClient =  $equipment->getVisite();
@@ -326,14 +334,15 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -342,14 +351,15 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -358,14 +368,15 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -374,15 +385,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -391,15 +403,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -408,15 +421,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -425,15 +439,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -442,15 +457,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -459,15 +475,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -476,15 +493,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -493,15 +511,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -510,15 +529,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -527,15 +547,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -544,15 +565,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -561,15 +583,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -578,15 +601,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -595,15 +619,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
@@ -612,15 +637,16 @@ class HomeController extends AbstractController
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
                     $clientSelectedEquipments  = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
                     $visitArray = [];
-                    
+                    $dateArray = [];                    
                     
                     foreach ($clientSelectedEquipments as $equipment) {
                         if ($equipment->getDateEnregistrement() != NULL) {
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
+                                $dateArray[] = $equipment->getDateEnregistrement();
                             }
-                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $equipment->getDateEnregistrement(), $equipment->getDateEnregistrement());
+                            $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
                         }
                     }
