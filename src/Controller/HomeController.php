@@ -199,7 +199,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -218,7 +220,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -236,7 +240,9 @@ class HomeController extends AbstractController
                                 array_push($clientSelectedEquipmentsFiltered, $equipment);
                                 if (!in_array($equipment->getVisite(), $visitArray)) {
                                     $visitArray[] = $equipment->getVisite();
-                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                    if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                        $dateArray[] = $equipment->getDateEnregistrement();
+                                    }
                                 }
                                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                                 $visiteDuClient =  $equipment->getVisite();
@@ -254,7 +260,9 @@ class HomeController extends AbstractController
                                 array_push($clientSelectedEquipmentsFiltered, $equipment);
                                 if (!in_array($equipment->getVisite(), $visitArray)) {
                                     $visitArray[] = $equipment->getVisite();
-                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                    if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                        $dateArray[] = $equipment->getDateEnregistrement();
+                                    }
                                 }
                                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                                 $visiteDuClient =  $equipment->getVisite();
@@ -272,7 +280,9 @@ class HomeController extends AbstractController
                                 array_push($clientSelectedEquipmentsFiltered, $equipment);
                                 if (!in_array($equipment->getVisite(), $visitArray)) {
                                     $visitArray[] = $equipment->getVisite();
-                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                    if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                        $dateArray[] = $equipment->getDateEnregistrement();
+                                    }
                                 }
                                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                                 $visiteDuClient =  $equipment->getVisite();
@@ -290,7 +300,9 @@ class HomeController extends AbstractController
                                 array_push($clientSelectedEquipmentsFiltered, $equipment);
                                 if (!in_array($equipment->getVisite(), $visitArray)) {
                                     $visitArray[] = $equipment->getVisite();
-                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                    if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                        $dateArray[] = $equipment->getDateEnregistrement();
+                                    }
                                 }
                                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                                 $visiteDuClient =  $equipment->getVisite();
@@ -307,7 +319,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -324,7 +338,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -341,7 +357,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -358,7 +376,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -375,7 +395,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -392,7 +414,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -409,7 +433,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -426,7 +452,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -443,7 +471,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -460,7 +490,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -477,7 +509,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -494,7 +528,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -511,7 +547,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -528,7 +566,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -545,7 +585,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -562,7 +604,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -579,7 +623,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -596,7 +642,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -613,7 +661,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
@@ -630,7 +680,9 @@ class HomeController extends AbstractController
                             array_push($clientSelectedEquipmentsFiltered, $equipment);
                             if (!in_array($equipment->getVisite(), $visitArray)) {
                                 $visitArray[] = $equipment->getVisite();
-                                $dateArray[] = $equipment->getDateEnregistrement();
+                                if (!in_array($equipment->getDateEnregistrement(), $dateArray)) {
+                                    $dateArray[] = $equipment->getDateEnregistrement();
+                                }
                             }
                             $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $visitArray, $agenceSelected, $dateArray);
                             $visiteDuClient =  $equipment->getVisite();
