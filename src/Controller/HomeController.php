@@ -688,6 +688,49 @@ class HomeController extends AbstractController
             }
         }
         $agenceSelected = trim($agenceSelected);
+
+        $clientAnneeFilterArray = []; // Je filtre les résultats
+        foreach ($clientSelectedEquipmentsFiltered as $equipment) {
+            $date_equipment = date("Y", strtotime($equipment->getDateEnregistrement()));
+            // $date_equipment = $equipment->getDateEnregistrement();
+            if (!in_array($date_equipment, $clientAnneeFilterArray)) {
+                $clientAnneeFilterArray [] = $date_equipment;
+            }
+        }
+        $clientVisiteFilterArray = []; // Je filtre les résultats
+        foreach ($clientSelectedEquipmentsFiltered as $equipment) {
+            $visite_equipment = $equipment->getVisite();
+            if (!in_array($visite_equipment, $clientVisiteFilterArray)) {
+                $clientVisiteFilterArray [] = $visite_equipment;
+            }
+        }
+        $clientAnneeFilter = "";
+        $clientVisiteFilter = "";
+        // Récupération de l'année et de la visite dans le formulaire "Filtres" en front
+        if(isset($_POST['submitFilters'])){  
+            if(!empty($_POST['clientAnneeFilter'])) {
+                $clientAnneeFilter = $_POST['clientAnneeFilter'];
+                // On réinitialise le tableau des équipements à 0 !
+                $clientSelectedEquipmentsFiltered = [];
+            } else {  
+                echo 'Sélectionnez l\'année.';
+            }  
+            if(!empty($_POST['clientVisiteFilter'])) {
+                $clientVisiteFilter = $_POST['clientVisiteFilter'];
+                // On réinitialise le tableau des équipements à 0 !
+                $clientSelectedEquipmentsFiltered = [];
+                foreach ($clientSelectedEquipmentsFiltered as $equipment) {
+                    $annee_date_equipment = date("Y", strtotime($equipment->getDateEnregistrement()));
+                    // Si l'année de la visite et le nom de la visite est pareil que l'équipement retourné par la base de données, je le rajoute au tableau des équipements
+                    if ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter) {
+                        $clientSelectedEquipmentsFiltered [] = $equipment;
+                    }
+                }
+            } else {  
+                echo 'Sélectionnez la visite.';
+            }  
+        }
+
         dump($clientSelectedEquipmentsFiltered);
         return $this->render('home/index.html.twig', [
             'clientsGroup' => $clientsGroup,  // Array of Contacts
@@ -712,6 +755,8 @@ class HomeController extends AbstractController
             'directoriesLists' => $directoriesLists, // Array with Objects $myFile with path and annee properties in it
             'visiteDuClient' =>  $visiteDuClient,
             'idClientSelected' =>  $idClientSelected,
+            'clientAnneeFilterArray' =>  $clientAnneeFilterArray,
+            'clientVisiteFilterArray' =>  $clientVisiteFilterArray,
         ]);
     }
 

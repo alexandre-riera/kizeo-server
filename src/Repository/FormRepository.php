@@ -27,6 +27,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use stdClass;
 
 /**
  * @extends ServiceEntityRepository<ApiForm>
@@ -60,7 +61,7 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-        * @return Form[] Returns an array of forms from Kizeo
+        * @return Form[] Returns an array of forms from Kizeo .  94 forms au 09.04.2025
         */
     public function getForms(): array
     {
@@ -77,6 +78,46 @@ class FormRepository extends ServiceEntityRepository
             $content = $response->toArray();
 
             return $content;
+    }
+    /**
+        * @return Form[] Returns an array of forms from Kizeo
+        */
+    public function getFormsMaintenance(): array  // La fonction renvoie bien les formulaires avec la class MAINTENANCE
+    {
+        $formMaintenanceArray = [];
+        $resultToReturn = [];
+        $response = $this->client->request(
+            'GET',
+            'https://forms.kizeo.com/rest/v3/forms', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+            ]
+        );
+        $content = $response->getContent();
+        $content = $response->toArray();
+
+        foreach ($content['forms'] as $form) {
+            if ($form['class'] == "MAINTENANCE") {
+                $formMaintenanceArray [] = $form;
+            }
+        }
+
+        foreach ($formMaintenanceArray as $formMaintenance) {
+            $response = $this->client->request('POST', 
+                'https://forms.kizeo.com/rest/v3/forms/' . $formMaintenance['id'] . '/data/advanced', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]
+            );
+            $content = $response->toArray();  // On récupère directement un tableau
+            $resultToReturn[] = $content['data'];
+        }
+        
+        return $resultToReturn;
     }
     
     //      ----------------------------------------------------------------------------------------------------------------------
@@ -1437,55 +1478,43 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Function to mark maintenance forms as UNREAD 
      */
-    public function markMaintenanceFormsAsUnread(){
+    public function markMaintenanceFormsAsUnread($cache){
         // Récupérer les fichiers PDF dans un tableau
-        // -----------------------------   Return all forms in an array
-        $allFormsArray = FormRepository::getForms();  // All forms on Kizeo
-        $allFormsArray = $allFormsArray['forms'];
-        $allFormsMaintenanceArray = []; // All forms with class "MAINTENANCE
-
-        // ----------------------------- DÉBUT Return all forms with class "MAINTENANCE"
-        foreach ($allFormsArray as $key => $value) {
-            if ($allFormsArray[$key]['class'] === 'MAINTENANCE') {
-                $response = $this->client->request(
-                    'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' . $allFormsArray[$key]['id'] . '/data/advanced', [
+        // Filtrer uniquement les formulaires de maintenance
+        $allFormsArray = $cache->get('forms_maintenance', function(ItemInterface $item){ // $allFormsData = $content['data'] from getFormsMaintenance()
+            $item->expiresAfter(1800); // Cache pour 30 minutes
+            $results = FormRepository::getFormsMaintenance();
+            return $results;
+        });
+        
+        // Consolider les ids des formulaires à marquer comme non lus
+        $formToUnreadArray = [];
+        
+        foreach ($allFormsArray as $data) {
+            $formToMarkAsUnread = new stdClass;
+            $formToMarkAsUnread -> formId = $data['_form_id'];
+            $formToMarkAsUnread -> dataId = $data['_id'];
+            $formToUnreadArray[] = $formToMarkAsUnread;
+        }
+        dd($formToUnreadArray);
+        foreach ($formToUnreadArray as $data) {
+            // Effectuer une action de marquage de tous les formulaires en une seule requête
+            // if (!empty($formIdsToMarkAsUnread)) {
+                $this->client->request('POST', 
+                    'https://forms.kizeo.com/rest/v3/forms/' . $data['_form_id'] . '/markasunreadbyaction/read', [
                         'headers' => [
                             'Accept' => 'application/json',
                             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                         ],
+                        'json' => [
+                            "data_ids" => intval($data['_id']) // Convertir à int
+                        ]
                     ]
                 );
-                $content = $response->getContent();
-                $content = $response->toArray();
-                foreach ($content['data'] as $key => $value) {
-                    array_push($allFormsMaintenanceArray, $value);
-                }
-            }
+            // }
         }
-        // -----------------------------  FIN Return all forms with class "MAINTENANCE"
 
-        foreach ($allFormsMaintenanceArray as $formMaintenance) {
-            // -------------------------------------------            MARK FORM AS UNREAD !!!
-            // ------------------------------------------------------------------------------
-            $response = $this->client->request(
-                'POST',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $formMaintenance['_form_id'] . '/markasunreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => [intval($formMaintenance['_id'])]
-                    ]
-                ]
-            );
-            $dataOfResponse = $response->getContent();
-            
-            // -------------------------------------------            MARKED FORM AS UNREAD !!!
-            // ------------------------------------------------------------------------------
-            
-        }
+        
     }
 
     /**
@@ -1634,6 +1663,7 @@ class FormRepository extends ServiceEntityRepository
             $equipement->setUpdateTime($equipements['update_time']);
             
             $equipement->setCodeEquipement($additionalEquipment['equipement']['value']);
+            // $equipement->setEquipmentId($additionalEquipment['equipement']['value']);
             $equipement->setRaisonSocialeVisite($additionalEquipment['equipement']['path']);
             if (isset($additionalEquipment['photo_etiquette_somafi']['value'])) {
                 $equipement->setPhotoEtiquetteSomafi($additionalEquipment['photo_etiquette_somafi']['value']);

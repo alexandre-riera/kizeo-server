@@ -421,10 +421,22 @@
                     <div class="col-sm-2">
                         <div class="card">
                             <div class="card-body">
-                                <h4 class="card-title">Date de fin de contrat</h4>
-                                <br>
-                                <br>
-                                <p class="client-infos-nombre">N/C</p>
+                                <h4 class="card-title">Filtres</h4>
+                                <form action="" method"POST">
+                                    <select style="margin-bottom: 10px; margin-top:20px;" class="form-control" id="client-annee-filter-select" name="clientAnneeFilter">
+                                        <option value = "" selected> Année </option>
+                                        {% for annee in clientAnneeFilterArray%}
+                                            <option  value="{{ annee }}" id="client_annee_filter">{{ annee }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select style="margin-bottom: 10px" class="form-control" id="client-visite-filter-select" name="clientVisiteFilter">
+                                        <option value = "" selected> Visite </option>
+                                        {% for visite in clientVisiteFilterArray%}
+                                            <option  value="{{ visite }}" id="client_visite_filter">{{ visite }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit"  name ="submitFilters" class="btn btn-primary">Valider</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -452,8 +464,22 @@
                             </div>
                         </div>
                     </div>
+                    {% elseif directoriesLists is not empty %}
+                    <div class="col-sm-2">
+                        <div class="card downloadPdf">
+                            <div class="card-body">
+                                <h4 class="card-title">Compte-rendu</h4>
+                                <ul style="list-style-type:none;">
+                                    {% for objectFile in directoriesLists %}
+                                        {% if  objectFile.path %}
+                                            <li style="margin-bottom:10px;"><a href="{{ objectFile.path }}" target="_blank">{{ objectFile.visite }} du {{ objectFile.date }}</a></li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                {% elseif agenceSelected is not empty and clientSelected is not empty %}
                 <div>
                     <h2>Aucune information pour {{clientSelected}} avec l'id {{idClientSelected}} trouvée en base de donnée, merci de refaire l'export Contact Gestan de l'agence {{agenceSelected}}</h2>
                 </div>
