@@ -133,14 +133,14 @@ class FormController extends AbstractController
      * Save maintenance equipments in local database then call save equipments to KIZEO  --  FIRST CALL IN CRON TASK
      */
     #[Route('/api/forms/save/maintenance/equipments', name: 'app_api_form_save_maintenance_equipments', methods: ['GET'])]
-    public function saveEquipementsInDatabase(FormRepository $formRepository, CacheInterface $cache) // : JsonResponse
+    public function saveEquipementsInDatabase(FormRepository $formRepository, CacheInterface $cache) //: JsonResponse
     {
         $formRepository->saveEquipmentsInDatabase($cache);
         
         
         // return new JsonResponse("Les équipements de maintenance ont bien été sauvegardés ", Response::HTTP_OK, [], true);
-        return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // Sauvegarder 5 formulaires à la fois en BDD en BOUCLE A utiliser pour ne mettre à jour que la base de données
-        // return $this->redirectToRoute('app_api_form_update_lists_equipements_from_bdd'); 
+        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // Sauvegarder 5 formulaires à la fois en BDD en BOUCLE A utiliser pour ne mettre à jour que la base de données
+        return $this->redirectToRoute('app_api_form_update_lists_equipements_from_bdd'); 
     }
 
     /**
@@ -176,7 +176,8 @@ class FormController extends AbstractController
     public function markMaintenanceFormsAsUnread(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
         // $formRepository->saveEquipementPdfInPublicFolder();
-        $formRepository->markMaintenanceFormsAsUnread($cache);
+        $formRepository->getFormsMaintenance($cache);
+        // $formRepository->markMaintenanceFormsAsUnread($cache);
         
         return new JsonResponse("Les pdf de maintenance ont bien été mis en non lu ", Response::HTTP_OK, [], true);
     }
