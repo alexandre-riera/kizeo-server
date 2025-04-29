@@ -132,8 +132,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -142,39 +142,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S10':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -183,8 +185,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -193,39 +195,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S40':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -234,8 +238,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -244,39 +248,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S40':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -285,8 +291,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -295,39 +301,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S50':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -336,8 +344,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -346,39 +354,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S50':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -387,8 +397,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -397,39 +407,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S60':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -438,8 +450,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -448,39 +460,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S60':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -489,8 +503,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -499,39 +513,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S70':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -540,8 +556,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -550,39 +566,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S70':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -591,8 +609,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -601,39 +619,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S80':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -642,8 +662,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -652,39 +672,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S80':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -693,8 +715,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -703,39 +725,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S100':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -744,8 +768,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -754,39 +778,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S100':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -795,8 +821,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -805,39 +831,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S120':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -846,8 +874,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -856,39 +884,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S120':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -897,8 +927,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -907,39 +937,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S130':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -948,8 +980,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -958,39 +990,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S130':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -999,8 +1033,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1009,39 +1043,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S140':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1050,8 +1086,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1073,15 +1109,15 @@ class HomeController extends AbstractController
 
                     // Filtrer les équipements dans l'intervalle
                     $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
+                        $equipmentDate = $equipment->getDerniereVisite();
                         
                         return $equipmentDate !== null && 
                             $equipmentDate <= $absoluteLatestVisitDate && 
                             $equipmentDate >= $twoMonthsAgo;
                     });
                     foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
                         }
                     }
                     $currentVisit = "";
@@ -1101,8 +1137,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1111,39 +1147,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S150':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1152,8 +1190,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1162,39 +1200,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S150':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1203,8 +1243,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1213,39 +1253,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S160':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1254,8 +1296,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1264,32 +1306,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                    $twoMonthsAgo = $absoluteLatestVisitDate->modify('-2 months');
-                    $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S160':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1298,8 +1349,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1308,32 +1359,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                    $twoMonthsAgo = $absoluteLatestVisitDate->modify('-2 months');
-                    $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case 'S170':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1342,8 +1402,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1352,39 +1412,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 case ' S170':
                     $clientSelectedInformations  =  $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $idClientSelected]);
@@ -1393,8 +1455,8 @@ class HomeController extends AbstractController
                     // Trouver la date de visite la plus récente
                     $absoluteLatestVisitDate = null;
                     foreach ($clientSelectedEquipments as $equipment) {
-                        if ($equipment->getDateEnregistrement() !== null) {
-                            $currentDate = new DateTime($equipment->getDateEnregistrement());
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $currentDate = new DateTime($equipment->getDerniereVisite());
                             
                             // Comparer et garder la date la plus récente
                             if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
@@ -1403,39 +1465,41 @@ class HomeController extends AbstractController
                         }
                     }
 
-                    // Vérifier si une date a été trouvée
-                    if ($absoluteLatestVisitDate !== null) {
-                        // Calculer la date limite inférieure (2 mois avant la date la plus récente)
-                        $twoMonthsAgo = clone $absoluteLatestVisitDate;
-                        $twoMonthsAgo->modify('-2 months');
-                        $twoMonthsAgo = $twoMonthsAgo->format('Y-m-d');
-                    } else {
-                        // Gérer le cas où aucune date n'a été trouvée
-                        $twoMonthsAgo = null;
-                    }
+                    // Déterminer l'année et la visite par défaut
+                    $defaultYear = $absoluteLatestVisitDate ? $absoluteLatestVisitDate->format('Y') : '';
+                    $defaultVisit = "";
 
-                    // Filtrer les équipements dans l'intervalle
-                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($absoluteLatestVisitDate, $twoMonthsAgo) {
-                        $equipmentDate = $equipment->getDateEnregistrement();
-                        
-                        return $equipmentDate !== null && 
-                            $equipmentDate <= $absoluteLatestVisitDate && 
-                            $equipmentDate >= $twoMonthsAgo;
-                    });
-                    foreach($clientSelectedEquipmentsFiltered as $equipment){
-                        if(!in_array($equipment->getDateEnregistrement(), $dateArray)){
-                            $dateArray[] = $equipment->getDateEnregistrement();
+                    // Trouver la visite correspondant à la date la plus récente
+                    foreach ($clientSelectedEquipments as $equipment) {
+                        if ($equipment->getDerniereVisite() !== null) {
+                            $equipmentDate = new DateTime($equipment->getDerniereVisite());
+                            if ($equipmentDate == $absoluteLatestVisitDate) {
+                                $defaultVisit = $equipment->getVisite();
+                                break;
+                            }
                         }
                     }
-                    $currentVisit = "";
-                    if (isset($clientSelectedEquipmentsFiltered[1])) {
-                        $currentVisit = $clientSelectedEquipmentsFiltered[1]->getVisite();
-                    }else if(isset($clientSelectedEquipmentsFiltered[1])){
-                        $currentVisit = $clientSelectedEquipmentsFiltered[0]->getVisite();
-                    }else{
-                        $currentVisit = "";
+
+                    // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+                    $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+                    $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+                    // Filtrer les équipements par défaut avec les valeurs de la dernière visite
+                    $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                        return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+                    });
+
+                    // Si aucun équipement n'est trouvé avec les filtres par défaut, montrer tous les équipements
+                    if (empty($clientSelectedEquipmentsFiltered)) {
+                        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
                     }
-                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $currentVisit, $agenceSelected, $dateArray);
+                    foreach($clientSelectedEquipmentsFiltered as $equipment){
+                        if(!in_array($equipment->getDerniereVisite(), $dateArray)){
+                            $dateArray[] = $equipment->getDerniereVisite();
+                        }
+                    }
+                    $directoriesLists = $homeRepository->getListOfPdf($clientSelected, $defaultVisit, $agenceSelected, $dateArray);
                     break;
                 
                 default:
@@ -1461,7 +1525,6 @@ class HomeController extends AbstractController
         }
         $clientAnneeFilter = "";
         $clientVisiteFilter = "";
-        
         // Récupération des filtres via la requête
         if ($request->query->get('submitFilters')) {
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
@@ -1480,7 +1543,7 @@ class HomeController extends AbstractController
             // Filtrage des équipements
             if (!empty($clientAnneeFilter) && !empty($clientVisiteFilter)) {
                 $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
-                    $annee_date_equipment = date("Y", strtotime($equipment->getDateEnregistrement()));
+                    $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
                     return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
                 });
             }
@@ -1508,15 +1571,102 @@ class HomeController extends AbstractController
             'clientSelectedEquipmentsFiltered'  => $clientSelectedEquipmentsFiltered, // Selected Entity Equipement where last visit is superior 3 months ago
             'totalClientSelectedEquipmentsFiltered'  => count($clientSelectedEquipmentsFiltered), // Total Selected Entity Equipement where last visit is superior 3 months ago
             'directoriesLists' => $directoriesLists, // Array with Objects $myFile with path and annee properties in it
+            'clientSelectedEquipments' =>  $clientSelectedEquipments,
             'visiteDuClient' =>  $visiteDuClient,
             'idClientSelected' =>  $idClientSelected,
             'clientAnneeFilterArray' =>  $clientAnneeFilterArray,
+            'clientAnneeFilter' =>  $clientAnneeFilter,
             'clientVisiteFilterArray' =>  $clientVisiteFilterArray,
+            'clientVisiteFilter' =>  $clientVisiteFilter,
         ]);
+    }
+    
+    #[Route('/filter-equipments', name: 'app_filter_equipments')]
+    public function filterEquipments(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $clientAnneeFilter = $request->request->get('clientAnneeFilter', '');
+        $clientVisiteFilter = $request->request->get('clientVisiteFilter', '');
+        $agenceSelected = $request->request->get('agenceSelected', '');
+        $idClientSelected = $request->request->get('idClientSelected', '');
+        $errors = [];
+        
+        // Récupérez les équipements du client (comme vous le faites déjà)
+        $clientSelectedEquipments = [];
+        switch ($agenceSelected) {
+            case 'S10':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S40':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S50':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S60':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S70':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S80':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S100':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S120':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S130':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S140':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S150':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S160':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+            case 'S170':
+                $clientSelectedEquipments = $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $idClientSelected], ['numero_equipement' => 'ASC']);
+                break;
+        }
+        $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
+        
+        // Validation des filtres
+        if (empty($clientAnneeFilter)) {
+            $errors[] = 'Sélectionnez l\'année.';
+        }
+
+        if (empty($clientVisiteFilter)) {
+            $errors[] = 'Sélectionnez la visite.';
+        }
+
+        // Filtrage des équipements
+        if (!empty($clientAnneeFilter) && !empty($clientVisiteFilter)) {
+            $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+            });
+        }
+        
+        if ($errors) {
+            return $this->json(['errors' => $errors]);
+        }
+        
+        // Préparer l'HTML pour la réponse
+        $html = $this->renderView('components/equipment_list.html.twig', [
+            'equipments' => $clientSelectedEquipmentsFiltered
+        ]);
+        
+        return $this->json(['html' => $html]);
     }
 
     #[Route('/save/modal/equipement', name: 'app_save_modal_equipement')]
-    public function saveModalInDatabase(EntityManagerInterface $entityManager){
+    public function saveModalInDatabase(EntityManagerInterface $entityManager, Request $request)//: Response
+    {
 
         // Récupération de l'équipement édité dans la modal
         if(isset($_POST['saveEquipmentFromModal'])){
@@ -1599,9 +1749,14 @@ class HomeController extends AbstractController
                     # code...
                     break;
             }
-            $equipement = new $entityAgency;
+            // $equipement = new $entityAgency;
+            $equipement = $entityManager->getRepository($entityAgency)->findOneBy(['id' => $equipmentidEquipementAndIdRow]);
             $equipement->setIdContact($equipmentIdContact);
-            $equipement->setDateEnregistrement(date("Y-m-d H:i:s"));
+            // Pour avoir l'heure exacte de l'enregistrement
+            $date = new DateTime(date("Y-m-d H:i:s"));
+            $dateValable = clone $date;
+            $dateValable->modify('+2 hour');
+            $equipement->setDateEnregistrement($dateValable->format('d-m-Y H:i:s'));
             $equipement->setCodeSociete($equipmentIdSociete);
             $equipement->setCodeAgence($equipmentCodeAgence);
             $equipement->setDerniereVisite($equipmentDerniereVisiteDeMaintenance);
@@ -1642,10 +1797,14 @@ class HomeController extends AbstractController
             $entityManager->persist($equipement);
             // actually executes the queries (i.e. the INSERT query)
             $entityManager->flush();
-
         }
-        // return new Response("L'équipement édité dans la modal a bien été enregistré en base de données", Response::HTTP_OK, [], true);
-        return $this->redirectToRoute('app_front');
+        $this->addFlash('success', 'L\'équipement a été mit à jour avec succès !');
+        return $this->redirectToRoute('app_show_equipement_details_by_id', [
+            'agence' => $equipmentCodeAgence,
+            'id' => $equipmentidEquipementAndIdRow
+        ]);
+        // return new Response("<html><body><p  style='font-size:18px; font-weight:bold;'>L'équipement édité dans la modal a bien été enregistré en base de données</p></body></html>", Response::HTTP_OK, [], true);
+        // return $this->redirect($request->getUri());
     }
 
     #[Route('/show/equipement/details/{agence}/{id}', name: 'app_show_equipement_details_by_id')]
