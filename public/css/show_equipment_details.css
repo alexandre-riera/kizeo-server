@@ -17,15 +17,10 @@
     margin: 10px;
 }
 .card-body p{
-    font-size: x-large;
+    font-size: 18px;
     text-align: center;
 }
 .card-img, .card-img-bottom, .card-img-top {
     width: 100%;
     height: -webkit-fill-available;
-}
-.card-img-top:hover{
-    transform: scale(1.5);
-    position: absolute;
-    z-index: 4000;
 }
