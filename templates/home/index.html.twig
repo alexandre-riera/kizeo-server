@@ -274,7 +274,6 @@
         {% endblock %}
         <nav class="navbar bg-body-tertiary">
             <div class="container">
-<<<<<<< HEAD
                 <a class="navbar-brand" href="/">
                     <i class="fa-solid fa-house"> </i>Accueil
                 </a>
@@ -319,37 +318,6 @@
                 {% endfor %}
             {% endfor %}
         </div>
-=======
-            <a class="navbar-brand" href="/">
-                <i class="fa-solid fa-house"> </i>Accueil
-            </a>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="{{ path('app_contrat_new') }}" class="navbar-brand" ><i class="fa-solid fa-file-contract"> </i>Nouveau contrat</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="{{ path('app_logout') }}" class="navbar-brand" >
-                        <i class="fa-solid fa-user"></i>Se déconnecter
-                    </a>
-                </li>
-                {#
-                <li class="nav-item dropdown" style="margin-right: 75px;">
-                    <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img class="nav-profile-img rounded-circle" src="{{ asset('images/astronaut-profile.png') }}">
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                        <a class="dropdown-item" href="#">Profile</a>
-                        <a class="dropdown-item" href="#">Create Post</a>
-                        <a class="dropdown-item" href="#">Logout</a>
-                    </div>
-                </li>
-                #}
-            </ul>
-            </div>
-        </nav>
->>>>>>> 0b9927ba83a270c80c7494eca361b9a5b019dc01
         {% block clientsInformations %}
         <div class="selections-container">
             <div class="selection-client" >
@@ -439,7 +407,6 @@
                     </div>
                 {% endif %}
             </div>
-<<<<<<< HEAD
         </div>
         {% if clientSelectedInformations != NULL  %}
             <div class="row">
@@ -633,203 +600,8 @@
         <div id="equipment-table-container">
             {% include 'components/equipment_table.html.twig' with {'clientSelectedEquipmentsFiltered': clientSelectedEquipmentsFiltered} %}
         </div>
-=======
-        </div>
-        {% if clientSelectedInformations != NULL  %}
-            <div class="row">
-                <div class="col-sm-3 mb-3 mb-sm-0">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Adresse</h4>
-                            <span></span>
-                            <span class="card-text"><b>{{ clientSelectedInformations.getRaisonSociale() }}</b></span><br>
-                            <span class="card-text">{{ clientSelectedInformations.getAdressep1() }} </span><br>
-                            <span class="card-text">{{ clientSelectedInformations.getCpostalp() }} </span><br>
-                            <span class="card-text">{{ clientSelectedInformations.getVillep() }} </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Infos client</h4>
-                            <span class="card-text"><b>Id client</b> : {{ clientSelectedInformations.getIdContact() }} </span><br>
-                            <span class="card-text"><b>Id société</b> : {{ clientSelectedInformations.getIdSociete() }}</span><br>
-                            <span class="card-text"><b>Agence</b> : {{ agenceSelected }}</span><br>
-                            <span class="card-text"><b>Téléphone</b> : {{ clientSelectedInformations.getTelephone() }} </span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-2">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Filtres</h4>
-                            {# Formulaire de filtres avec valeurs par défaut #}
-                            {# <form id="filterForm" method="get" action="{{ path('votre_route_actuelle') }}"> #}
-                            <form id="filterForm" method="get" action="">
-                                <input type="hidden" class="form-control" id="clientSelected" name="clientSelected" value="{{ clientSelected }}">
-                                <input type="hidden" class="form-control" id="agenceSelected" name="agenceSelected" value="{{ agenceSelected }}">
-                                <input type="hidden" class="form-control" id="idClientSelected" name="idClientSelected" value="{{ idClientSelected }}">
-                                <div class="form-group">
-                                    <label for="clientAnneeFilter">Année :</label>
-                                    <select class="form-control" id="clientAnneeFilter" name="clientAnneeFilter">
-                                        {% for annee in clientAnneeFilterArray %}
-                                            <option value="{{ annee }}" {% if clientAnneeFilter == annee %}selected{% endif %}>{{ annee }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="clientVisiteFilter">Visite :</label>
-                                    <select class="form-control" id="clientVisiteFilter" name="clientVisiteFilter">
-                                        {% for visite in clientVisiteFilterArray %}
-                                            <option value="{{ visite }}" {% if clientVisiteFilter == visite %}selected{% endif %}>{{ visite }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <button type="submit" name="submitFilters" value="1" class="btn btn-primary">Filtrer</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-2">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Nombre d'équipements</h4>
-                            <br>
-                            <br>
-                            <p class="client-infos-nombre">{{ totalClientSelectedEquipmentsFiltered }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {%endif%}
-        {% endblock %}
         
-        {% block modal %}
-        <!-- Modal -->
-            <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class=" fa-solid fa-pen-to-square"></i> Édition de l'équipement</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form action="/save/modal/equipement" method="post" class="row g-12">
-                                <input type="hidden" class="form-control" id="modal_libelle" value="" name="libelle" />
-                                <input type="hidden" class="form-control" id="modal_idContact" value="" name="idContact" />
-                                <input type="hidden" class="form-control" id="modal_idSociete" value="" name="idSociete" />
-                                <input type="hidden" class="form-control" id="modal_anomalies" value="" name="anomalies" />
-                                <input type="hidden" class="form-control" id="modal_trigrammeTech" value="" name="trigrammeTech" />
-                                <input type="hidden" class="form-control" id="modal_signatureTech" value="" name="signatureTech" />
-                                <input type="hidden" class="form-control" id="modal_ifExistDB" value="" name="ifExistDB" />
-                                <input type="hidden" class="form-control" id="modal_hauteurNacelle" value="" name="hauteurNacelle" />
-                                <input type="hidden" class="form-control" id="modal_modeleNacelle" value="" name="modeleNacelle" />
-                                <input type="hidden" class="form-control" id="modal_raisonSociale" value="" name="raisonSociale" />
-                                <input type="hidden" class="form-control" id="modal_visite" value="" name="visite" />
-                                <input type="hidden" class="form-control" id="modal_id" value="" name="id" />
-                                <div class="col-md-12">
-                                    <h3>Personne modifiant l'équipement</h3>
-                                    <div class="col-md-6">
-                                        <label for="nom" class="form-label">Votre nom</label>
-                                        <input type="text" class="form-control" id="modal_nom" value="" name="nom" />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="prenom" class="form-label">Votre prénom</label>
-                                        <input type="text" class="form-control" id="modal_prenom" value="" name="prenom" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="trigramme" class="form-label">Équipement cible</label>
-                                    <input type="text" class="form-control" placeholder="" id="modal_trigramme" value="" name="trigramme" />
-                                    <label for="codeAgence" class="form-label">Code Agence</label>
-                                    <input type="text" class="form-control" placeholder="" id="modal_codeAgence" value="" name="codeAgence" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
-                                    <input type="text" class="form-control" placeholder="" id="modal_modeFonctionnement" value="" name="modefonctionnement" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="repereCiteClient" class="form-label">Repère site client</label>
-                                    <input type="text" id="modal_repereSiteClient" class="form-control" placeholder="" value="" name="reperesiteclient" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="miseEnService" class="form-label">Mise en service</label>
-                                    <input type="text" id="modal_miseEnService" class="form-control" placeholder="" value="" name="miseenservice" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="numeroDeSerie" class="form-label">Numéro de série</label>
-                                    <input type="text" id="modal_numeroDeSerie" class="form-control" placeholder="" value="" name="numerodeserie" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="marque" class="form-label">Marque</label>
-                                    <input type="text" id="modal_marque" class="form-control" placeholder="" value="" name="marque" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="hauteur" class="form-label">Hauteur</label>
-                                    <input type="text" id="modal_hauteur" class="form-control" placeholder="" value="" name="hauteur" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="Largeur" class="form-label">Largeur</label>
-                                    <input type="text" id="modal_largeur" class="form-control" placeholder="" value="" name="largeur" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="longueur" class="form-label">Longueur</label>
-                                    <input type="text" id="modal_longueur" class="form-control" placeholder="" value="" name="longueur" />
-                                </div>
-                                <div class="col-md-12">
-                                    <label for="plaqueSignaletique" class="form-label">Plaque signalétique</label>
-                                    <input type="text" id="modal_plaqueSignaletique" class="form-control" placeholder="" value="" name="plaquesignaletique"/>
-                                </div>
-                                <div class="col-12">
-                                    <label for="etat" class="form-label">État de l'équipement</label>
-                                    <textarea id="modal_etat" class="form-control " value="" name="etat" ></textarea>
-                                </div>
-                                <div class="col-6">
-                                    <label for="dateDerniereVisite" class="form-label">Dernière visite de maintenance</label>
-                                    <input type="text" id="modal_derniereVisite"class="form-control" placeholder="" value="" name="dernierevisitedemaintenance" />
-                                </div>
-                                <div class="col-6">
-                                    <label for="statut-actuel" class="form-label">Statut actuel de l'équipement</label>
-                                    <input type="text" id="modal_statut" class="form-control" placeholder="" value="" name="oldstatut" />
-                                </div>
-                                <div class="col-6">
-                                    <label for="statut" class="form-label">Statut de l'équipement</label>
-                                    <select id="modal_prochain_statut" class="form-select"  name="newstatutclient">
-                                        <option selected>Choose...</option>
-                                        <option value="Vert">Vert</option>
-                                        <option value="Orange">Orange</option>
-                                        <option value="Rouge">Rouge</option>
-                                        <option value="A l'arrêt">A l'arrêt</option>
-                                        <option value="Innaccessible">Inaccessible</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="carnetEntretien" class="form-label">Présence carnet d'entretien</label>
-                                    <input type="text" id="modal_carnetEntretien" class="form-control" placeholder="" value="" name="carnetentretien" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="statutConformite" class="form-label">Statut conformité</label>
-                                    <input type="text" id="modal_statutConformite" class="form-control" placeholder="" value="" name="statutconformite" />
-                                </div>
-                                
-                                <button type="submit" id="saveEquipmentFromModal" class="btn btn-primary" name="saveEquipmentFromModal">Enregistrer</button>
-                            </form>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endblock %}
-        {# Conteneur pour la table des équipements (sera mis à jour par AJAX) #}
-        <div id="equipment-table-container">
-            {% include 'components/equipment_table.html.twig' with {'clientSelectedEquipmentsFiltered': clientSelectedEquipmentsFiltered} %}
-        </div>
->>>>>>> 0b9927ba83a270c80c7494eca361b9a5b019dc01
-        
-    {% else %}
+        {% else %}
         <header class="header">
             <h1>Merci de vous connecter avant de pouvoir accéder à l'application</h1>
         </header>
