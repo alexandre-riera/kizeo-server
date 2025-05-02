@@ -23,6 +23,8 @@
             <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.23.5/dist/bootstrap-table.min.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.23.5/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
             <script src="https://kit.fontawesome.com/722abd2107.js" crossorigin="anonymous"></script>
+            <script src="/public/js/filterFunction.js"></script>
+            <script src="/public/js/editEquipmentInModal.js"></script>
         {% endblock %}
     </head>
     <body>
@@ -33,95 +35,11 @@
                 padding: 80px;
             }
         </style>
-        {% if app.user and is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI') %}
-            {% block header %}
-                <header class="header">
-                    <h1>Gestion de parc équipements</h1>
-                    <h2>Bonjour {{ app.user.firstName }}</h2>
-                </header>
-            {% endblock %}
-            
-            <nav class="navbar navbar-expand-lg bg-body-tertiary">
-                <div class="container">
-                    <a class="navbar-brand" href="/">
-                        <i class="fa-solid fa-house"> </i>Accueil
-                    </a>
-                    
-                    <!-- Regrouper les autres liens de navigation -->
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav me-auto">
-                            <li class="nav-item">
-                                <a href="{{ path('app_contrat_new') }}" class="nav-link" >
-                                    <i class="fa-solid fa-file-contract"></i> Nouveau contrat
-                                </a>
-                            </li>
-                            {% if is_granted('ROLE_ADMIN') %}
-                                <li class="nav-item">
-                                    <a class="nav-link align-items-center" data-bs-toggle="collapse" href="#collapseUsers" role="button" aria-expanded="false" aria-controls="collapseUsers">
-                                        <i class="fa-solid fa-user"></i>
-                                        <span style="font-size:16px;">Gestion des utilisateurs</span>
-                                        <i class="ms-1 fa-solid fa-caret-down"></i>
-                                    </a>
-                                    <div class="collapse" id="collapseUsers">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item">
-                                                <a class="nav-link ms-3" href="{{ path('app_user_index') }}">Liste</a>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link ms-3" href="{{ path('app_user_new') }}">Nouvel utilisateur</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </li>
-                            {% endif %}
-                        </ul>
-                        
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a href="{{ path('app_logout') }}" class="nav-link">
-                                    Se déconnecter
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
-            {# Flash messages #}
-            <div class="container">
-                {% for label, messages in app.flashes %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ label }} alert-dismissible fade show">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endfor %}
-            </div>
-            
-            <main class="container mt-4">
-                {% block body %}{% endblock %}
-            </main>
-            {% else %}
-            <header class="header">
-                <h1>Merci de vous connecter avant de pouvoir accéder à l'application</h1>
-            </header>
-            <nav class="navbar bg-body-tertiary">
-                <div class="container">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item">
-                            <a href="{{ path('app_login') }}" class="navbar-brand" >
-                                <i class="fa-solid fa-user"></i>Se Connecter
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-        {% endif %}
+        
+        
+        <main class="container mt-4">
+            {% block body %}{% endblock %}
+        </main>
         <footer class="container mt-5 py-3 border-top">
             <p class="text-center">© 2025 Gestion de parc équipements</p>
         </footer>
