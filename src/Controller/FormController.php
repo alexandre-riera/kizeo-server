@@ -265,9 +265,9 @@ class FormController extends AbstractController
                     break;
                 
                 
-                // case 'S70':
-                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
-                //     break;
+                case 'S70':
+                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesBordeauxEquipementsInDatabase, $entiteEquipementS70, $entityManager);
+                    break;
                 
                 
                 case 'S80':
@@ -280,14 +280,14 @@ class FormController extends AbstractController
                     break;
                 
                 
-                // case 'S120':
-                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
-                //     break;
+                case 'S120':
+                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesHautsDeFranceEquipementsInDatabase, $entiteEquipementS120, $entityManager);
+                    break;
                 
                 
-                // case 'S130':
-                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
-                //     break;
+                case 'S130':
+                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesToulouseEquipementsInDatabase, $entiteEquipementS130, $entityManager);
+                    break;
                 
                 
                 case 'S140':
@@ -295,14 +295,14 @@ class FormController extends AbstractController
                     break;
                 
                 
-                // case 'S150':
-                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
-                //     break;
+                case 'S150':
+                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesSogefiEquipementsInDatabase, $entiteEquipementS150, $entityManager);
+                    break;
                 
                 
-                // case 'S160':
-                //     $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
-                //     break;
+                case 'S160':
+                    $formRepository->createAndSaveInDatabaseByAgency($equipements, $allResumesRouenEquipementsInDatabase, $entiteEquipementS160, $entityManager);
+                    break;
                 
                 
                 // case 'S170':
@@ -310,7 +310,6 @@ class FormController extends AbstractController
                 //     break;
                 
                 default:
-                    dump('Le code agence n\'est pas prévu dans le code');
                     break;
             }
             
@@ -452,7 +451,6 @@ class FormController extends AbstractController
                         break;
                     
                     default:
-                        dump('Le code agence n\'est pas prévu dans le code');
                         break;
                 }
             }
