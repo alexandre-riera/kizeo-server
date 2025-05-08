@@ -1,4 +1,4 @@
-{# components/equipment_table_kuehne.html.twig #}
+{# components/equipment_table_gls.html.twig #}
 <style>
     .bootstrap-table .fixed-table-container .fixed-table-body {
         overflow: auto;
@@ -13,7 +13,7 @@
         width: 90vw !important;
     }
 </style>
-{% if app.user and is_granted('ROLE_ADMIN_KUEHNE') or is_granted('ROLE_USER_KUEHNE') %}
+{% if app.user and is_granted('ROLE_ADMIN_GLS') or is_granted('ROLE_USER_GLS') %}
     {% if clientSelectedEquipmentsFiltered is defined and clientSelectedEquipmentsFiltered is not empty %}
         {#<div class="compte_rendu col-sm-3">
             <div class="card downloadPdf">
@@ -42,7 +42,7 @@
                             <th data-sortable="true" data-filter-control="select" data-field="marque">Marque</th>
                             <th data-sortable="true" data-filter-control="select" data-field="etat">État</th>
                             <th data-sortable="true" data-filter-control="select" data-field="statut_maintenance">Statut</th>
-                            {% if is_granted('ROLE_ADMIN_KUEHNE') %}
+                            {% if is_granted('ROLE_ADMIN_GLS') %}
                                 <th data-sortable="false" data-field="action">Action</th>
                             {% endif %}
                         </tr>
@@ -94,7 +94,7 @@
                                     {% elseif equipment.statutDeMaintenance == "Non présent" %}
                                     <td>{{ equipment.getStatutDeMaintenance() }}</td>
                                 {% endif %}
-                                {% if is_granted('ROLE_ADMIN_KUEHNE') %}
+                                {% if is_granted('ROLE_ADMIN_GLS') %}
                                     <td>
                                         <button onclick="editEquipement(
                                             '{{ equipment.getId() }}',

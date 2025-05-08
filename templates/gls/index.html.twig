@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}
-    Parc Équipements Kuehne & Nagel
+    Parc Équipements GLS
 {% endblock %}
 {% block stylesheets %}
     <!-- our project just needs Font Awesome Solid + Brands it's FREE icons-->
@@ -214,17 +214,17 @@
 
     </style>
 
-    {% if app.user and is_granted('ROLE_ADMIN_KUEHNE') or is_granted('ROLE_USER_KUEHNE') %}
+    {% if app.user and is_granted('ROLE_ADMIN_GLS') or is_granted('ROLE_USER_GLS') %}
         {% block header %}
             <header class="header">
                 {# <h1>Parc Équipements Clients Somafi</h1> #}
-                <h1>Parc Équipements Kuehne & Nagel</h1>
+                <h1>Parc Équipements GLS</h1>
                     {# <h2>Bonjour {{ app.user.firstName }}</h2> #}
             </header>
         {% endblock %}
         <nav class="navbar bg-body-tertiary">
             <div class="container">
-            <a class="navbar-brand" href="/kuehne">
+            <a class="navbar-brand" href="/gls">
                 <i class="fa-solid fa-house"> </i>Accueil
             </a>
             <ul class="navbar-nav ml-auto">
@@ -274,7 +274,7 @@
                             <input type="text" class="form-control form-control-client" placeholder="Search.." id="myInput" onkeyup="filterFunction()" >
                             <select class="form-control" id="client-sous-contrat-select" name="clientName" onFocus="expand(this)" onBlur="unexpand(this)"  onclick="unexpand(this)">
                                 <option value = "" selected> Sélection du site </option> 
-                                {% for client in allKuehneContactsFromFrance%}
+                                {% for client in allGlsContactsFromFrance%}
                                     <option value="{{ client.raison_sociale }}" id="client_selected_s50">{{ client.raison_sociale }}</option>
                                 {% endfor %}
                             </select>
@@ -353,7 +353,7 @@
                         </div>
                     </div>
                 </div>
-                {% if is_granted('ROLE_ADMIN_KUEHNE') %}
+                {% if is_granted('ROLE_ADMIN_GLS') %}
                     <div class="col-sm-3">
                         <div class="card">
                             <div class="card-body">
@@ -362,7 +362,7 @@
                                 <br>
                                 <div class="mb-4">
                                     {# <label for="formFile" class="form-label">Attaché à ce site</label> #}
-                                    <form action="{{ path('kuehne_upload_file') }}" method="POST" enctype="multipart/form-data">
+                                    <form action="{{ path('gls_upload_file') }}" method="POST" enctype="multipart/form-data">
                                         <input class="form-control" style="width:85%" type="file" id="formFile" name="fileselected">
                                         <input type="hidden" id="id_client" name="id_client" value="{{ idClientSelected }}">
                                         <input type="hidden" id="client_name" name="client_name" value="{{ clientSelected }}">
@@ -510,7 +510,7 @@
         {% endblock %}
         {# Conteneur pour la table des équipements (sera mis à jour par AJAX) #}
         <div id="equipment-table-container">
-            {% include 'components/equipment_table_kuehne.html.twig' with {'clientSelectedEquipmentsFiltered': clientSelectedEquipmentsFiltered} %}
+            {% include 'components/equipment_table_gls.html.twig' with {'clientSelectedEquipmentsFiltered': clientSelectedEquipmentsFiltered} %}
         </div>
         {% else %}
         <header class="header">
@@ -541,7 +541,7 @@
                 
                 // Envoyer la requête AJAX
                 $.ajax({
-                    url: '/ajax/filter-equipment-kuehne',
+                    url: '/ajax/filter-equipment-gls',
                     type: 'GET',
                     data: formData,
                     success: function(response) {
