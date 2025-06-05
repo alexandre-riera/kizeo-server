@@ -174,9 +174,7 @@
                                 <p>Travaux urgent ou à l'arrêt</p>
                             {% elseif etat == "Equipement inaccessible le jour de la visite" or etat == "D" %}
                                 <p>Équipement inaccessible</p>
-                            {% elseif etat == "Equipement inexistant le jour de la visite" or etat == "G" %}
-                                {{ continue }} {# Ignore this state in the main table #}
-                            {% endif %}
+                            {% endif %} 
                         </td>
                         <td style="text-align: center;">
                             {{ count }}
