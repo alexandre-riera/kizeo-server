@@ -178,10 +178,10 @@
                                 {% endif %} 
                             </td>
                             <td style="text-align: center;">
-                                {% if etat != "Equipement non présent le jour de la visite" or etat != "G" %}
-                                    {{ count }}
+                                {% if etat == "Equipement non présent le jour de la visite" or etat == "G" %}
+                                    {{ etat }}
                                 {% else %}
-                                    ---
+                                    {{ count }}
                                 {% endif %}
                             </td>
                         </tr>
