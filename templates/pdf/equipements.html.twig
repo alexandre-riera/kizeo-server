@@ -1,0 +1,324 @@
+{# templates/pdf/equipements.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Équipements du client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        .equipement {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .equipement-header {
+            background-color: #f5f5f5;
+            padding: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .photo {
+            max-width: 300px;
+            max-height: 200px;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+        th {
+            width: 30%;
+            background-color: #f9f9f9;
+        }
+        .filter-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 11px;
+        }
+        .filter-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-right: 5px;
+        }
+        
+        /* Styles pour le tableau de statistiques */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 11px;
+        }
+        .stats-table th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+        }
+        .stats-table td {
+            text-align: center;
+            padding: 6px;
+            border: 1px solid #ddd;
+        }
+        .stats-table .statut-cell {
+            text-align: left;
+            padding-left: 15px;
+        }
+        
+        /* Logos de statut */
+        .logo-statut {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .logo-vert { background-color: #4CAF50; }
+        .logo-orange { background-color: #FF9800; }
+        .logo-rouge { background-color: #F44336; }
+        .logo-noir { background-color: #424242; }
+        
+        .stats-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .stats-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+
+        {% if isFiltered is defined and isFiltered %}
+            <h1>Compte rendu d'entretien | Visite {{ clientVisiteFilter }} - {{ clientAnneeFilter }}</h1>
+            <h2>{{ clientRaisonSociale }}</h2>
+            {#<div class="filter-info">
+                <strong>Filtres appliqués :</strong>
+                {% if clientAnneeFilter %}
+                    <span class="filter-badge">Année : {{ clientAnneeFilter }}</span>
+                {% endif %}
+                {% if clientVisiteFilter %}
+                    <span class="filter-badge">Visite : {{ clientVisiteFilter }}</span>
+                {% endif %}
+            </div>#}
+        {% endif %}
+    </div>
+    
+    <div class="summary">
+        <h3>Résumé</h3>
+        <p><strong>Nombre d'équipements visités :</strong> {{ equipmentsWithPictures|length }}</p>
+        <p><strong>Nombre d'équipements inexistants :</strong> {{ equipementsNonPresents|length }}</p>
+        <p><strong>Nombre d'équipements supplémentaires :</strong> {{ equipementsSupplementaires|length }}</p>
+    </div>
+    
+    {# Tableau de statistiques #}
+    {% if statistiques is defined %}
+    <div class="stats-section">
+        <div class="stats-title">Équipements visités</div>
+        
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Statut</th>
+                    <th>État</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for etat, count in statistiques.etatsCount %}
+                    <tr>
+                        <td style="text-align: center;">
+                            {% if etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or etat == "A" %}
+                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="logo vert" style="width: 20px; height: 20px;">
+                            {% elseif etat == "Travaux à prévoir" or etat == "B" %}
+                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="logo orange" style="width: 20px; height: 20px;">
+                            {% elseif etat == "Travaux curatifs" or etat == "Equipement à l'arrêt le jour de la visite" or etat == "Equipement mis à l'arrêt lors de l'intervention" or etat == "C" or etat == "E" or etat == "F" %}
+                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" style="width: 20px; height: 20px;">
+                            {% elseif etat == "Equipement inaccessible le jour de la visite" or etat == "Equipement non présent sur site" or etat == "G" or etat == "D" %}
+                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px;">
+                            {% else %}
+                                {# Fallback: cercle gris pour les états non reconnus #}
+                                <div style="width: 20px; height: 20px; background-color: #CCCCCC; border-radius: 50%; display: inline-block;"></div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or etat == "A" %}
+                                <p>Bon état</p>
+                            {% elseif etat == "Travaux à prévoir" or etat == "B" %}
+                                <p>Travaux à prévoir</p>
+                            {% elseif etat == "Travaux curatifs" or etat == "Equipement à l'arrêt le jour de la visite" or etat == "Equipement mis à l'arrêt lors de l'intervention" or etat == "C" or etat == "E" or etat == "F" %}
+                                <p>Travaux urgent ou à l'arrêt</p>
+                            {% elseif etat == "Equipement non présent sur site" or etat == "G" %}
+                                <p>Équipement non présent</p>
+                            {% elseif etat == "Equipement inaccessible le jour de la visite" or etat == "D" %}
+                                <p>Équipement inaccessible</p>
+                            {% else %}
+                                <p>{{ etat }}</p>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {{ count }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="stats-title">Équipements non présents le jour de la visite</div>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Statut</th>
+                    <th>État</th>
+                    <th>Total inexistant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for etat, count in statistiques.etatsCount %}
+                    {% if etat == "Equipement non présent sur site" %}
+                        <tr>
+                            <td style="text-align: center;">
+                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px;">
+                            </td>
+                            <td style="text-align: center;">
+                                <p>Équipement non présent</p>
+                            </td>
+                            <td style="text-align: center;">
+                                {{ count }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {# Légende des couleurs #}
+        <div style="margin-top: 15px; font-size: 10px;">
+            <strong>Légende :</strong>
+            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="vert" style="width: 15px; height: 15px; vertical-align: middle;"> Bon état |
+            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="orange" style="width: 15px; height: 15px; vertical-align: middle;"> Travaux à prévoir |
+            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="rouge" style="width: 15px; height: 15px; vertical-align: middle;"> Travaux curatifs/Arrêt |
+            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="noir" style="width: 15px; height: 15px; vertical-align: middle;"> Inaccessible/Inexistant
+        </div>
+    </div>
+    {% endif %}
+    
+    {% for equipmentData in equipmentsWithPictures %}
+        {% set equipment = equipmentData.equipment %}
+        {% set pictures = equipmentData.pictures %}
+        
+        <div class="equipement">
+            <div class="equipement-header">
+                <div class="equipement-title">
+                    Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
+                    {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                        <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="logo vert" style="width: 20px; height: 20px; margin-top:2px; float: right;">
+                    {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                        <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="logo orange" style="width: 20px; height: 20px; margin-top:2px; float: right;">
+                    {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                        <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" style="width: 20px; height: 20px; margin-top:2px; float: right;">
+                    {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" or equipment.etat == "D" %}
+                        <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px; margin-top:2px; float: right;">
+                    {% else %}
+                        {# Fallback: cercle gris pour les états non reconnus #}
+                        <div style="width: 20px; height: 20px; margin-top:2px; background-color: #CCCCCC; border-radius: 50%; display: inline-block;"></div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <h4>Informations techniques</h4>
+            <table class="info-table">
+                <tr>
+                    <th>Numéro</th>
+                    <td>{{ equipment.numeroEquipement }}</td>
+                    <th>Type</th>
+                    <td>{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                </tr>
+                <tr>
+                    <th>Marque</th>
+                    <td>{{ equipment.marque ?? 'Non renseigné' }}</td>
+                    <th>Modèle</th>
+                    <td>{{ equipment.modele ?? 'Non renseigné' }}</td>
+                </tr>
+                {% if equipment.etat %}
+                <tr>
+                    <th>État</th>
+                    <td style="text-align: center;">
+                        {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                            <p>Bon état</p>
+                        {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                            <p>Travaux à prévoir</p>
+                        {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                            <p>Travaux urgent ou à l'arrêt</p>
+                        {% elseif equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" %}
+                            <p>Équipement non présent</p>
+                        {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "D" %}
+                            <p>Équipement inaccessible</p>
+                        {% else %}
+                            <p>{{ equipment.etat }}</p>
+                        {% endif %}
+                    </td>
+                    <th>Dernière visite</th>
+                    <td>{{ equipment.derniereVisite ? equipment.derniereVisite|date('d/m/Y') : 'Aucune visite' }}</td>
+                    
+                </tr>
+                {% endif %}
+            </table>
+            
+            <div class="photos-section">
+                <h4>Photos ({{ pictures|length }} photo{{ pictures|length > 1 ? 's' : '' }})</h4>
+                {% if pictures|length > 0 %}
+                    <div class="photos-grid">
+                        {% for pictureData in pictures %}
+                            <div class="photo-container">
+                                <img src="data:image/jpeg;base64,{{ pictureData.picture }}" class="photo" alt="Photo équipement">
+                                <div class="photo-caption">
+                                    {{ pictureData.update_time ? pictureData.update_time|date('d/m/Y H:i') : 'Date inconnue' }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p><em>Aucune photo disponible pour cet équipement.</em></p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if not loop.last %}
+            <div class="page-break"></div>
+        {% endif %}
+    {% endfor %}
+    
+    <div style="margin-top: 30px; font-size: 9px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px;">
+        Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} - {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
+        {% if isFiltered is defined and isFiltered %}
+            <br><em>Filtres appliqués lors de la génération</em>
+        {% endif %}
+    </div>
+</body>
+</html>

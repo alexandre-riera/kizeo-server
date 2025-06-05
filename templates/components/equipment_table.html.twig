@@ -11,7 +11,7 @@
     }
     
     .fixed-table-body {
-        margin-left: -12vw !important;
+        margin-left: -14vw !important;
     }
 </style>
 {% if clientSelectedEquipmentsFiltered is defined and clientSelectedEquipmentsFiltered is not empty %}
@@ -139,6 +139,10 @@
                                 </button>
                             {% endif %}
                             <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                            <a style="margin-top:10px;" href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
+                            class="btn btn-primary" target="_blank" title="PDF de cet équipement">
+                                <i class="fa-solid fa-file-pdf"></i>PDF équipement
+                            </a>
                             </td>
                             
                         </tr>

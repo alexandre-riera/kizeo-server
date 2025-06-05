@@ -25,11 +25,18 @@
     {% if app.user %}
         <!-- Modal show equipment details -->
         <div id="showEquipmentDetails" >
+            <div style="display: flex; justify-content: center;" class="mb-3">
+                <a href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
+                class="btn btn-primary" target="_blank" title="PDF de cet équipement">
+                    <i class="fa-solid fa-file-pdf"></i>PDF de cet équipement
+                </a>
+            </div>
             <h3 class="col-md-12">Détails équipement</h3>
             <div class="card bg-light mb-3">
                 <div class="card-body">
                     <h4 class="card-title">Raison sociale et visite</h4>
-                    <p class="card-text" id="modal_show_trigramme">{{ equipment.getNumeroEquipement() }}</p>
+                    <p class="card-text" id="modal_show_trigramme">{{ equipment.getRaisonSociale() }}</p>
+                    <p class="card-text" id="modal_show_trigramme">{{ equipment.getVisite() }} de {{ equipment.getDerniereVisite()|date('Y') }}</p>
                 </div>
             </div>
             <div class="card bg-light mb-3">
