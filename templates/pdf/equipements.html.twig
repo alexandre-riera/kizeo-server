@@ -215,7 +215,11 @@
                         </tr>
                         {% else %}
                         {# Ignore les autres états #}
-                        {{ etat}}
+                        <tr>
+                            <td>
+                                {{ etat}}
+                            </td>
+                        </tr>
                     {% endif %}
                 {% endfor %}
             </tbody>
