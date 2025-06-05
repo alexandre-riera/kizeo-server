@@ -213,6 +213,9 @@
                                 {{ count }}
                             </td>
                         </tr>
+                        {% else %}
+                        {# Ignore les autres états #}
+                        {{ etat}}
                     {% endif %}
                 {% endfor %}
             </tbody>
