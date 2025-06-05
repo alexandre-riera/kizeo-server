@@ -179,7 +179,7 @@
                             </td>
                             <td style="text-align: center;">
                                 {% if etat == "Equipement non présent le jour de la visite" or etat == "G" %}
-                                    {% set etat = "---" %}
+                                    {% set etat = "" %}
                                     {{ etat }}
                                 {% else %}
                                     {{ count }}
