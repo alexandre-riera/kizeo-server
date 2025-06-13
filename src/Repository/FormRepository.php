@@ -1030,12 +1030,10 @@ class FormRepository extends ServiceEntityRepository
     
         foreach ($structuredEquipements as $structuredEquipment) {
             $structuredPrefix = explode('|', $structuredEquipment)[0]; // Extraire le préfixe de la BDD
-            dump('Équipement BDD structuré avant la mise à jour : ' . $structuredEquipment);
             $foundAndReplaced = false;
             foreach ($updatedKizeoEquipments as $key => $kizeoEquipment) {
                 $kizeoPrefix = explode('|', $kizeoEquipment)[0]; // Extraire le préfixe de Kizeo
                 if ($kizeoPrefix === $structuredPrefix) {
-                    dd('Équipement Kizeo avant la mise à jour : ' . $kizeoPrefix);
                     // Remplacer l'élément Kizeo correspondant par celui de la BDD
                     $updatedKizeoEquipments[$key] = $structuredEquipment;
                     $foundAndReplaced = true;
@@ -1048,7 +1046,7 @@ class FormRepository extends ServiceEntityRepository
                 $updatedKizeoEquipments[] = $structuredEquipment;
             }
             // Mettre à jour toutes les visites associées (si nécessaire)
-            $this->updateAllVisits($updatedKizeoEquipments, $structuredPrefix, $structuredEquipment);
+            // $this->updateAllVisits($updatedKizeoEquipments, $structuredPrefix, $structuredEquipment);
         }
     
         // Envoyer la liste mise à jour à Kizeo Forms
