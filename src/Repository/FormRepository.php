@@ -976,11 +976,11 @@ class FormRepository extends ServiceEntityRepository
 
         // Traitement par entité d'équipement
         foreach ($entitesEquipements as $entite) {
-            // Récupérer les équipements depuis la BDD
+            // Récupérer tous les équipements de l'agence depuis la BDD
             $equipements = $entityManager->getRepository($entite)->findAll();
             // Structurer les équipements pour ressembler à la structure de Kizeo
             $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
-
+            dd('Équipements structurés pour l\'entité ' . $entite . ': ' . json_encode($structuredEquipements));
             // Diviser les équipements pour faciliter la comparaison
             // $structuredEquipementsSplitted = $formRepository->splitStructuredEquipmentsToKeepFirstPart($structuredEquipements);
 
