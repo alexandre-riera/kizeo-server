@@ -1034,8 +1034,8 @@ class FormRepository extends ServiceEntityRepository
             $foundAndReplaced = false;
             foreach ($updatedKizeoEquipments as $key => $kizeoEquipment) {
                 $kizeoPrefix = explode('|', $kizeoEquipment)[0]; // Extraire le préfixe de Kizeo
-                dd('Équipement Kizeo avant la mise à jour : ' . $kizeoEquipment);
                 if ($kizeoPrefix === $structuredPrefix) {
+                    dd('Équipement Kizeo avant la mise à jour : ' . $kizeoPrefix);
                     // Remplacer l'élément Kizeo correspondant par celui de la BDD
                     $updatedKizeoEquipments[$key] = $structuredEquipment;
                     $foundAndReplaced = true;
