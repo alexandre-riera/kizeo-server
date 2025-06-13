@@ -1033,6 +1033,13 @@ class FormRepository extends ServiceEntityRepository
             $foundAndReplaced = false;
             foreach ($updatedKizeoEquipments as $key => $kizeoEquipment) {
                 $kizeoPrefix = explode('|', $kizeoEquipment)[0]; // Extraire le préfixe de Kizeo
+
+                // Dans compareAndSyncEquipments, ajoutez avant la comparaison :
+                error_log("BDD Equipment: " . $structuredEquipment);
+                error_log("Kizeo Equipment: " . $kizeoEquipment);
+                error_log("BDD Prefix: " . $structuredPrefix);
+                error_log("Kizeo Prefix: " . $kizeoPrefix);
+
                 if ($kizeoPrefix === $structuredPrefix) {
                     // Remplacer l'élément Kizeo correspondant par celui de la BDD
                     $updatedKizeoEquipments[$key] = $structuredEquipment;
@@ -1164,34 +1171,66 @@ class FormRepository extends ServiceEntityRepository
     }
 
     // Function for agency equipments lists to structure them like Kizeo, to set their "if_exist_DB" with the structured string tuple
+    // public function structureLikeKizeoEquipmentsList($agencyEquipmentsList){
+    //     $equipmentsList = [];
+    //     foreach ($agencyEquipmentsList as $equipement) {
+            
+    //         $theProcessedEquipment = 
+    //         $equipement->getRaisonSociale() . ":" . $equipement->getRaisonSociale() . "\\" .
+    //         $equipement->getVisite() . ":" . $equipement->getVisite() . "\\" .
+    //         $equipement->getNumeroEquipement() . ":" . $equipement->getNumeroEquipement() . "|" .
+    //         ucfirst($equipement->getLibelleEquipement()) . ":" . ucfirst($equipement->getLibelleEquipement()) . "|" .
+    //         $equipement->getMiseEnService() . ":" . $equipement->getMiseEnService() . "|" .
+    //         $equipement->getNumeroDeSerie() . ":" . $equipement->getNumeroDeSerie() . "|" .
+    //         trim($equipement->getMarque()) . ":" . $equipement->getMarque() . "|" .
+    //         $equipement->getHauteur() . ":" . $equipement->getHauteur() . "|" .
+    //         $equipement->getLargeur() . ":" . $equipement->getLargeur() . "|" .
+    //         $equipement->getRepereSiteClient() . ":" . $equipement->getRepereSiteClient() . "|" .
+    //         $equipement->getIdContact() . ":" . $equipement->getIdContact() . "|" .
+    //         $equipement->getCodeSociete() . ":" . $equipement->getCodeSociete() . "|" .
+    //         $equipement->getCodeAgence() . ":" . $equipement->getCodeAgence()
+    //         ;
+
+    //         // Set if equipment exist DB with new value from structured agency list for all agencies to match strings from Kizeo Forms
+    //         $equipement->setIfExistDB($theProcessedEquipment);
+    //         array_push($equipmentsList, $theProcessedEquipment);
+
+    //         // Trying to update without 
+    //         // // tell Doctrine you want to (eventually) save the Product (no queries yet)
+    //         // $this->getEntityManager()->persist($equipement);
+    //         // // actually executes the queries (i.e. the INSERT query)
+    //         // $this->getEntityManager()->flush();
+    //     }
+        
+    //     return $equipmentsList;
+    // }
+
     public function structureLikeKizeoEquipmentsList($agencyEquipmentsList){
         $equipmentsList = [];
         foreach ($agencyEquipmentsList as $equipement) {
             
+            // Format simple comme dans Kizeo Forms (sans les doublons avec :)
             $theProcessedEquipment = 
-            $equipement->getRaisonSociale() . ":" . $equipement->getRaisonSociale() . "\\" .
-            $equipement->getVisite() . ":" . $equipement->getVisite() . "\\" .
-            $equipement->getNumeroEquipement() . ":" . $equipement->getNumeroEquipement() . "|" .
-            ucfirst($equipement->getLibelleEquipement()) . ":" . ucfirst($equipement->getLibelleEquipement()) . "|" .
-            $equipement->getMiseEnService() . ":" . $equipement->getMiseEnService() . "|" .
-            $equipement->getNumeroDeSerie() . ":" . $equipement->getNumeroDeSerie() . "|" .
-            trim($equipement->getMarque()) . ":" . $equipement->getMarque() . "|" .
-            $equipement->getHauteur() . ":" . $equipement->getHauteur() . "|" .
-            $equipement->getLargeur() . ":" . $equipement->getLargeur() . "|" .
-            $equipement->getRepereSiteClient() . ":" . $equipement->getRepereSiteClient() . "|" .
-            $equipement->getIdContact() . ":" . $equipement->getIdContact() . "|" .
-            $equipement->getCodeSociete() . ":" . $equipement->getCodeSociete() . "|" .
-            $equipement->getCodeAgence() . ":" . $equipement->getCodeAgence()
-            ;
+            $equipement->getRaisonSociale() . "\\" .
+            $equipement->getVisite() . "\\" .
+            $equipement->getNumeroEquipement() . "|" .
+            ucfirst($equipement->getLibelleEquipement()) . "|" .
+            $equipement->getMiseEnService() . "|" .
+            $equipement->getNumeroDeSerie() . "|" .
+            trim($equipement->getMarque()) . "|" .
+            $equipement->getHauteur() . "|" .
+            $equipement->getLargeur() . "|" .
+            $equipement->getRepereSiteClient() . "|" .
+            $equipement->getIdContact() . "|" .
+            $equipement->getCodeSociete() . "|" .
+            $equipement->getCodeAgence();
 
             // Set if equipment exist DB with new value from structured agency list for all agencies to match strings from Kizeo Forms
             $equipement->setIfExistDB($theProcessedEquipment);
             array_push($equipmentsList, $theProcessedEquipment);
 
-            // Trying to update without 
-            // // tell Doctrine you want to (eventually) save the Product (no queries yet)
+            // Optionnel : persister les changements en base
             // $this->getEntityManager()->persist($equipement);
-            // // actually executes the queries (i.e. the INSERT query)
             // $this->getEntityManager()->flush();
         }
         
