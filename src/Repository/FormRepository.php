@@ -980,7 +980,7 @@ class FormRepository extends ServiceEntityRepository
             $equipements = $entityManager->getRepository($entite)->findAll();
             // Structurer les équipements pour ressembler à la structure de Kizeo
             $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
-            dd('Équipements structurés pour l\'entité ' . $entite . ': ' . json_encode($structuredEquipements));
+            // dd('Équipements structurés pour l\'entité ' . $entite . ': ' . json_encode($structuredEquipements));
             // Diviser les équipements pour faciliter la comparaison
             // $structuredEquipementsSplitted = $formRepository->splitStructuredEquipmentsToKeepFirstPart($structuredEquipements);
 
@@ -993,6 +993,7 @@ class FormRepository extends ServiceEntityRepository
                 $item->expiresAfter(900); // 15 minutes en cache
                 $idListeKizeo = $this->getIdListeKizeoPourEntite($entite); // Obtenir l'ID de la liste Kizeo associée à l'entité
                 $result = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
+                dd('Équipements Kizeo récupérés pour l\'entité ' . $entite . ': ' . json_encode($result));
                 return $result;
             });
             // Comparer et mettre à jour la liste Kizeo
