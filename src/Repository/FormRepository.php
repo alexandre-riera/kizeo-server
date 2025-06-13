@@ -980,7 +980,7 @@ class FormRepository extends ServiceEntityRepository
             $equipements = $entityManager->getRepository($entite)->findAll();
             // Structurer les équipements pour ressembler à la structure de Kizeo
             $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
-            // dd('Équipements structurés pour l\'entité ' . $entite . ': ' . json_encode($structuredEquipements));
+            dump($structuredEquipements);
             // Diviser les équipements pour faciliter la comparaison
             // $structuredEquipementsSplitted = $formRepository->splitStructuredEquipmentsToKeepFirstPart($structuredEquipements);
 
@@ -990,10 +990,10 @@ class FormRepository extends ServiceEntityRepository
             // Récupérer la liste des équipements Kizeo depuis le cache
             $nomCache = strtolower(str_replace('Equipement', '', $entite)); 
             $kizeoEquipments = $cache->get('kizeo_equipments_' . $nomCache, function(ItemInterface $item) use ($formRepository, $entite, $idListeKizeo) {
-                $item->expiresAfter(900); // 15 minutes en cache
+                $item->expiresAfter(300); // 15 minutes en cache
                 $idListeKizeo = $this->getIdListeKizeoPourEntite($entite); // Obtenir l'ID de la liste Kizeo associée à l'entité
                 $result = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
-                dd('Équipements Kizeo récupérés pour l\'entité ' . $entite . ': ' . json_encode($result));
+                dump($result);
                 return $result;
             });
             // Comparer et mettre à jour la liste Kizeo
@@ -1049,7 +1049,7 @@ class FormRepository extends ServiceEntityRepository
             if (!$foundAndReplaced) {
                 $updatedKizeoEquipments[] = $structuredEquipment;
             }
-    
+            dd($updatedKizeoEquipments);
             // Mettre à jour toutes les visites associées (si nécessaire)
             $this->updateAllVisits($updatedKizeoEquipments, $structuredPrefix, $structuredEquipment);
         }
