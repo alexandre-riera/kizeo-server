@@ -2,12 +2,27 @@
 // src/Controller/EquipementPdfController.php
 namespace App\Controller;
 
+use App\Entity\Form;
+use App\Entity\ContactS10;
+use App\Entity\ContactS40;
+use App\Entity\ContactS50;
+use App\Entity\ContactS60;
+use App\Entity\ContactS70;
+use App\Entity\ContactS80;
+use App\Entity\ContactS100;
+use App\Entity\ContactS120;
+use App\Entity\ContactS130;
+use App\Entity\ContactS140;
+use App\Entity\ContactS150;
+use App\Entity\ContactS160;
+use App\Entity\ContactS170;
 use App\Entity\EquipementS10;
 use App\Entity\EquipementS40;
 use App\Entity\EquipementS50;
 use App\Entity\EquipementS60;
 use App\Entity\EquipementS70;
 use App\Entity\EquipementS80;
+use App\Service\PdfGenerator;
 use App\Entity\EquipementS100;
 use App\Entity\EquipementS120;
 use App\Entity\EquipementS130;
@@ -15,13 +30,11 @@ use App\Entity\EquipementS140;
 use App\Entity\EquipementS150;
 use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
-use App\Entity\Form;
-use App\Service\PdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class EquipementPdfController extends AbstractController
 {
@@ -87,7 +100,53 @@ class EquipementPdfController extends AbstractController
         
         // Récupérer tous les équipements du client selon l'agence
         $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
-        
+
+        //Récupérer le client
+        $clientSelectedInformations = null;
+        switch ($agence) {
+            case 'S10':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S40':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S50':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S60':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S70':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S80':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S100':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S120':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S130':    
+                $clientSelectedInformations = $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S140':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S150':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S160':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $id]);
+                break;
+            case 'S170':
+                $clientSelectedInformations = $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $id]);
+                break;
+            
+            default:
+                break;
+        }
         if (empty($equipments)) {
             throw $this->createNotFoundException('Aucun équipement trouvé pour ce client');
         }
@@ -167,12 +226,11 @@ class EquipementPdfController extends AbstractController
         
         $equipmentsWithPictures = [];
         
-        // Récupérer la raison sociale du client
-        $clientRaisonSociale = "";
+        // Récupérer la date de dernière visite
+        $dateDeDerniererVisite = "";
 
         // Pour chaque équipement filtré, récupérer ses photos
         foreach ($equipments as $equipment) {
-            $clientRaisonSociale = $equipment->getRaisonSociale();
             $picturesArray = $entityManager->getRepository(Form::class)->findBy([
                 'code_equipement' => $equipment->getNumeroEquipement(), 
                 'raison_sociale_visite' => $equipment->getRaisonSociale() . "\\" . $equipment->getVisite()
@@ -194,8 +252,12 @@ class EquipementPdfController extends AbstractController
             if ($equipement['equipment']->getEtat() === "Equipement non présent sur site" || $equipement['equipment']->getEtat() === "G") {
                 $equipementsNonPresents[] = $equipement;
             }
+            $dateDeDerniererVisite = $equipement['equipment']->getDerniereVisite();
         }
 
+        // Déterminer l'URL de l'image en fonction du nom de l'agence
+        $imageUrl = $this->getImageUrlForAgency($agence);
+        // dd($imageUrl);
         // Générer le HTML pour le PDF
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $equipmentsWithPictures,
@@ -203,10 +265,12 @@ class EquipementPdfController extends AbstractController
             'equipementsNonPresents' => $equipementsNonPresents,
             'clientId' => $id,
             'agence' => $agence,
+            'imageUrl' => $imageUrl,
             'clientAnneeFilter' => $clientAnneeFilter,
             'clientVisiteFilter' => $clientVisiteFilter,
-            'clientRaisonSociale' => $clientRaisonSociale,
             'statistiques' => $statistiques, // 🎯 Nouvelle variable ajoutée,
+            'dateDeDerniererVisite' => $dateDeDerniererVisite,
+            'clientSelectedInformations' => $clientSelectedInformations,
             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter)
         ]);
         
@@ -302,6 +366,44 @@ class EquipementPdfController extends AbstractController
                 return $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
             default:
                 return [];
+        }
+    }
+
+    private function getImageUrlForAgency(string $agencyName): string
+    {
+        // Assurer que cela renvoie un chemin absolu
+        $basePath = 'https://www.pdf.somafi-group.fr/background/';
+
+        // Assurez-vous d'ajouter vos conditions pour les URL spécifiques
+        switch ($agencyName) {
+            case 'S10':
+                return $basePath . 'group.jpg';
+            case 'S40':
+                return $basePath . 'st-etienne.jpg';
+            case 'S50':
+                return $basePath . 'grenoble.jpg';
+            case 'S60':
+                return $basePath . 'lyon.jpg';
+            case 'S70':
+                return $basePath . 'bordeaux.jpg';
+            case 'S80':
+                return $basePath . 'paris.jpg';
+            case 'S100':
+                return $basePath . 'montpellier.jpg';
+            case 'S120':
+                return $basePath . 'portland.jpg';
+            case 'S130':
+                return $basePath . 'toulouse.jpg';
+            case 'S140':
+                return $basePath . 'grand-est.jpg';
+            case 'S150':
+                return $basePath . 'paca.jpg';
+            case 'S160':
+                return $basePath . 'rouen.jpg';
+            case 'S170':
+                return $basePath . 'rennes.jpg';
+            default:
+                return $basePath . 'default.jpg'; // Image par défaut
         }
     }
 }

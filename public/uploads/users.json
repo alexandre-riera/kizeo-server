@@ -1,0 +1,981 @@
+[
+ {
+  "NOM": "AGUIARD",
+  "PRENOM": "Nicolas",
+  "EMAIL": "naguiard@somafi-group.fr",
+  "MOT DE PASSE": "jkbn34fdgt$!*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ALLARD",
+  "PRENOM": "Alexia",
+  "EMAIL": "aallard@somafi-group.fr",
+  "MOT DE PASSE": "Al!@4D$* ",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ANDREU",
+  "PRENOM": "Johan",
+  "EMAIL": "jandreu.somafi@gmail.com",
+  "MOT DE PASSE": "Ah34E7$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ARRIAS",
+  "PRENOM": "Robin",
+  "EMAIL": "rarrias.somafi@gmail.com",
+  "MOT DE PASSE": "R14r!@$*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ASLAH",
+  "PRENOM": "Nacim",
+  "EMAIL": "naslah.somafi@gmail.com",
+  "MOT DE PASSE": "v4j$LdkCXwNd",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BAPST",
+  "PRENOM": "Alexandre",
+  "EMAIL": ": abapst.somafi@gmail.com",
+  "MOT DE PASSE": "t7w9KEjdVGZ#",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BARD",
+  "PRENOM": "Valériane",
+  "EMAIL": "vbard.somafi@gmail.com",
+  "MOT DE PASSE": "r@%3dK8#SfzL",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BARNIER",
+  "PRENOM": "Audrey",
+  "EMAIL": "abarnier.somafi@gmail.com",
+  "MOT DE PASSE": "y@5rHjm!D26Y",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BASNIER",
+  "PRENOM": "Arnaud",
+  "EMAIL": "abasnier.somafi@gmail.com",
+  "MOT DE PASSE": "B@sN93*!$",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BAUDON",
+  "PRENOM": "Jimmy",
+  "EMAIL": "jbaudon.somafi@gmail.com",
+  "MOT DE PASSE": "Psj#caik9JoG",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BENTIVEGNA",
+  "PRENOM": "Christophero",
+  "EMAIL": "cbentivegna.somafi@gmail.com",
+  "MOT DE PASSE": "B3nt9v3gn1;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BERGER",
+  "PRENOM": "Thierry",
+  "EMAIL": "tberger.somafi@gmail.com",
+  "MOT DE PASSE": "BGT543edc",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BERNIER",
+  "PRENOM": "Sabrina",
+  "EMAIL": "sbernier.somafi@gmail.com",
+  "MOT DE PASSE": "B3rN!e4$",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BORGNE",
+  "PRENOM": "Jéremy",
+  "EMAIL": "jeborgne.somafi@gmail.com",
+  "MOT DE PASSE": "B04gn3*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BORNAREL",
+  "PRENOM": "Franck",
+  "EMAIL": "fbornarel.somafi@gmail.com",
+  "MOT DE PASSE": "B0rn1r3l*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BOURDENS",
+  "PRENOM": "Estelle",
+  "EMAIL": "ebourdens.somafi@gmail.com",
+  "MOT DE PASSE": "livreT-a)gue-so1o",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BOURDESSOL",
+  "PRENOM": "Dwan",
+  "EMAIL": "dbourdessol.somafi@gmail.com",
+  "MOT DE PASSE": "6wqx9YA#BcVy",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "BRISSAUD",
+  "PRENOM": "Laurent",
+  "EMAIL": "lbrissaud.somafi@gmail.com",
+  "MOT DE PASSE": "Manon28102008!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CAPRAJA",
+  "PRENOM": "Alexandre",
+  "EMAIL": "acapraja.somafi@gmail.com",
+  "MOT DE PASSE": "lux9-Mie-tr&ct",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CARDIN",
+  "PRENOM": "Pascal",
+  "EMAIL": "pcardin@somafi-group.fr",
+  "MOT DE PASSE": "Tilleuls-33",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CASTELLA",
+  "PRENOM": "Serge",
+  "EMAIL": "scastella.somafi@gmail.com",
+  "MOT DE PASSE": "PjzL7uthu",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CHARLET",
+  "PRENOM": "Rudy",
+  "EMAIL": "rcharlet.somafi@gmail.com",
+  "MOT DE PASSE": "Rud1Charl&t!;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CHAUVIN",
+  "PRENOM": "Fabien",
+  "EMAIL": "fchauvin.somafi@gmail.com",
+  "MOT DE PASSE": "of#$P5TVF&R6",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CHAUVIN",
+  "PRENOM": "Fabien",
+  "EMAIL": "fchauvin.somafi@gmail.com",
+  "MOT DE PASSE": "of#$P5TVF&R7",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CHEVALLAY",
+  "PRENOM": "Bruno",
+  "EMAIL": "bchevallay.somafi@gmail.com",
+  "MOT DE PASSE": "BGT54rfv",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CLAVERIE",
+  "PRENOM": "Mickael",
+  "EMAIL": "mclaverie.somafi@gmail.com",
+  "MOT DE PASSE": "Cl3v3ri3!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CONSTANT",
+  "PRENOM": "Sebastien",
+  "EMAIL": "sconstant.somafi@gmail.com",
+  "MOT DE PASSE": "C0nst1nt;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "COUVREUX",
+  "PRENOM": "Mattéo",
+  "EMAIL": "mcouvreux.somafi@gmail.com",
+  "MOT DE PASSE": "CDE345tgb;!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CRAMPETTE",
+  "PRENOM": "Cédric",
+  "EMAIL": "ccrampette.somafi@gmail.com",
+  "MOT DE PASSE": "(or-lunE-s6bre",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CRESSON",
+  "PRENOM": "Raphaël",
+  "EMAIL": "rcresson.somafi@gmail.com",
+  "MOT DE PASSE": "Cr3ss0n!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CRESTIN",
+  "PRENOM": "Philippe",
+  "EMAIL": "pcrestin.somafi@gmail.com",
+  "MOT DE PASSE": "CDE34rfv",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "CROS",
+  "PRENOM": "Johan",
+  "EMAIL": "jcros.somafi@gmail.com",
+  "MOT DE PASSE": "R3spt3ch42$",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DANTAS DE SOUSA",
+  "PRENOM": "Tiago",
+  "EMAIL": "tdantas.somafi@gmail.com",
+  "MOT DE PASSE": "R%3luQEl7&2g",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DE DIOS",
+  "PRENOM": "Eric",
+  "EMAIL": "ededios.somafi@gmail.com",
+  "MOT DE PASSE": "D3d89!$*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DELIGNY",
+  "PRENOM": "Gregory",
+  "EMAIL": "gdeligny.somafi@gmail.com",
+  "MOT DE PASSE": "GR32zsx!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DEPADOVA",
+  "PRENOM": "Julien",
+  "EMAIL": "jdepadova.somafi@gmail.com",
+  "MOT DE PASSE": "S100Somaf1!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DERAMAUX",
+  "PRENOM": "Jean-luc",
+  "EMAIL": "jlderamaux.somafi@gmail.com",
+  "MOT DE PASSE": "2$8Xge9UhMi&",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DI BARTOLOMEO RAMEL",
+  "PRENOM": "Christelle",
+  "EMAIL": "crammel.somafi@gmail.com",
+  "MOT DE PASSE": "CDE34rfv;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DIDIER",
+  "PRENOM": "Vincent",
+  "EMAIL": "vdidier.somafi@gmail.com",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DOBY",
+  "PRENOM": "Williams",
+  "EMAIL": "wdoby.somafi@gmail.com",
+  "MOT DE PASSE": "D0b7*:!!;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DUARTE",
+  "PRENOM": "Emelyne",
+  "EMAIL": "eduarte.somafi@gmail.com",
+  "MOT DE PASSE": "DE34rfv$*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DUCANDAS",
+  "PRENOM": "Laurent",
+  "EMAIL": "lducandas.somafi@gmail.com",
+  "MOT DE PASSE": "D7c1nd1s",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DUPRET",
+  "PRENOM": "Loïc",
+  "EMAIL": "ldupret.somafi@gmail.com",
+  "MOT DE PASSE": "Zo!*72CU64T5",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DURAND",
+  "PRENOM": "Jérémy",
+  "EMAIL": "jdurand.somafi@gmail.com",
+  "MOT DE PASSE": "JU765tgb",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DUTHIL",
+  "PRENOM": "Ghislain",
+  "EMAIL": "gduthil.somafi@gmail.com",
+  "MOT DE PASSE": "WQA12zsx",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "EDOUARD",
+  "PRENOM": "Margaux",
+  "EMAIL": "medouard.somafi@gmail.com",
+  "MOT DE PASSE": "M@rg@ux38*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FERNANDEZ",
+  "PRENOM": "David",
+  "EMAIL": "dfernandez.somafi@gmail.com",
+  "MOT DE PASSE": "FR456yhn$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FERRANTE",
+  "PRENOM": "Carla",
+  "EMAIL": "cferrante.somafi@gmail.com",
+  "MOT DE PASSE": "F3R4@nTe",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FERREIRA",
+  "PRENOM": "Pedro",
+  "EMAIL": "pferreira.somafi@gmail.com",
+  "MOT DE PASSE": "Pj@GAaZg5q6U",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FIGUEIREDO",
+  "PRENOM": "Licurgo",
+  "EMAIL": "lrodrigues.somafi@gmail.com",
+  "MOT DE PASSE": "3rv4mN$ufFEq",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FLANDRINCK",
+  "PRENOM": "Jonathan",
+  "EMAIL": " jflandrinck.somafi@gmail.com",
+  "MOT DE PASSE": "Flandr1nck+;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FLORENT",
+  "PRENOM": "Francis",
+  "EMAIL": "fflorent.somafi@gmail.com",
+  "MOT DE PASSE": "Fl0rent62300+;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "FOURNIER",
+  "PRENOM": "Benjamin",
+  "EMAIL": "bfournier.somafi@gmail.com",
+  "MOT DE PASSE": "yvUi8@V*mNif",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GANCZARCZYK",
+  "PRENOM": "Benoit ",
+  "EMAIL": "bganczarczyk.somafi@gmail.com",
+  "MOT DE PASSE": "Ben01t59*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GASNE",
+  "PRENOM": "Mathieu",
+  "EMAIL": "mgasne.somafi@gmail.com",
+  "MOT DE PASSE": "GT567uj,",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GAUTHIER",
+  "PRENOM": "Agathe",
+  "EMAIL": "agauthier@somafi-group.fr",
+  "MOT DE PASSE": "G1uT8!eR",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GODFROY",
+  "PRENOM": "Marie",
+  "EMAIL": "mgodfroy.somafi@gmail.com",
+  "MOT DE PASSE": " ouP6Q#hxnLWC",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GOLEBIOWSKI",
+  "PRENOM": "Gregory",
+  "EMAIL": "ggolebiowski.somafi@gmail.com",
+  "MOT DE PASSE": "G0l3b90sk9;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GONCALVES",
+  "PRENOM": "Noa",
+  "EMAIL": "ngoncalves.somafi@gmail.com",
+  "MOT DE PASSE": "6RuRmo@UBBrt",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GOUVERNEUR",
+  "PRENOM": "Quentin",
+  "EMAIL": "qgouverneur.somafi@gmail.com",
+  "MOT DE PASSE": "Qg07V34n37r",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "GUIOT",
+  "PRENOM": "Sébastien",
+  "EMAIL": "sguiot.somafi@gmail.com",
+  "MOT DE PASSE": "pkR$jGA&HuE2",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "HEMMERLE",
+  "PRENOM": "Camille",
+  "EMAIL": "chemmerle.somafi@gmail.com",
+  "MOT DE PASSE": "b#n-vraC-fibr9",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "JAOVAHINY",
+  "PRENOM": "Romain",
+  "EMAIL": "rjaovahiny.somafi@gmail.com",
+  "MOT DE PASSE": "J10vaHin6",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "JOBERT",
+  "PRENOM": "Charline",
+  "EMAIL": "cjobert.somafi@gmail.com",
+  "MOT DE PASSE": "J0$be*!t",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "JOLY",
+  "PRENOM": "Eric",
+  "EMAIL": "ejoly.somafi@gmail.com",
+  "MOT DE PASSE": "J9l6j9l6",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "KESSLER",
+  "PRENOM": "Marlon",
+  "EMAIL": "mkessler.somafi@gmail.com",
+  "MOT DE PASSE": "K3sSl3rfv",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "KEUFTERIAN",
+  "PRENOM": "Hubert",
+  "EMAIL": "hubertkeufterian.somafi@gmail.com",
+  "MOT DE PASSE": " H8b3rT69",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "KIFOULA",
+  "PRENOM": "Saye",
+  "EMAIL": "skifoula.somafi@gmail.com",
+  "MOT DE PASSE": "Ai2qSiSyJm9@",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "KMIECZAK",
+  "PRENOM": "Axel",
+  "EMAIL": "akmieczak.somafi@gmail.com",
+  "MOT DE PASSE": "&jzBvCtX6rF7",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "KOULA",
+  "PRENOM": "Jean-Louis",
+  "EMAIL": "jlkoula.somafi@gmail.com",
+  "MOT DE PASSE": "K07l1*:!!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LANTHEAUME",
+  "PRENOM": "Vincent",
+  "EMAIL": "v.lantheaume@portland.fr",
+  "MOT DE PASSE": "VFR456yhn",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LASSALLE",
+  "PRENOM": "Johan",
+  "EMAIL": "johanlassalle.somafi@gmail.com",
+  "MOT DE PASSE": "S100Somaf1!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LAURE",
+  "PRENOM": "Vincent",
+  "EMAIL": "vlaure.somafi@gmail.com",
+  "MOT DE PASSE": "L@7rE$!#",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LEBON",
+  "PRENOM": "Jeferson",
+  "EMAIL": "jlebon.somafi@gmail.com",
+  "MOT DE PASSE": "e36FHT@TgmsE",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LEDRU",
+  "PRENOM": "Mickaël",
+  "EMAIL": "mledru.somafi@gmail.com",
+  "MOT DE PASSE": "b0+J2e$V",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LEFEBVRE",
+  "PRENOM": "Elvis",
+  "EMAIL": "elefebvre.somafi@gmail.com",
+  "MOT DE PASSE": "L34eBv$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LEGRAND",
+  "PRENOM": "Alison",
+  "EMAIL": "alegrand.somafi",
+  "MOT DE PASSE": "LE345tgb$* ",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LENGAGNE",
+  "PRENOM": "Fréderic",
+  "EMAIL": "flengagne.somafi@gmail.com",
+  "MOT DE PASSE": "Freder1c34",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LERAT",
+  "PRENOM": "Aurélie",
+  "EMAIL": "alerat.somafi@gmail.com",
+  "MOT DE PASSE": "L3r1t*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LOONIS",
+  "PRENOM": "Irène",
+  "EMAIL": "iloonis.somafi@gmail.com",
+  "MOT DE PASSE": "ne%-indeX-g6ng",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "LOUPIAS",
+  "PRENOM": "Ludovic",
+  "EMAIL": "lloupias.somafi@gmail.com",
+  "MOT DE PASSE": "L0up1@s34!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MADANI",
+  "PRENOM": "Zinetadj",
+  "EMAIL": "zmadani.somafi@gmail.com",
+  "MOT DE PASSE": "MaD@n!$*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MARTIN",
+  "PRENOM": "Julien",
+  "EMAIL": "jmartin.somafi@gmail.com",
+  "MOT DE PASSE": "MP09ol:!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MARTINAUD-CONTI",
+  "PRENOM": "Céline",
+  "EMAIL": "cmartinaud.somafi@gmail.com",
+  "MOT DE PASSE": "CM1rt9n1ud!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MASSET",
+  "PRENOM": "Jonathan",
+  "EMAIL": "jmasset.somafi@gmail.com",
+  "MOT DE PASSE": "M1ss3t*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MAVEZA",
+  "PRENOM": "Azarias",
+  "EMAIL": "amaveza.somafi@gmail.com",
+  "MOT DE PASSE": "A21zqwxs",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MIDOES",
+  "PRENOM": "Jeffrey ",
+  "EMAIL": "jmidoes.somafi@gmail.com",
+  "MOT DE PASSE": "M8D0eS$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MILLON",
+  "PRENOM": "Guillaume",
+  "EMAIL": "gmillon.somafi@gmail.com",
+  "MOT DE PASSE": "Au1.6FP)Jg",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "NEVETON",
+  "PRENOM": "Alexandre",
+  "EMAIL": "aneveton.somafi@gmail.com",
+  "MOT DE PASSE": "N3v3t9n*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "NICOLLE",
+  "PRENOM": "David",
+  "EMAIL": "dnicolle.somafi@gmail.com",
+  "MOT DE PASSE": "z8Zs77T7u#kd",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "NOE",
+  "PRENOM": "Pierre",
+  "EMAIL": "pnoe.somafi@gmail.com",
+  "MOT DE PASSE": "J#7wVj8Vp8Lh",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ODERIO",
+  "PRENOM": "Drys",
+  "EMAIL": "doderio.somafi@gmail.com",
+  "MOT DE PASSE": "div&n-baiE-troup9",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "OSIOL",
+  "PRENOM": "Eric",
+  "EMAIL": "eosiol.somafi@gmail.com",
+  "MOT DE PASSE": "ozedfc_(%fgy",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PARANT",
+  "PRENOM": "Mathieu",
+  "EMAIL": "mparant.somafi@gmail.com",
+  "MOT DE PASSE": "POI87ytr",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PARANT",
+  "PRENOM": "Matis",
+  "EMAIL": "matisparant.somafi@gmail.com",
+  "MOT DE PASSE": "2Q*z6ledFFsW",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PAYET",
+  "PRENOM": "Dany",
+  "EMAIL": "dpayet.somafi@gmail.com",
+  "MOT DE PASSE": "D1nYp1Y3t88",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "DUPUICH",
+  "PRENOM": "Vincent",
+  "EMAIL": "vdupuiche.somafi@gmail.com",
+  "MOT DE PASSE": "V1ncenT*",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PAYET",
+  "PRENOM": "Alexis",
+  "EMAIL": "apayet.somafi@gmail.com",
+  "MOT DE PASSE": "P16eT*$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PELISSIER",
+  "PRENOM": "Christophe",
+  "EMAIL": "cpelissier.somafi@gmail.com",
+  "MOT DE PASSE": "P3l8ss83r",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PEREIRA",
+  "PRENOM": "Claudio",
+  "EMAIL": "cpereira.somafi@gmail.com",
+  "MOT DE PASSE": "P3r38r1!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PERRET",
+  "PRENOM": "Dimitri",
+  "EMAIL": "dperret.somafi@gmail.com",
+  "MOT DE PASSE": "KI87uj,;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PERRIN",
+  "PRENOM": "Roseline",
+  "EMAIL": "rperrin.somafi@gmail.com",
+  "MOT DE PASSE": "R0sel1ne*1",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PERRIN",
+  "PRENOM": "Anthony",
+  "EMAIL": "aperrin.somafi@gmail.com",
+  "MOT DE PASSE": "6VFmp@N",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PETTE",
+  "PRENOM": "Alexandre",
+  "EMAIL": "apette.somafi@gmail.com",
+  "MOT DE PASSE": "P3t53*:!!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PEUGNET",
+  "PRENOM": "Clément",
+  "EMAIL": "cpeugnet.somafi@gmail.com",
+  "MOT DE PASSE": "P38gn3t*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "MERLEN",
+  "PRENOM": "Ludovic",
+  "EMAIL": "l.merlen.portland@gmail.com",
+  "MOT DE PASSE": "MP09ol:!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PEYSSARD",
+  "PRENOM": "Patrick",
+  "EMAIL": "ppeyssard.somafi@gmail.com",
+  "MOT DE PASSE": "3aR9k7gudW#4",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PICARD",
+  "PRENOM": "Stéphane",
+  "EMAIL": "spicard.somafi@gmail.com",
+  "MOT DE PASSE": "iuxTve6PS@c4",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PLATEL",
+  "PRENOM": "Jérome",
+  "EMAIL": "jplatel.somafi@gmail.com",
+  "MOT DE PASSE": "Pl1t3l*!;",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PONTIER",
+  "PRENOM": "Lionel",
+  "EMAIL": "lpontier.somafi@gmail.com",
+  "MOT DE PASSE": "WQA12zsx??",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "QUINTUS",
+  "PRENOM": "Patrice",
+  "EMAIL": "pquintus.somafi@gmail.com",
+  "MOT DE PASSE": "s#rt-pu6-maniE",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "PIERRU",
+  "PRENOM": "Norlan",
+  "EMAIL": "n.pierru.portland@gmail.com",
+  "MOT DE PASSE": "P13rru*!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ROUSSALY",
+  "PRENOM": "Yann",
+  "EMAIL": "yroussaly.somafi@gmail.com",
+  "MOT DE PASSE": "Ro7S$@lY",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ROUSSELET",
+  "PRENOM": "Guillaume",
+  "EMAIL": "grousselet.somafi@gmail.com",
+  "MOT DE PASSE": "3Tc8*cSdp$sK",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "ROUX",
+  "PRENOM": "Jean-François",
+  "EMAIL": "jroux.somafi@gmail.com",
+  "MOT DE PASSE": "3SpGvEPLLh%8",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SAHBI",
+  "PRENOM": "Julien",
+  "EMAIL": "jsahbi.somafi@gmail.com",
+  "MOT DE PASSE": ")azz-Mur-oliv9",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SCHAEDLER",
+  "PRENOM": "Jean-Baptiste",
+  "EMAIL": "jschaedler.somafi@gmail.com",
+  "MOT DE PASSE": "Sch1dl3r!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SEGUI",
+  "PRENOM": "Fréderic",
+  "EMAIL": "fsegui@somafi-group.fr",
+  "MOT DE PASSE": "fS3G78i$!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SELLIAH",
+  "PRENOM": "Nilaksan",
+  "EMAIL": "nselliah.somafi@gmail.com",
+  "MOT DE PASSE": "SE45rdxw",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SEPHTON",
+  "PRENOM": "Richard",
+  "EMAIL": "rsephton.somafi@gmail.com ",
+  "MOT DE PASSE": "Dq4Ye&bD@q6M",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SERPINET",
+  "PRENOM": "Julien",
+  "EMAIL": "jserpinet.somafi@gmail.com",
+  "MOT DE PASSE": "S34p8neT!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SIMONET",
+  "PRENOM": "Maxime",
+  "EMAIL": "msimonet.somafi@gmail.com",
+  "MOT DE PASSE": "ckMajiQV5F!Z",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "STRAZZERI",
+  "PRENOM": "Franck",
+  "EMAIL": "fstrazzeri.somafi@gmail.com",
+  "MOT DE PASSE": "kYgKczc!$ka6",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SULPIZIO",
+  "PRENOM": "Philippo",
+  "EMAIL": "psulpizio.somafi@gmail.com",
+  "MOT DE PASSE": "S7!p8zi0",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SYLLA",
+  "PRENOM": "Bachir",
+  "EMAIL": "bsylla.somafi@gmail.com",
+  "MOT DE PASSE": "2NU$2bkByK7&",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SZALAY",
+  "PRENOM": "Léa",
+  "EMAIL": "lszalay.somafi@gmail.com",
+  "MOT DE PASSE": "Soc1@l38!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "SZALAY",
+  "PRENOM": "Nathan",
+  "EMAIL": "nszalay.somafi@gmail.com",
+  "MOT DE PASSE": "ux8LoDlr&8Pm",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TAILLY",
+  "PRENOM": "Baptiste",
+  "EMAIL": "btailly.somafi@gmail.com",
+  "MOT DE PASSE": "T@1ll162!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TANESIE",
+  "PRENOM": "Yohan",
+  "EMAIL": "ytanesie.somafi@gmail.com",
+  "MOT DE PASSE": "N96ziZp!Po*8",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TANNET",
+  "PRENOM": "Franck",
+  "EMAIL": "ftannet.somafi@gmail.com",
+  "MOT DE PASSE": "fr@1568#",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TATERKA",
+  "PRENOM": "Maxime",
+  "EMAIL": "mtaterka.somafi@gmail.com",
+  "MOT DE PASSE": "T1tErk1!",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TAVERNINI",
+  "PRENOM": "Thibault",
+  "EMAIL": "commercial77.somafi@gmail.com",
+  "MOT DE PASSE": "T1v3rn9ni",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TESCONI",
+  "PRENOM": "Claire",
+  "EMAIL": "ctesconi.somafi@gmail.com",
+  "MOT DE PASSE": "T3sC0n!$",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TESSIER",
+  "PRENOM": "Armand",
+  "EMAIL": "atessier.somafi@gmail.com",
+  "MOT DE PASSE": "aNtre-fo(-R@k1",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "TONDELIER",
+  "PRENOM": "Gaëtan",
+  "EMAIL": "gtondelier.somafi@gmail.com",
+  "MOT DE PASSE": "FkuqhdM$Qq@5",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "VANMARCKE",
+  "PRENOM": "Erwin",
+  "EMAIL": "evanmarcke.somafi@gmail.com",
+  "MOT DE PASSE": "H&%Rz28gW5@s",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "VIRET",
+  "PRENOM": "Emilie",
+  "EMAIL": "eviret.somafi@gmail.com",
+  "MOT DE PASSE": "VFR456yhn",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "VOISIN",
+  "PRENOM": "Lionel",
+  "EMAIL": "lvoisin.somafi@gmail.com",
+  "MOT DE PASSE": "xodZ&m3fKWYH",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "VOISINE",
+  "PRENOM": "Nadège",
+  "EMAIL": "nvoisine.somafi@gmail.com",
+  "MOT DE PASSE": "27DESsvm&q9M",
+  "ROLES": "[]"
+ },
+ {
+  "NOM": "WITZ",
+  "PRENOM": "Sébastien",
+  "EMAIL": "switz@somafi-group.fr",
+  "MOT DE PASSE": "loUpe-k6ki-ne7",
+  "ROLES": "[]"
+ }
+]

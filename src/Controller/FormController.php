@@ -157,25 +157,6 @@ class FormController extends AbstractController
         return new JsonResponse('La mise à jour sur KIZEO a été réalisée !', Response::HTTP_OK, [], true);
         // return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // A remettre pour faire tourner la boucle des 2 URL
     }
-
-    #[Route('/api/forms/test/single-agency/{agence}', name: 'app_api_test_single_agency', methods: ['GET'])]
-    public function testSingleAgency(string $agence, FormRepository $formRepository, CacheInterface $cache, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $entiteClass = "App\\Entity\\Equipement{$agence}";
-        
-        if (!class_exists($entiteClass)) {
-            return new JsonResponse("Entité {$entiteClass} non trouvée", 404);
-        }
-        
-        try {
-            $equipements = $entityManager->getRepository($entiteClass)->findAll();
-            $count = count($equipements);
-            
-            return new JsonResponse("Agence {$agence}: {$count} équipements trouvés", 200);
-        } catch (\Exception $e) {
-            return new JsonResponse("Erreur pour l'agence {$agence}: " . $e->getMessage(), 500);
-        }
-    }
     /**
      * 
      * Save PDF maintenance on remote server --                                  THIRD CALL IN CRON TASK
