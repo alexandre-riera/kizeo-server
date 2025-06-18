@@ -257,7 +257,7 @@ class EquipementPdfController extends AbstractController
             
             // Retourner une réponse d'erreur utilisateur
             $this->addFlash('error', 'Impossible de générer le PDF. Essayez de réduire le nombre d\'équipements ou contactez le support.');
-            return $this->redirectToRoute('client_equipements_pdf'); // Remplacez par votre route
+            return $this->redirectToRoute('app_front'); // Remplacez par votre route
         }
     }
 
