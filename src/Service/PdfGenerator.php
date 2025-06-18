@@ -12,36 +12,65 @@ class PdfGenerator
         // Configuration des options
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
-        $options->set('isRemoteEnabled', true); // Pour permettre le chargement d'images externes
+        $options->set('isRemoteEnabled', true);
         $options->set('isPHPEnabled', true);
-        $options->set('marginTop', 0);
-        $options->set('marginBottom', 0);
-        $options->set('marginLeft', 0);
-        $options->set('marginRight', 0);
-
+        
+        // Désactiver les marges par défaut
+        $options->set('defaultMediaType', 'print');
+        $options->set('isFontSubsettingEnabled', true);
+        
         // Initialisation de Dompdf
         $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
         
-        // Configuration du format et orientation
+        // Modification du HTML pour supprimer toutes les marges
+        $htmlWithoutMargins = '<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @page {
+                    margin: 0mm;
+                    padding: 0mm;
+                }
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                html, body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    width: 100%;
+                    height: 100%;
+                }
+            </style>
+        </head>
+        <body>' . $html . '</body>
+        </html>';
+        
+        $dompdf->loadHtml($htmlWithoutMargins);
+        
+        // Configuration du format et orientation avec marges à zéro
         $dompdf->setPaper('A4', 'portrait');
         
         // Rendu du PDF
         $dompdf->render();
         
-        // Parameters
-        $x          = 505;
-        $y          = 790;
-        $text       = "{PAGE_NUM} of {PAGE_COUNT}";     
-        $font       = $dompdf->getFontMetrics()->get_font('Helvetica', 'normal');   
-        $size       = 10;    
-        $color      = array(255,255,255);
-        $word_space = 0.0;
-        $char_space = 0.0;
-        $angle      = 0.0;
-
-        $dompdf->getCanvas()->page_text(
-        $x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle
+        // Parameters pour la numérotation des pages (ajustés pour pas de marge)
+        $canvas = $dompdf->getCanvas();
+        $font = $dompdf->getFontMetrics()->get_font('Helvetica', 'normal');
+        
+        // Positionnement ajusté pour absence de marges
+        $canvas->page_text(
+            520, // x - position ajustée
+            820, // y - position ajustée 
+            "Page {PAGE_NUM} sur {PAGE_COUNT}",
+            $font,
+            10,
+            [0, 0, 0], // couleur noir
+            0.0,
+            0.0,
+            0.0
         );
 
         return $dompdf->output();
