@@ -5,124 +5,44 @@
     <meta charset="UTF-8">
     <title>Équipements du client</title>
     <style>
-        /* Suppression complète des marges pour le PDF */
-        @page {
-            margin: 0mm !important;
-            padding: 0mm !important;
-            size: A4 portrait;
-        }
-        
-        * {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box;
-        }
-        
-        html {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm;
-            height: 297mm;
-        }
-        
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 210mm;
-            min-height: 297mm;
-            position: relative;
         }
-        
-        /* Page de couverture avec image de fond */
-        .cover-page {
-            width: 210mm;
-            height: 297mm;
-            background-image: url('{{ imageUrl }}');
-            background-size: 210mm 297mm;
-            background-position: top left;
-            background-repeat: no-repeat;
-            position: relative;
+        .page-break {
             page-break-after: always;
         }
-        
-        /* Container principal pour le contenu de la première page */
-        .content-container {
-            position: absolute;
-            top: 65mm;
-            left: 10mm;
-            right: 10mm;
-            width: 190mm; /* 210mm - 20mm de marges */
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 5px;
-        }
-        
-        /* Pages suivantes sans image de fond */
-        .equipment-page {
-            width: 210mm;
-            min-height: 297mm;
-            background-color: white;
-            position: relative;
-            padding: 20mm 15mm 25mm 15mm; /* top, right, bottom, left */
-            page-break-before: always;
-        }
-        
-        /* Container pour les équipements sur les pages normales */
-        .equipment-container-page {
-            width: 100%;
-            height: calc(297mm - 45mm); /* hauteur totale - marges top/bottom */
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Centre verticalement */
-            gap: 30px; /* Espacement entre équipements */
-        }
-        
         .equipement {
-            margin-bottom: 0; /* Supprimé car géré par gap */
+            margin-bottom: 20px;
             border: 1px solid #ddd;
-            padding: 15px;
-            background-color: white;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 10px;
         }
-        
         .equipement-header {
             background-color: #f5f5f5;
-            padding: 8px;
-            margin-bottom: 15px;
+            padding: 5px;
+            margin-bottom: 10px;
             font-weight: bold;
-            border-radius: 3px;
         }
-        
         .photo {
-            max-width: 250px;
-            max-height: 180px;
+            max-width: 300px;
+            max-height: 200px;
             margin: 5px 0;
-            border-radius: 3px;
         }
-        
         table {
             width: 100%;
             border-collapse: collapse;
         }
-        
         table, th, td {
             border: 1px solid #ddd;
         }
-        
         th, td {
-            padding: 8px;
+            padding: 5px;
             text-align: left;
         }
-        
         th {
             width: 30%;
             background-color: #f9f9f9;
-            font-weight: bold;
         }
-        
         .filter-info {
             background-color: #e7f3ff;
             border: 1px solid #b3d9ff;
@@ -131,7 +51,6 @@
             margin: 10px 0;
             font-size: 11px;
         }
-        
         .filter-badge {
             background-color: #007bff;
             color: white;
@@ -140,436 +59,105 @@
             font-size: 10px;
             margin-right: 5px;
         }
-        
-        /* En-tête personnalisé qui s'affiche sur l'image de fond */
-        .header-overlay {
-            position: absolute;
-            top: 30mm;
-            left: 20mm;
-            right: 20mm;
-            color: black;
-            text-align: center;
-            z-index: 10;
-        }
-        
-        .header-overlay h1 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-        
-        .header-overlay h2 {
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .header-overlay p {
-            font-size: 12px;
-            margin-bottom: 3px;
-        }
-        
-        /* Styles pour le tableau de statistiques */
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 11px;
-            background-color: white;
-        }
-        
-        .stats-table th {
-            background-color: #ffff00;
-            color: black;
-            font-weight: bold;
-            text-align: center;
-            padding: 8px;
-        }
-        
-        .stats-table td {
-            text-align: center;
-            padding: 6px;
-            border: 1px solid #ddd;
-            background-color: white;
-        }
-        
-        .stats-table .statut-cell {
-            text-align: left;
-            padding-left: 15px;
-        }
-        
-        .logo-statut {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        
-        .stats-section {
-            background-color: rgba(248, 249, 250, 0.95);
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 20px;
-        }
-        
-        .stats-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #495057;
-        }
-        
-        .equipment-detail-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .equipment-image {
-            width: 40%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .main-photo {
-            max-width: 100%;
-            max-height: 250px;
-            object-fit: contain;
-            border-radius: 3px;
-        }
-
-        .no-image {
-            width: 100%;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #f5f5f5;
-            border: 1px dashed #ccc;
-            border-radius: 3px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .equipment-info {
-            width: 58%;
-        }
-
-        .info-table {
-            width: 100%;
-        }
-
-        .info-table th {
-            width: 120px;
-            text-align: left;
-            padding: 8px;
-            background-color: #f5f5f5;
-            font-size: 11px;
-        }
-
-        .info-table td {
-            padding: 8px;
-            background-color: white;
-            font-size: 11px;
-        }
-        
-        /* En-tête et pied de page pour toutes les pages */
-        .page-header {
-            position: fixed;
-            top: 5mm;
-            left: 10mm;
-            right: 10mm;
-            height: 15mm;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-bottom: 1px solid #ddd;
-            padding: 5px 10px;
-            text-align: center;
-            font-size: 10px;
-            z-index: 1000;
-        }
-        
-        .page-footer {
-            position: fixed;
-            bottom: 5mm;
-            left: 10mm;
-            right: 10mm;
-            height: 15mm;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-top: 1px solid #ddd;
-            padding: 5px 10px;
-            text-align: center;
-            font-size: 9px;
-            color: #666;
-            z-index: 1000;
-        }
-        
-        /* Photos supplémentaires */
-        .photos-section {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-        
-        .photos-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: flex-start;
-        }
-        
-        .photo-container {
-            display: inline-block;
-        }
     </style>
 </head>
 <body>
-    <!-- En-tête fixe pour toutes les pages (sauf première) -->
-    <div class="page-header" style="display: none;">
-        <strong>Compte rendu d'entretien</strong>
+    <div class="header">
+        <h1>Rapport d'équipements</h1>
+        <span class="agence-badge">Agence {{ agence }}</span>
+        
         {% if isFiltered is defined and isFiltered %}
-            - Visite {{ clientVisiteFilter }} {{ clientAnneeFilter }}
+            <div class="filter-info">
+                <strong>Filtres appliqués :</strong>
+                {% if clientAnneeFilter %}
+                    <span class="filter-badge">Année : {{ clientAnneeFilter }}</span>
+                {% endif %}
+                {% if clientVisiteFilter %}
+                    <span class="filter-badge">Visite : {{ clientVisiteFilter }}</span>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
     
-    <!-- Pied de page fixe pour toutes les pages -->
-    <div class="page-footer">
+    <div class="summary">
+        <h3>Résumé</h3>
+        <p><strong>Nombre total d'équipements :</strong> {{ equipmentsWithPictures|length }}</p>
+        {% if isFiltered is defined and isFiltered %}
+            <p><em>Résultats filtrés selon les critères sélectionnés</em></p>
+        {% else %}
+            <p><em>Tous les équipements du client</em></p>
+        {% endif %}
+        {#<p><strong>Date de génération :</strong> {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }}</p>#}
+    </div>
+    
+    {% for equipmentData in equipmentsWithPictures %}
+        {% set equipment = equipmentData.equipment %}
+        {% set pictures = equipmentData.pictures %}
+        
+        <div class="equipement">
+            <div class="equipement-header">
+                <div class="equipement-title">
+                    Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
+                </div>
+            </div>
+            
+            <h4>Informations techniques</h4>
+            <table class="info-table">
+                <tr>
+                    <th>Numéro</th>
+                    <td>{{ equipment.numeroEquipement }}</td>
+                    <th>Type</th>
+                    <td>{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                </tr>
+                <tr>
+                    <th>Marque</th>
+                    <td>{{ equipment.marque ?? 'Non renseigné' }}</td>
+                    <th>Modèle</th>
+                    <td>{{ equipment.modele ?? 'Non renseigné' }}</td>
+                </tr>
+                <tr>
+                    <th>Date enregistrement</th>
+                    <td>{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('d/m/Y') : 'Non renseigné' }}</td>
+                    <th>Dernière visite</th>
+                    <td>{{ equipment.derniereVisite ? equipment.derniereVisite|date('d/m/Y') : 'Aucune' }}</td>
+                </tr>
+                {#<tr>
+                    <th>Visite</th>
+                    <td>{{ equipment.visite ?? 'Non renseigné' }}</td>
+                    <th>ID Contact</th>
+                    <td>{{ equipment.idContact ?? 'Non renseigné' }}</td>
+                </tr>#}
+            </table>
+            
+            <div class="photos-section">
+                <h4>Photos ({{ pictures|length }} photo{{ pictures|length > 1 ? 's' : '' }})</h4>
+                {% if pictures|length > 0 %}
+                    <div class="photos-grid">
+                        {% for pictureData in pictures %}
+                            <div class="photo-container">
+                                <img src="data:image/jpeg;base64,{{ pictureData.picture }}" class="photo" alt="Photo équipement">
+                                <div class="photo-caption">
+                                    {{ pictureData.update_time ? pictureData.update_time|date('d/m/Y H:i') : 'Date inconnue' }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p><em>Aucune photo disponible pour cet équipement.</em></p>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if not loop.last %}
+            <div class="page-break"></div>
+        {% endif %}
+    {% endfor %}
+    
+    <div style="margin-top: 30px; font-size: 9px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px;">
         Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} - {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
         {% if isFiltered is defined and isFiltered %}
             <br><em>Filtres appliqués lors de la génération</em>
         {% endif %}
     </div>
-    
-    <!-- Page de couverture avec image de fond -->
-    <div class="cover-page">
-        <!-- En-tête affiché sur l'image de fond -->
-        {% if isFiltered is defined and isFiltered %}
-            <div class="header-overlay">
-                <h1>Compte rendu d'entretien</h1>
-                <p><strong>Visite</strong> {{ clientVisiteFilter }} - {{ clientAnneeFilter }}</p>
-                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') }}</p>
-                {% set variable1 = clientSelectedInformations.getRaisonSociale() %}
-                {% set variable1 = variable1|replace({(clientSelectedInformations.getVillep()): ''}) %}
-                <h2>{{ variable1 }}</h2>
-                <p>{{ clientSelectedInformations.getAdressep1() }}</p>
-                {% if clientSelectedInformations.getAdressep2() is not empty %}
-                    <p>{{ clientSelectedInformations.getAdressep2() }}</p>
-                {% endif %}
-                <p>{{ clientSelectedInformations.getCpostalp() }} {{ clientSelectedInformations.getVillep() }}</p>
-            </div>
-        {% endif %}
-        
-        <!-- Contenu principal de la première page -->
-        <div class="content-container">
-            <div class="summary">
-                <h3>Résumé</h3>
-                <p><strong>Nombre d'équipements visités :</strong> {{ equipmentsWithPictures|length }}</p>
-                <p><strong>Nombre d'équipements inexistants :</strong> {{ equipementsNonPresents|length }}</p>
-                <p><strong>Nombre d'équipements supplémentaires :</strong> {{ equipementsSupplementaires|length }}</p>
-            </div>
-            
-            {# Tableau de statistiques #}
-            {% if statistiques is defined %}
-            <div class="stats-section">
-                <div class="stats-title">Équipements visités</div>
-                
-                <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>Statut</th>
-                            <th>État</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for etat, count in statistiques.etatsCount %}
-                            {% if etat != "Equipement non présent le jour de la visite" and etat != "G" %}
-                                <tr>
-                                    <td style="text-align: center;">
-                                        {% if etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or etat == "A" %}
-                                            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="logo vert" style="width: 20px; height: 20px;">
-                                        {% elseif etat == "Travaux à prévoir" or etat == "B" %}
-                                            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="logo orange" style="width: 20px; height: 20px;">
-                                        {% elseif etat == "Travaux curatifs" or etat == "Equipement à l'arrêt le jour de la visite" or etat == "Equipement mis à l'arrêt lors de l'intervention" or etat == "C" or etat == "E" or etat == "F" %}
-                                            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" style="width: 20px; height: 20px;">
-                                        {% elseif etat == "Equipement inaccessible le jour de la visite" or etat == "D" %}
-                                            <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px;">
-                                        {% endif %}
-                                    </td>
-                                    <td style="text-align: center;">
-                                        {% if etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or etat == "A" %}
-                                            <p>Bon état</p>
-                                        {% elseif etat == "Travaux à prévoir" or etat == "B" %}
-                                            <p>Travaux à prévoir</p>
-                                        {% elseif etat == "Travaux curatifs" or etat == "Equipement à l'arrêt le jour de la visite" or etat == "Equipement mis à l'arrêt lors de l'intervention" or etat == "C" or etat == "E" or etat == "F" %}
-                                            <p>Travaux urgent ou à l'arrêt</p>
-                                        {% elseif etat == "Equipement inaccessible le jour de la visite" or etat == "D" %}
-                                            <p>Équipement inaccessible</p>
-                                        {% endif %} 
-                                    </td>
-                                    <td style="text-align: center;">{{ count }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-                
-                <!-- Tableau pour les équipements non présents -->
-                {% set equipementsNonPresentsAffiche = false %}
-                {% for etat, count in statistiques.etatsCount %}
-                    {% if (etat == "Equipement non présent le jour de la visite" or etat == "G") and not equipementsNonPresentsAffiche %}
-                        {% set equipementsNonPresentsAffiche = true %}
-                        <div class="stats-title">Équipements non présents le jour de la visite</div>
-                        <table class="stats-table">
-                            <thead>
-                                <tr>
-                                    <th>Statut</th>
-                                    <th>État</th>
-                                    <th>Total inexistant</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for etat2, count2 in statistiques.etatsCount %}
-                                    {% if etat2 == "Equipement non présent sur site" or etat2 == "Equipement non présent" or etat2 == "G" %}
-                                        <tr>
-                                            <td style="text-align: center;">
-                                                <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px;">
-                                            </td>
-                                            <td style="text-align: center;">
-                                                <p>Équipement non présent</p>
-                                            </td>
-                                            <td style="text-align: center;">{{ count2 }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-                {% endfor %}
-                
-                {# Légende des couleurs #}
-                <div style="margin-top: 15px; font-size: 10px;">
-                    <strong>Légende :</strong>
-                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="vert" style="width: 15px; height: 15px; vertical-align: middle;"> Bon état |
-                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="orange" style="width: 15px; height: 15px; vertical-align: middle;"> Travaux à prévoir |
-                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="rouge" style="width: 15px; height: 15px; vertical-align: middle;"> Travaux curatifs/Arrêt |
-                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="noir" style="width: 15px; height: 15px; vertical-align: middle;"> Inaccessible/Inexistant
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Pages des équipements (2 équipements par page, centrés verticalement) -->
-    {% for equipmentData in equipmentsWithPictures %}
-        {% if loop.index0 is divisible by(2) %}
-            <div class="equipment-page">
-                <div class="equipment-container-page">
-        {% endif %}
-        
-        {% set equipment = equipmentData.equipment %}
-        {% set pictures = equipmentData.pictures %}
-        
-        <div class="equipement">
-            <div class="equipment-detail-container">
-                <div class="equipment-image">
-                    {% if pictures|length > 0 %}
-                        <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement">
-                    {% else %}
-                        <div class="no-image">
-                            <em>Aucune photo disponible</em>
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <div class="equipment-info">
-                    <table class="info-table">
-                        <tr>
-                            <th colspan="2" style="background-color: #f8f9fa; text-align: center; font-size: 13px;">
-                                Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
-                                {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
-                                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="logo vert" style="width: 20px; height: 20px; margin-left: 10px; vertical-align: middle;">
-                                {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
-                                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="logo orange" style="width: 20px; height: 20px; margin-left: 10px; vertical-align: middle;">
-                                {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
-                                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" style="width: 20px; height: 20px; margin-left: 10px; vertical-align: middle;">
-                                {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" or equipment.etat == "D" %}
-                                    <img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" style="width: 20px; height: 20px; margin-left: 10px; vertical-align: middle;">
-                                {% else %}
-                                    <div style="width: 20px; height: 20px; margin-left: 10px; background-color: #CCCCCC; border-radius: 50%; display: inline-block; vertical-align: middle;"></div>
-                                {% endif %}
-                            </th>
-                        </tr>
-                        <tr>
-                            <th>Numéro</th>
-                            <td>{{ equipment.numeroEquipement }}</td>
-                        </tr>
-                        <tr>
-                            <th>Type</th>
-                            <td>{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Marque</th>
-                            <td>{{ equipment.marque ?? 'Non renseigné' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Modèle</th>
-                            <td>{{ equipment.modele ?? 'Non renseigné' }}</td>
-                        </tr>
-                        <tr>
-                            <th>État</th>
-                            <td>
-                            {% if equipment.etat %}
-                                {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
-                                    Bon état
-                                {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
-                                    Travaux à prévoir
-                                {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
-                                    Travaux urgent ou à l'arrêt
-                                {% elseif equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" %}
-                                    Équipement non présent
-                                {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "D" %}
-                                    Équipement inaccessible
-                                {% else %}
-                                    {{ equipment.etat }}
-                                {% endif %}
-                            {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Mise en service</th>
-                            <td>{{ equipment.miseEnService ?? 'Année non présente sur équipement' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Repère site client</th>
-                            <td>{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            {% if pictures|length > 1 %}
-                <div class="photos-section">
-                    <h4 style="margin-bottom: 10px; font-size: 12px;">Photos supplémentaires ({{ pictures|length - 1 }} photo{{ pictures|length - 1 > 1 ? 's' : '' }}) :</h4>
-                    <div class="photos-grid">
-                        {% for pictureData in pictures %}
-                            {% if not loop.first %}
-                                <div class="photo-container">
-                                    <img src="data:image/jpeg;base64,{{ pictureData.picture }}" class="photo" alt="Photo équipement">
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        
-        {% if loop.index is divisible by(2) or loop.last %}
-                </div>
-            </div>
-        {% endif %}
-    {% endfor %}
 </body>
 </html>
