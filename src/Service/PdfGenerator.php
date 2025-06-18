@@ -59,7 +59,7 @@ class PdfGenerator
         
         // Parameters pour la numérotation des pages (ajustés pour pas de marge)
         $canvas = $dompdf->getCanvas();
-        $font = $dompdf->getFontMetrics()->get_font('Helvetica', 'normal');
+        $font = $dompdf->getFontMetrics()->getFont('Helvetica', 'normal');
         
         // Positionnement ajusté pour absence de marges
         $canvas->page_text(
