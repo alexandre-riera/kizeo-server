@@ -41,9 +41,8 @@ class PdfGenerator
                     margin: 0 !important;
                     padding-top: 150px !important;
                     padding-left: 10px !important;
-                    padding-bottom: -180px !important;
                     width: 100%;
-                    height: 100%;
+                    height: 90%;
                 }
             </style>
         </head>
