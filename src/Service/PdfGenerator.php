@@ -35,7 +35,7 @@ class PdfGenerator
         $text       = "{PAGE_NUM} of {PAGE_COUNT}";     
         $font       = $dompdf->getFontMetrics()->get_font('Helvetica', 'normal');   
         $size       = 10;    
-        $color      = array(0,0,0);
+        $color      = array(255,255,255);
         $word_space = 0.0;
         $char_space = 0.0;
         $angle      = 0.0;
