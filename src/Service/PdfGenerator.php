@@ -39,7 +39,7 @@ class PdfGenerator
                 }
                 html, body {
                     margin: 0 !important;
-                    padding-top: 60px !important;
+                    padding-top: 160px !important;
                     padding-left: 10px !important;
                     width: 100%;
                     height: 90%;
