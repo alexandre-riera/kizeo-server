@@ -30,7 +30,7 @@ class PdfGenerator
             <style>
                 @page {
                     margin: 0mm;
-                    padding-top: 180px;
+                    padding: 0mm;
                 }
                 * {
                     margin: 0;
@@ -39,7 +39,7 @@ class PdfGenerator
                 }
                 html, body {
                     margin: 0 !important;
-                    padding: 0 !important;
+                    padding-top: 150px !important;
                     width: 100%;
                     height: 100%;
                 }
