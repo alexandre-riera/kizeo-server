@@ -1081,25 +1081,43 @@ class FormRepository extends ServiceEntityRepository
      * Au lieu de remplacer toute la ligne, elle met à jour uniquement les données après le "|" dans la ligne Kizeo, en utilisant les données correspondantes de la nouvelle ligne.
      * Enfin, elle reconstruit la ligne Kizeo avec les données mises à jour.
     */
+    /**
+    * Version corrigée de la fonction updateAllVisits
+    * 
+    * Explication des modifications:
+    * 1. Extraction du numéro d'équipement spécifique (SEC01, SEC02, etc.)
+    * 2. Comparaison basée sur le client ET le numéro d'équipement exact
+    * 3. Évite la mise à jour de tous les équipements du même type
+    */
     private function updateAllVisits(&$kizeoEquipments, $prefixToUpdate, $newEquipment) {
         $clientPrefix = explode('\\', $prefixToUpdate)[0]; // Extrait le préfixe du client (raison_sociale)
         $newEquipmentData = explode('|', $newEquipment); // Tableau des nouvelles données de l'équipement
-    
+        
+        // CORRECTION : Extraire le numéro d'équipement spécifique depuis le préfixe
+        // Format du préfixe : "RAISON_SOCIALE\VISITE\NUMERO_EQUIPEMENT"
+        $equipmentNumberFromPrefix = explode('\\', $prefixToUpdate)[2]; // Ex: "SEC01"
+
         foreach ($kizeoEquipments as $key => $equipment) {
             $kizeoClientPrefix = explode('\\', $equipment)[0];
-            $kizeoEquipmentName = explode('|', $equipment)[1];
             $kizeoEquipmentData = explode('|', $equipment); // Tableau des données actuelles de l'équipement Kizeo
-    
-            if ($kizeoClientPrefix === $clientPrefix && $kizeoEquipmentName === $newEquipmentData[1]) { // Vérifie le client et le nom de l'équipement
+            
+            // CORRECTION : Extraire le numéro d'équipement depuis la ligne Kizeo
+            $kizeoEquipmentNumber = explode('\\', $equipment)[2]; // Ex: "SEC01", "SEC02", etc.
+
+            // CORRECTION : Comparer le client ET le numéro d'équipement spécifique
+            if ($kizeoClientPrefix === $clientPrefix && $kizeoEquipmentNumber === $equipmentNumberFromPrefix) {
                 // Met à jour les données après le "|" (pipe)
                 for ($i = 2; $i < count($newEquipmentData); $i++) { // Commence à l'indice 2 pour les données après le nom de l'équipement
                     if (isset($kizeoEquipmentData[$i])) {
                         $kizeoEquipmentData[$i] = $newEquipmentData[$i];
                     } else {
-                      $kizeoEquipmentData[] = $newEquipmentData[$i];
+                        $kizeoEquipmentData[] = $newEquipmentData[$i];
                     }
                 }
                 $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData); // Reconstruit la ligne avec les données mises à jour
+                
+                // CORRECTION : Sortir de la boucle une fois l'équipement trouvé et mis à jour
+                break;
             }
         }
     }
