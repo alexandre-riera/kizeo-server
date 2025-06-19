@@ -420,7 +420,7 @@ class OptimizedFormController extends AbstractController
             $equipement->setHauteurNacelle($additionalEquipment['hauteur_de_nacelle_necessaire']['value'] ?? '');
             $equipement->setModeleNacelle($additionalEquipment['si_location_preciser_le_model']['value'] ?? '');
             
-            $equipement->setStatutDeMaintenance($this->getMaintenanceStatus($additionalEquipment['etat']['value']));
+            $equipement->setStatutDeMaintenance($this->getMaintenanceContractStatus($additionalEquipment['etat']['value']));
             $equipement->setVisite($this->getVisitType($additionalEquipment['equipement']['path']));
             
             $equipement->setEnMaintenance(true);
@@ -548,7 +548,7 @@ class OptimizedFormController extends AbstractController
     /**
      * Statut de maintenance pour équipements au contrat
      */
-    private function getMaintenanceStatus(string $etat): string
+    private function getMaintenanceContractStatus(string $etat): string
     {
         switch ($etat) {
             case "Rien à signaler le jour de la visite. Fonctionnement ok":
