@@ -516,7 +516,7 @@ class FormController extends AbstractController
     /**
      * ROUTE ALTERNATIVE avec template Twig
      */
-    #[Route('/test_async_twig', name: 'app_test_async_twig', methods: ['GET'])]
+    #[Route('/test_async', name: 'app_test_async', methods: ['GET'])]
     public function testAsyncPageTwig(): Response
     {
         return $this->render('test_async.html.twig');
