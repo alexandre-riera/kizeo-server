@@ -186,8 +186,8 @@ class FormController extends AbstractController
     #[Route('/api/forms/markasunread', name: 'app_api_form_markasunread', methods: ['GET'])]
     public function markMaintenanceFormsAsUnread(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
-        // Générer un ID unique pour ce processus
-        $processId = uniqid('mark_unread_', true);
+        // CORRECTION : Passer le bon nombre de paramètres à uniqid()
+        $processId = uniqid('mark_unread_', true); // 2 paramètres : prefix et more_entropy
         
         try {
             // Initialiser le statut du processus en cache
@@ -203,7 +203,12 @@ class FormController extends AbstractController
                 'last_updated' => date('Y-m-d H:i:s')
             ];
             
-            $cache->set("mark_unread_status_$processId", $initialStatus, 7200); // 2 heures
+            // CORRECTION : Stocker le statut initial avec la nouvelle méthode
+            $cache->delete("mark_unread_status_$processId");
+            $cache->get("mark_unread_status_$processId", function($item) use ($initialStatus) {
+                $item->expiresAfter(7200); // 2 heures
+                return $initialStatus;
+            });
             
             // Retourner immédiatement la réponse à l'utilisateur
             $response = new JsonResponse([
@@ -249,9 +254,22 @@ class FormController extends AbstractController
     public function getMarkUnreadStatus(string $processId, CacheInterface $cache): JsonResponse
     {
         try {
-            $status = $cache->get("mark_unread_status_$processId");
+            $status = null;
+            $found = false;
             
-            if (!$status) {
+            // Utiliser get() avec un callback pour vérifier si la clé existe
+            try {
+                $status = $cache->get("mark_unread_status_$processId", function() use (&$found) {
+                    $found = false;
+                    return null; // Cette valeur ne sera pas utilisée si la clé n'existe pas
+                });
+                $found = true; // Si on arrive ici, c'est que la clé existe
+            } catch (\Psr\Cache\InvalidArgumentException $e) {
+                $found = false;
+            }
+            
+            // Si le statut n'a pas été trouvé ou est null/vide
+            if (!$found || !$status) {
                 return new JsonResponse([
                     'success' => false,
                     'error' => 'Processus non trouvé ou expiré',
@@ -512,11 +530,18 @@ class FormController extends AbstractController
     private function updateAsyncStatus(CacheInterface $cache, string $processId, array $updates): void
     {
         try {
-            $currentStatus = $cache->get("mark_unread_status_$processId", []);
+            $currentStatus = $cache->get("mark_unread_status_$processId", function() {
+                return [];
+            });
             $newStatus = array_merge($currentStatus, $updates);
             $newStatus['last_updated'] = date('Y-m-d H:i:s');
             
-            $cache->set("mark_unread_status_$processId", $newStatus, 7200); // 2 heures
+            // Utiliser delete puis get avec callback pour "simuler" un set
+            $cache->delete("mark_unread_status_$processId");
+            $cache->get("mark_unread_status_$processId", function($item) use ($newStatus) {
+                $item->expiresAfter(7200); // 2 heures
+                return $newStatus;
+            });
             
         } catch (\Exception $e) {
             error_log("Erreur updateAsyncStatus: " . $e->getMessage());
