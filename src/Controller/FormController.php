@@ -170,21 +170,349 @@ class FormController extends AbstractController
         // return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // DDécommenter et commenter  : JsonResponse pour faire une boucle fermée des 3 url pour mettre à jour si les tâches cron ne marchent pas
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés + on est à jour en BDD et sur KIZEO ", Response::HTTP_OK, [], true);
     }
+    
     /**
-     * MARK FORMS maintenance as UNREAD on kizeo - VERSION OPTIMISÉE
+     * NOUVELLE ROUTE : Démarrage du processus asynchrone pour markasunread
      */
     #[Route('/api/forms/markasunread', name: 'app_api_form_markasunread', methods: ['GET'])]
     public function markMaintenanceFormsAsUnread(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
-        $result = $formRepository->markMaintenanceFormsAsUnreadOptimized($cache);
+        // Générer un ID unique pour ce processus
+        $processId = uniqid('mark_unread_', true);
         
-        return new JsonResponse([
-            'message' => 'Processus de marquage terminé',
-            'success_count' => $result['success_count'],
-            'error_count' => $result['error_count'],
-            'errors' => $result['errors']
-        ], Response::HTTP_OK);
+        try {
+            // Initialiser le statut du processus en cache
+            $initialStatus = [
+                'status' => 'started',
+                'started_at' => date('Y-m-d H:i:s'),
+                'progress' => 0,
+                'total' => 0,
+                'success_count' => 0,
+                'error_count' => 0,
+                'processed' => 0,
+                'current_form' => null,
+                'last_updated' => date('Y-m-d H:i:s')
+            ];
+            
+            $cache->set("mark_unread_status_$processId", $initialStatus, 7200); // 2 heures
+            
+            // Retourner immédiatement la réponse à l'utilisateur
+            $response = new JsonResponse([
+                'success' => true,
+                'message' => 'Processus de marquage démarré en arrière-plan',
+                'process_id' => $processId,
+                'status_url' => "/api/forms/markasunread/status/$processId",
+                'started_at' => date('Y-m-d H:i:s')
+            ]);
+            
+            // Fermer la connexion HTTP immédiatement
+            $response->send();
+            
+            // Terminer la réponse pour PHP-FPM ou Apache
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            } else {
+                // Pour Apache mod_php
+                if (ob_get_level()) {
+                    ob_end_flush();
+                }
+                flush();
+            }
+            
+            // Maintenant démarrer le traitement en arrière-plan
+            $this->processMarkUnreadAsync($formRepository, $cache, $processId);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Erreur lors du démarrage du processus: ' . $e->getMessage()
+            ], 500);
+        }
+        
+        // Cette ligne ne sera jamais atteinte si fastcgi_finish_request() fonctionne
+        return $response;
     }
+
+    /**
+     * NOUVELLE ROUTE : Vérification du statut du processus
+     */
+    #[Route('/api/forms/markasunread/status/{processId}', name: 'app_api_form_markasunread_status', methods: ['GET'])]
+    public function getMarkUnreadStatus(string $processId, CacheInterface $cache): JsonResponse
+    {
+        try {
+            $status = $cache->get("mark_unread_status_$processId");
+            
+            if (!$status) {
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => 'Processus non trouvé ou expiré',
+                    'process_id' => $processId
+                ], 404);
+            }
+            
+            return new JsonResponse([
+                'success' => true,
+                'process_id' => $processId,
+                'data' => $status
+            ]);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Erreur lors de la récupération du statut: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * TRAITEMENT ASYNCHRONE PRINCIPAL
+     */
+    private function processMarkUnreadAsync(FormRepository $formRepository, CacheInterface $cache, string $processId): void
+    {
+        try {
+            // Configuration pour traitement long
+            set_time_limit(0); // Pas de limite de temps
+            ini_set('memory_limit', '512M');
+            ignore_user_abort(true); // Continue même si l'utilisateur ferme son navigateur
+            
+            // Mettre à jour le statut : en cours de récupération des formulaires
+            $this->updateAsyncStatus($cache, $processId, [
+                'status' => 'fetching_forms',
+                'message' => 'Récupération de la liste des formulaires...'
+            ]);
+            
+            // Récupérer la liste des formulaires MAINTENANCE
+            $maintenanceForms = $this->getMaintenanceFormsForAsync($cache);
+            $totalForms = count($maintenanceForms);
+            
+            if ($totalForms === 0) {
+                $this->updateAsyncStatus($cache, $processId, [
+                    'status' => 'completed',
+                    'completed_at' => date('Y-m-d H:i:s'),
+                    'message' => 'Aucun formulaire de maintenance trouvé',
+                    'progress' => 100
+                ]);
+                return;
+            }
+            
+            // Mettre à jour avec le total
+            $this->updateAsyncStatus($cache, $processId, [
+                'status' => 'processing',
+                'total' => $totalForms,
+                'message' => "Traitement de $totalForms formulaires..."
+            ]);
+            
+            $successCount = 0;
+            $errorCount = 0;
+            $errors = [];
+            
+            // Traiter chaque formulaire
+            foreach ($maintenanceForms as $index => $form) {
+                $formId = $form['id'];
+                $formName = $form['name'];
+                
+                try {
+                    // Mettre à jour le formulaire en cours
+                    $this->updateAsyncStatus($cache, $processId, [
+                        'current_form' => [
+                            'id' => $formId,
+                            'name' => $formName,
+                            'index' => $index + 1
+                        ],
+                        'message' => "Traitement: $formName (". ($index + 1) ."/$totalForms)"
+                    ]);
+                    
+                    // Récupérer les data_ids pour ce formulaire
+                    $dataIds = $this->getDataIdsForAsync($formId);
+                    
+                    if (!empty($dataIds)) {
+                        // Marquer comme non lu
+                        $this->markFormAsUnreadForAsync($formId, $dataIds);
+                        $successCount++;
+                        
+                        error_log("✅ Formulaire $formId ($formName) marqué avec " . count($dataIds) . " data_ids");
+                    } else {
+                        error_log("⚠️ Aucun data_id trouvé pour $formId ($formName)");
+                    }
+                    
+                } catch (\Exception $e) {
+                    $errorCount++;
+                    $errorDetail = [
+                        'form_id' => $formId,
+                        'form_name' => $formName,
+                        'error' => $e->getMessage(),
+                        'timestamp' => date('Y-m-d H:i:s')
+                    ];
+                    $errors[] = $errorDetail;
+                    
+                    error_log("❌ Erreur formulaire $formId ($formName): " . $e->getMessage());
+                }
+                
+                // Calculer et mettre à jour le progrès
+                $processed = $index + 1;
+                $progress = round(($processed / $totalForms) * 100, 2);
+                
+                $this->updateAsyncStatus($cache, $processId, [
+                    'processed' => $processed,
+                    'progress' => $progress,
+                    'success_count' => $successCount,
+                    'error_count' => $errorCount
+                ]);
+                
+                // Petite pause pour éviter la surcharge de l'API
+                usleep(150000); // 0.15 seconde
+            }
+            
+            // Statut final de completion
+            $this->updateAsyncStatus($cache, $processId, [
+                'status' => 'completed',
+                'completed_at' => date('Y-m-d H:i:s'),
+                'progress' => 100,
+                'current_form' => null,
+                'message' => "Terminé ! Succès: $successCount, Erreurs: $errorCount",
+                'final_summary' => [
+                    'total_processed' => $totalForms,
+                    'successful' => $successCount,
+                    'failed' => $errorCount,
+                    'success_rate' => $totalForms > 0 ? round(($successCount / $totalForms) * 100, 2) : 0
+                ],
+                'errors' => $errors
+            ]);
+            
+            error_log("🎉 Processus $processId terminé : $successCount succès, $errorCount erreurs sur $totalForms formulaires");
+            
+        } catch (\Exception $e) {
+            // Erreur critique dans tout le processus
+            $this->updateAsyncStatus($cache, $processId, [
+                'status' => 'failed',
+                'failed_at' => date('Y-m-d H:i:s'),
+                'error' => $e->getMessage(),
+                'message' => 'Erreur critique: ' . $e->getMessage()
+            ]);
+            
+            error_log("💥 Erreur critique dans processMarkUnreadAsync: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Récupération des formulaires MAINTENANCE optimisée pour async
+     */
+    private function getMaintenanceFormsForAsync(CacheInterface $cache): array
+    {
+        try {
+            $response = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'timeout' => 30
+                ]
+            );
+            
+            $content = $response->toArray();
+            $maintenanceForms = [];
+            
+            foreach ($content['forms'] as $form) {
+                if ($form['class'] == "MAINTENANCE") {
+                    $maintenanceForms[] = [
+                        'id' => $form['id'],
+                        'name' => $form['name'] ?? 'Formulaire ' . $form['id']
+                    ];
+                }
+            }
+            
+            return $maintenanceForms;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur getMaintenanceFormsForAsync: " . $e->getMessage());
+            throw new \Exception("Impossible de récupérer la liste des formulaires: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Récupération des data_ids optimisée pour async
+     */
+    private function getDataIdsForAsync($formId): array
+    {
+        try {
+            $response = $this->client->request('POST', 
+                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'timeout' => 25
+                ]
+            );
+            
+            $content = $response->toArray();
+            $dataIds = [];
+            
+            if (isset($content['data']) && is_array($content['data'])) {
+                foreach ($content['data'] as $dataItem) {
+                    if (isset($dataItem['_id'])) {
+                        $dataIds[] = intval($dataItem['_id']);
+                    }
+                }
+            }
+            
+            return $dataIds;
+            
+        } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
+            throw new \Exception("Timeout lors de la récupération des data_ids");
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur récupération data_ids: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Marquage comme non lu optimisé pour async
+     */
+    private function markFormAsUnreadForAsync($formId, $dataIds): void
+    {
+        try {
+            $response = $this->client->request('POST', 
+                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/markasunreadbyaction/read', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'json' => ["data_ids" => $dataIds],
+                    'timeout' => 20
+                ]
+            );
+            
+            $statusCode = $response->getStatusCode();
+            if ($statusCode < 200 || $statusCode >= 300) {
+                throw new \Exception("Réponse HTTP inattendue: $statusCode");
+            }
+            
+        } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
+            throw new \Exception("Timeout lors du marquage");
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur marquage: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mise à jour du statut du processus asynchrone
+     */
+    private function updateAsyncStatus(CacheInterface $cache, string $processId, array $updates): void
+    {
+        try {
+            $currentStatus = $cache->get("mark_unread_status_$processId", []);
+            $newStatus = array_merge($currentStatus, $updates);
+            $newStatus['last_updated'] = date('Y-m-d H:i:s');
+            
+            $cache->set("mark_unread_status_$processId", $newStatus, 7200); // 2 heures
+            
+        } catch (\Exception $e) {
+            error_log("Erreur updateAsyncStatus: " . $e->getMessage());
+        }
+    }
+
     // ------------------------------------------------------------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------------------------

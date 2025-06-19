@@ -82,104 +82,104 @@ class FormRepository extends ServiceEntityRepository
     /**
     * @return Form[] Returns an array of forms from Kizeo
     */
-    public function getFormsMaintenance($cache): array 
-    {
-        // Cache pour les formulaires MAINTENANCE
-        $formsCacheKey = 'maintenance_forms_list';
-        $cachedForms = $cache->get($formsCacheKey, function(ItemInterface $item) {
-            $item->expiresAfter(3600); // Cache valide 1 heure
+    // public function getFormsMaintenance($cache): array 
+    // {
+    //     // Cache pour les formulaires MAINTENANCE
+    //     $formsCacheKey = 'maintenance_forms_list';
+    //     $cachedForms = $cache->get($formsCacheKey, function(ItemInterface $item) {
+    //         $item->expiresAfter(3600); // Cache valide 1 heure
             
-            $response = $this->client->request(
-                'GET',
-                'https://forms.kizeo.com/rest/v3/forms', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                ]
-            );
-            $content = $response->toArray();
+    //         $response = $this->client->request(
+    //             'GET',
+    //             'https://forms.kizeo.com/rest/v3/forms', [
+    //                 'headers' => [
+    //                     'Accept' => 'application/json',
+    //                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //                 ],
+    //             ]
+    //         );
+    //         $content = $response->toArray();
     
-            return array_filter($content['forms'], function($form) {
-                return $form['class'] == "MAINTENANCE";
-            });
-        });
+    //         return array_filter($content['forms'], function($form) {
+    //             return $form['class'] == "MAINTENANCE";
+    //         });
+    //     });
     
-        $formMaintenanceArrayOfObject = [];
-        $allFormsIds = array_column($cachedForms, 'id');
+    //     $formMaintenanceArrayOfObject = [];
+    //     $allFormsIds = array_column($cachedForms, 'id');
         
-        $cachedFormData = [];
-        // Cache pour chaque formulaire
-        foreach ($allFormsIds as $formId) {
-            // Clé de cache unique pour chaque formulaire
-            $dataCacheKey = 'maintenance_form_data_' . $formId;
-            $cachedFormData = $cache->get($dataCacheKey, function(ItemInterface $item) use ($formId) {
-                $item->expiresAfter(1800); // Cache valide 30 minutes
+    //     $cachedFormData = [];
+    //     // Cache pour chaque formulaire
+    //     foreach ($allFormsIds as $formId) {
+    //         // Clé de cache unique pour chaque formulaire
+    //         $dataCacheKey = 'maintenance_form_data_' . $formId;
+    //         $cachedFormData = $cache->get($dataCacheKey, function(ItemInterface $item) use ($formId) {
+    //             $item->expiresAfter(1800); // Cache valide 30 minutes
                 
-                $response = $this->client->request('POST', 
-                    'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                    ]
-                );
-                $content = $response->getContent();
-                $content = $response->toArray();
-                return $content['data'];
-            });
-        }
+    //             $response = $this->client->request('POST', 
+    //                 'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
+    //                     'headers' => [
+    //                         'Accept' => 'application/json',
+    //                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //                     ],
+    //                 ]
+    //             );
+    //             $content = $response->getContent();
+    //             $content = $response->toArray();
+    //             return $content['data'];
+    //         });
+    //     }
 
-        // Mettre en cache avec expiration (par exemple 24 heures)
-        $formattedData = $cache->get('all_form_id_with_their_data_id', function (ItemInterface $item) use ($cachedFormData) {
-            $item->expiresAfter(3600); // 1 heure
+    //     // Mettre en cache avec expiration (par exemple 24 heures)
+    //     $formattedData = $cache->get('all_form_id_with_their_data_id', function (ItemInterface $item) use ($cachedFormData) {
+    //         $item->expiresAfter(3600); // 1 heure
 
-            $formattedData = [];
-            foreach ($cachedFormData as $item) {
-                $formId = $item['_form_id'];
-                $dataId = intval($item['_id']); // Convertir à int
+    //         $formattedData = [];
+    //         foreach ($cachedFormData as $item) {
+    //             $formId = $item['_form_id'];
+    //             $dataId = intval($item['_id']); // Convertir à int
 
-                if (!isset($formattedData[$formId])) {
-                    $formattedData[$formId] = [];
-                }
+    //             if (!isset($formattedData[$formId])) {
+    //                 $formattedData[$formId] = [];
+    //             }
 
-                $formattedData[$formId][] = $dataId;
-            }
+    //             $formattedData[$formId][] = $dataId;
+    //         }
 
-            return $formattedData;
-        });
-        // dd($formattedData);
-        // array:1 [▼
-        //     1034808 => array:5 [▼
-        //         0 => "212851512"
-        //         1 => "213145512"
-        //         2 => "213435284"
-        //         3 => "213762192"
-        //         4 => "213933129"
-        //     ]
-        // ]
-        foreach ($formattedData as $theFormId => $dataIds) {
-            $idDesDatas = [];
-            foreach ($dataIds as $dataId) {
-                $idDesDatas[] = intval($dataId); // Convertir à int
-            }
-            // Effectuer une action de marquage de tous les formulaires en une seule requête
-            $this->client->request('POST', 
-                'https://forms.kizeo.com/rest/v3/forms/' . $theFormId . '/markasunreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => $idDesDatas
-                    ]
-                ]
-            );  
-        }
+    //         return $formattedData;
+    //     });
+    //     // dd($formattedData);
+    //     // array:1 [▼
+    //     //     1034808 => array:5 [▼
+    //     //         0 => "212851512"
+    //     //         1 => "213145512"
+    //     //         2 => "213435284"
+    //     //         3 => "213762192"
+    //     //         4 => "213933129"
+    //     //     ]
+    //     // ]
+    //     foreach ($formattedData as $theFormId => $dataIds) {
+    //         $idDesDatas = [];
+    //         foreach ($dataIds as $dataId) {
+    //             $idDesDatas[] = intval($dataId); // Convertir à int
+    //         }
+    //         // Effectuer une action de marquage de tous les formulaires en une seule requête
+    //         $this->client->request('POST', 
+    //             'https://forms.kizeo.com/rest/v3/forms/' . $theFormId . '/markasunreadbyaction/read', [
+    //                 'headers' => [
+    //                     'Accept' => 'application/json',
+    //                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //                 ],
+    //                 'json' => [
+    //                     "data_ids" => $idDesDatas
+    //                 ]
+    //             ]
+    //         );  
+    //     }
         
         
-        return $formMaintenanceArrayOfObject;
-    }
+    //     return $formMaintenanceArrayOfObject;
+    // }
         
     /**
      * Version optimisée pour marquer les formulaires de maintenance comme "non lus"
@@ -1890,33 +1890,33 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Function to mark maintenance forms as UNREAD 
      */
-    public function markMaintenanceFormsAsUnread($cache){
-        // Récupérer les fichiers PDF dans un tableau
-        // Filtrer uniquement les formulaires de maintenance
+    // public function markMaintenanceFormsAsUnread($cache){
+    //     // Récupérer les fichiers PDF dans un tableau
+    //     // Filtrer uniquement les formulaires de maintenance
         
-        $allFormsArray = $cache->get('forms_maintenance', function(ItemInterface $item) use ($cache){ // $allFormsData = $content['data'] from getFormsMaintenance()
-            $item->expiresAfter(1800); // Cache pour 30 minutes
-            $results = FormRepository::getFormsMaintenance($cache);
-            return $results;
-        });
-        foreach ($allFormsArray as $data) {
-            // Effectuer une action de marquage de tous les formulaires en une seule requête
-            Request::enableHttpMethodParameterOverride(); // <-- add this line
-            $this->client->request('POST', 
-                'https://forms.kizeo.com/rest/v3/forms/' . $data->form_id . '/markasunreadbyaction/read', [
-                    'headers' => [
-                        'Accept' => 'application/json',
-                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                    ],
-                    'json' => [
-                        "data_ids" => intval($data->data_id) // Convertir à int
-                    ]
-                ]
-            );
-        }
+    //     $allFormsArray = $cache->get('forms_maintenance', function(ItemInterface $item) use ($cache){ // $allFormsData = $content['data'] from getFormsMaintenance()
+    //         $item->expiresAfter(1800); // Cache pour 30 minutes
+    //         $results = FormRepository::getFormsMaintenance($cache);
+    //         return $results;
+    //     });
+    //     foreach ($allFormsArray as $data) {
+    //         // Effectuer une action de marquage de tous les formulaires en une seule requête
+    //         Request::enableHttpMethodParameterOverride(); // <-- add this line
+    //         $this->client->request('POST', 
+    //             'https://forms.kizeo.com/rest/v3/forms/' . $data->form_id . '/markasunreadbyaction/read', [
+    //                 'headers' => [
+    //                     'Accept' => 'application/json',
+    //                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+    //                 ],
+    //                 'json' => [
+    //                     "data_ids" => intval($data->data_id) // Convertir à int
+    //                 ]
+    //             ]
+    //         );
+    //     }
 
         
-    }
+    // }
 
     /**
      * Function to save PDF with pictures for etat des lieux portails in directories on O2switch  -------------- FUNCTIONNAL -------
