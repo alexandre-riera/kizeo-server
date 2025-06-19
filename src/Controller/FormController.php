@@ -171,17 +171,19 @@ class FormController extends AbstractController
         return new JsonResponse("Les pdf de maintenance ont bien été sauvegardés + on est à jour en BDD et sur KIZEO ", Response::HTTP_OK, [], true);
     }
     /**
-     * 
-     * MARK FORMS maintenance as UNREAD on kizeo
+     * MARK FORMS maintenance as UNREAD on kizeo - VERSION OPTIMISÉE
      */
     #[Route('/api/forms/markasunread', name: 'app_api_form_markasunread', methods: ['GET'])]
     public function markMaintenanceFormsAsUnread(FormRepository $formRepository, CacheInterface $cache): JsonResponse
     {
-        // $formRepository->saveEquipementPdfInPublicFolder();
-        $formRepository->getFormsMaintenance($cache);
-        // $formRepository->markMaintenanceFormsAsUnread($cache);
+        $result = $formRepository->markMaintenanceFormsAsUnreadOptimized($cache);
         
-        return new JsonResponse("Les pdf de maintenance ont bien été mis en non lu ", Response::HTTP_OK, [], true);
+        return new JsonResponse([
+            'message' => 'Processus de marquage terminé',
+            'success_count' => $result['success_count'],
+            'error_count' => $result['error_count'],
+            'errors' => $result['errors']
+        ], Response::HTTP_OK);
     }
     // ------------------------------------------------------------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------------------------

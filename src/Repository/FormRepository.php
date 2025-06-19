@@ -181,7 +181,184 @@ class FormRepository extends ServiceEntityRepository
         return $formMaintenanceArrayOfObject;
     }
         
-    
+    /**
+     * Version optimisée pour marquer les formulaires de maintenance comme "non lus"
+     * Suit la logique Kizeo: form_id pour l'URL + data_ids dans le body JSON
+     */
+    public function markMaintenanceFormsAsUnreadOptimized($cache): array
+    {
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        try {
+            // 1. Récupérer uniquement les formulaires MAINTENANCE avec cache optimisé
+            $maintenanceForms = $cache->get('maintenance_forms_list_optimized', function(ItemInterface $item) {
+                $item->expiresAfter(7200); // Cache 2 heures
+                
+                try {
+                    $response = $this->client->request(
+                        'GET',
+                        'https://forms.kizeo.com/rest/v3/forms', [
+                            'headers' => [
+                                'Accept' => 'application/json',
+                                'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                            ],
+                            'timeout' => 30
+                        ]
+                    );
+                    $content = $response->toArray();
+                    
+                    // Retourner seulement les form_id des formulaires MAINTENANCE
+                    $maintenanceForms = [];
+                    foreach ($content['forms'] as $form) {
+                        if ($form['class'] == "MAINTENANCE") {
+                            $maintenanceForms[] = [
+                                'id' => $form['id'],
+                                'name' => $form['name']
+                            ];
+                        }
+                    }
+                    return $maintenanceForms;
+                    
+                } catch (\Exception $e) {
+                    error_log("Erreur lors de la récupération des formulaires: " . $e->getMessage());
+                    return [];
+                }
+            });
+
+            // 2. Pour chaque form_id, récupérer ses data_ids et les marquer comme "non lus"
+            foreach ($maintenanceForms as $form) {
+                $formId = $form['id'];
+                
+                try {
+                    // Récupérer tous les data_ids pour ce form_id
+                    $dataIds = $this->getDataIdsForForm($formId, $cache);
+                    
+                    if (!empty($dataIds)) {
+                        // Marquer tous les data_ids comme "non lus" en une seule requête
+                        $this->markFormDataAsUnread($formId, $dataIds);
+                        $successCount++;
+                        error_log("Formulaire $formId marqué comme non lu avec " . count($dataIds) . " data_ids");
+                    } else {
+                        error_log("Aucun data_id trouvé pour le formulaire ID: $formId");
+                    }
+                    
+                } catch (\Exception $e) {
+                    $errorCount++;
+                    $errors[] = [
+                        'form_id' => $formId,
+                        'form_name' => $form['name'] ?? 'Unknown',
+                        'error' => $e->getMessage()
+                    ];
+                    error_log("Erreur pour le formulaire $formId: " . $e->getMessage());
+                    continue; // Continuer avec le formulaire suivant
+                }
+                
+                // Pause entre les formulaires pour éviter la surcharge
+                usleep(200000); // 0.2 seconde
+            }
+
+        } catch (\Exception $e) {
+            $errors[] = ['general_error' => $e->getMessage()];
+            error_log("Erreur générale: " . $e->getMessage());
+        }
+
+        return [
+            'success_count' => $successCount,
+            'error_count' => $errorCount,
+            'total_forms' => count($maintenanceForms ?? []),
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Récupère tous les data_ids pour un form_id donné
+     * Utilise l'endpoint /data/advanced qui est plus efficace
+     */
+    private function getDataIdsForForm($formId, $cache): array
+    {
+        $cacheKey = "form_data_ids_$formId";
+        
+        return $cache->get($cacheKey, function(ItemInterface $item) use ($formId) {
+            $item->expiresAfter(900); // Cache 15 minutes (plus court car les data changent plus souvent)
+            
+            try {
+                $response = $this->client->request('POST', 
+                    'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'timeout' => 20
+                    ]
+                );
+                
+                $content = $response->toArray();
+                
+                // Extraire tous les data_ids (ID des formulaires techniciens)
+                $dataIds = [];
+                if (isset($content['data']) && is_array($content['data'])) {
+                    foreach ($content['data'] as $dataItem) {
+                        if (isset($dataItem['_id'])) {
+                            $dataIds[] = intval($dataItem['_id']);
+                        }
+                    }
+                }
+                
+                return $dataIds;
+                
+            } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
+                error_log("Timeout lors de la récupération des data_ids pour le formulaire $formId");
+                throw new \Exception("Timeout pour le formulaire $formId");
+                
+            } catch (\Exception $e) {
+                error_log("Erreur lors de la récupération des data_ids pour le formulaire $formId: " . $e->getMessage());
+                throw new \Exception("Erreur data_ids pour formulaire $formId: " . $e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * Marque tous les data_ids d'un formulaire comme "non lus"
+     * Suit exactement la spec Kizeo: POST /forms/{formId}/markasunreadbyaction/read
+     */
+    private function markFormDataAsUnread($formId, $dataIds): void
+    {
+        try {
+            // Construire l'URL selon la spec Kizeo
+            $url = 'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/markasunreadbyaction/read';
+            
+            // Body JSON avec le tableau des data_ids
+            $requestBody = [
+                "data_ids" => $dataIds
+            ];
+            
+            $response = $this->client->request('POST', $url, [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+                'json' => $requestBody,
+                'timeout' => 15
+            ]);
+            
+            // Vérifier que la requête s'est bien passée
+            $statusCode = $response->getStatusCode();
+            if ($statusCode >= 200 && $statusCode < 300) {
+                error_log("Succès: Formulaire $formId marqué comme non lu (" . count($dataIds) . " data_ids)");
+            } else {
+                throw new \Exception("Code de statut inattendu: $statusCode");
+            }
+            
+        } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
+            throw new \Exception("Timeout lors du marquage du formulaire $formId comme non lu");
+            
+        } catch (\Exception $e) {
+            throw new \Exception("Erreur lors du marquage du formulaire $formId: " . $e->getMessage());
+        }
+    }
+
     //      ----------------------------------------------------------------------------------------------------------------------
     //      ---------------------------------------- GET EQUIPMENTS LISTS FROM KIZEO --------------------------------------
     //      ----------------------------------------------------------------------------------------------------------------------
