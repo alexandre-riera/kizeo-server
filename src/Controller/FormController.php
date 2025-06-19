@@ -296,11 +296,16 @@ class FormController extends AbstractController
      */
     private function processMarkUnreadAsync(FormRepository $formRepository, CacheInterface $cache, string $processId): void
     {
+        $startTime = time();
+        $maxExecutionTime = 1800; // 30 minutes maximum
+        
         try {
             // Configuration pour traitement long
             set_time_limit(0); // Pas de limite de temps
             ini_set('memory_limit', '512M');
             ignore_user_abort(true); // Continue même si l'utilisateur ferme son navigateur
+            
+            error_log("🚀 Début processus async $processId à " . date('Y-m-d H:i:s'));
             
             // Mettre à jour le statut : en cours de récupération des formulaires
             $this->updateAsyncStatus($cache, $processId, [
@@ -308,11 +313,16 @@ class FormController extends AbstractController
                 'message' => 'Récupération de la liste des formulaires...'
             ]);
             
+            error_log("🔍 Récupération de la liste des formulaires MAINTENANCE...");
+            
             // Récupérer la liste des formulaires MAINTENANCE
             $maintenanceForms = $this->getMaintenanceFormsForAsync();
             $totalForms = count($maintenanceForms);
             
+            error_log("📊 $totalForms formulaires de maintenance trouvés");
+            
             if ($totalForms === 0) {
+                error_log("⚠️ Aucun formulaire de maintenance trouvé - Arrêt du processus");
                 $this->updateAsyncStatus($cache, $processId, [
                     'status' => 'completed',
                     'completed_at' => date('Y-m-d H:i:s'),
@@ -333,10 +343,31 @@ class FormController extends AbstractController
             $errorCount = 0;
             $errors = [];
             
+            error_log("🔄 Début du traitement des formulaires...");
+            
             // Traiter chaque formulaire
             foreach ($maintenanceForms as $index => $form) {
+                $currentTime = time();
+                $elapsedTime = $currentTime - $startTime;
+                
+                // Vérifier le timeout global
+                if ($elapsedTime > $maxExecutionTime) {
+                    error_log("⏰ TIMEOUT GLOBAL après $elapsedTime secondes (limite: $maxExecutionTime)");
+                    $this->updateAsyncStatus($cache, $processId, [
+                        'status' => 'failed',
+                        'failed_at' => date('Y-m-d H:i:s'),
+                        'error' => "Timeout global après $elapsedTime secondes",
+                        'message' => 'Processus arrêté pour éviter le blocage - Temps dépassé'
+                    ]);
+                    return;
+                }
+                
                 $formId = $form['id'];
                 $formName = $form['name'];
+                $formPosition = $index + 1;
+                
+                error_log("📝 [$formPosition/$totalForms] Début traitement formulaire $formId ($formName)");
+                error_log("⏱️ Temps écoulé: {$elapsedTime}s / {$maxExecutionTime}s");
                 
                 try {
                     // Mettre à jour le formulaire en cours
@@ -344,22 +375,38 @@ class FormController extends AbstractController
                         'current_form' => [
                             'id' => $formId,
                             'name' => $formName,
-                            'index' => $index + 1
+                            'index' => $formPosition
                         ],
-                        'message' => "Traitement: $formName (". ($index + 1) ."/$totalForms)"
+                        'message' => "Traitement: $formName ($formPosition/$totalForms)",
+                        'elapsed_time' => $elapsedTime
                     ]);
                     
-                    // Récupérer les data_ids pour ce formulaire
+                    error_log("🔍 Récupération des data_ids pour formulaire $formId...");
+                    
+                    // Récupérer les data_ids pour ce formulaire avec timeout
+                    $dataStartTime = time();
                     $dataIds = $this->getDataIdsForAsync($formId);
+                    $dataEndTime = time();
+                    $dataRetrievalTime = $dataEndTime - $dataStartTime;
+                    
+                    error_log("📊 Formulaire $formId : " . count($dataIds) . " data_ids récupérés en {$dataRetrievalTime}s");
                     
                     if (!empty($dataIds)) {
-                        // Marquer comme non lu
+                        error_log("🔄 Marquage de " . count($dataIds) . " data_ids comme 'non lus' pour formulaire $formId...");
+                        
+                        // Marquer comme non lu avec mesure du temps
+                        $markStartTime = time();
                         $this->markFormAsUnreadForAsync($formId, $dataIds);
+                        $markEndTime = time();
+                        $markingTime = $markEndTime - $markStartTime;
+                        
                         $successCount++;
                         
-                        error_log("✅ Formulaire $formId ($formName) marqué avec " . count($dataIds) . " data_ids");
+                        error_log("✅ Formulaire $formId ($formName) marqué avec succès !");
+                        error_log("📊 - " . count($dataIds) . " data_ids traités en {$markingTime}s");
+                        error_log("📊 - Total succès: $successCount, erreurs: $errorCount");
                     } else {
-                        error_log("⚠️ Aucun data_id trouvé pour $formId ($formName)");
+                        error_log("⚠️ Aucun data_id trouvé pour formulaire $formId ($formName) - Passage au suivant");
                     }
                     
                 } catch (\Exception $e) {
@@ -368,27 +415,41 @@ class FormController extends AbstractController
                         'form_id' => $formId,
                         'form_name' => $formName,
                         'error' => $e->getMessage(),
-                        'timestamp' => date('Y-m-d H:i:s')
+                        'timestamp' => date('Y-m-d H:i:s'),
+                        'elapsed_time' => $elapsedTime
                     ];
                     $errors[] = $errorDetail;
                     
-                    error_log("❌ Erreur formulaire $formId ($formName): " . $e->getMessage());
+                    error_log("❌ ERREUR formulaire $formId ($formName): " . $e->getMessage());
+                    error_log("📊 Total succès: $successCount, erreurs: $errorCount");
                 }
                 
                 // Calculer et mettre à jour le progrès
                 $processed = $index + 1;
                 $progress = round(($processed / $totalForms) * 100, 2);
                 
+                error_log("📈 Progression: $progress% ($processed/$totalForms formulaires)");
+                
                 $this->updateAsyncStatus($cache, $processId, [
                     'processed' => $processed,
                     'progress' => $progress,
                     'success_count' => $successCount,
-                    'error_count' => $errorCount
+                    'error_count' => $errorCount,
+                    'elapsed_time' => $elapsedTime
                 ]);
                 
                 // Petite pause pour éviter la surcharge de l'API
+                error_log("⏸️ Pause de 0.15s avant le prochain formulaire...");
                 usleep(150000); // 0.15 seconde
             }
+            
+            $totalTime = time() - $startTime;
+            error_log("🎉 FIN DU TRAITEMENT - Processus $processId terminé en {$totalTime}s");
+            error_log("📊 RÉSULTATS FINAUX:");
+            error_log("   - Total formulaires: $totalForms");
+            error_log("   - Succès: $successCount");
+            error_log("   - Erreurs: $errorCount");
+            error_log("   - Taux de réussite: " . ($totalForms > 0 ? round(($successCount / $totalForms) * 100, 2) : 0) . "%");
             
             // Statut final de completion
             $this->updateAsyncStatus($cache, $processId, [
@@ -397,27 +458,42 @@ class FormController extends AbstractController
                 'progress' => 100,
                 'current_form' => null,
                 'message' => "Terminé ! Succès: $successCount, Erreurs: $errorCount",
+                'total_execution_time' => $totalTime,
                 'final_summary' => [
                     'total_processed' => $totalForms,
                     'successful' => $successCount,
                     'failed' => $errorCount,
-                    'success_rate' => $totalForms > 0 ? round(($successCount / $totalForms) * 100, 2) : 0
+                    'success_rate' => $totalForms > 0 ? round(($successCount / $totalForms) * 100, 2) : 0,
+                    'execution_time_seconds' => $totalTime
                 ],
                 'errors' => $errors
             ]);
             
-            error_log("🎉 Processus $processId terminé : $successCount succès, $errorCount erreurs sur $totalForms formulaires");
+            error_log("💾 Statut final sauvegardé dans le cache");
             
         } catch (\Exception $e) {
+            $totalTime = time() - $startTime;
+            error_log("💥 ERREUR CRITIQUE dans processMarkUnreadAsync après {$totalTime}s:");
+            error_log("   - Processus: $processId");
+            error_log("   - Erreur: " . $e->getMessage());
+            error_log("   - Fichier: " . $e->getFile() . ":" . $e->getLine());
+            error_log("   - Stack trace: " . $e->getTraceAsString());
+            
             // Erreur critique dans tout le processus
             $this->updateAsyncStatus($cache, $processId, [
                 'status' => 'failed',
                 'failed_at' => date('Y-m-d H:i:s'),
                 'error' => $e->getMessage(),
-                'message' => 'Erreur critique: ' . $e->getMessage()
+                'message' => 'Erreur critique: ' . $e->getMessage(),
+                'execution_time_before_failure' => $totalTime,
+                'error_details' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'message' => $e->getMessage()
+                ]
             ]);
             
-            error_log("💥 Erreur critique dans processMarkUnreadAsync: " . $e->getMessage());
+            error_log("💾 Statut d'erreur sauvegardé dans le cache");
         }
     }
 
@@ -465,15 +541,22 @@ class FormController extends AbstractController
     private function getDataIdsForAsync($formId): array
     {
         try {
+            error_log("🔍 [getDataIdsForAsync] Début récupération data_ids pour formulaire $formId");
+            
+            $startTime = microtime(true);
+            
             $response = $this->client->request('POST', 
                 'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
-                    'timeout' => 25
+                    'timeout' => 30 // Timeout à 30 secondes max
                 ]
             );
+            
+            $requestTime = round((microtime(true) - $startTime) * 1000, 2);
+            error_log("🌐 [getDataIdsForAsync] Requête API terminée en {$requestTime}ms pour formulaire $formId");
             
             $content = $response->toArray();
             $dataIds = [];
@@ -486,21 +569,34 @@ class FormController extends AbstractController
                 }
             }
             
+            error_log("✅ [getDataIdsForAsync] Formulaire $formId : " . count($dataIds) . " data_ids trouvés");
+            
+            if (count($dataIds) > 50) {
+                error_log("⚠️ [getDataIdsForAsync] ATTENTION: Formulaire $formId a " . count($dataIds) . " data_ids (traitement long prévu)");
+            }
+            
             return $dataIds;
             
         } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
-            throw new \Exception("Timeout lors de la récupération des data_ids");
+            error_log("⏰ [getDataIdsForAsync] TIMEOUT formulaire $formId après 30 secondes");
+            throw new \Exception("Timeout lors de la récupération des data_ids pour formulaire $formId");
         } catch (\Exception $e) {
-            throw new \Exception("Erreur récupération data_ids: " . $e->getMessage());
+            error_log("❌ [getDataIdsForAsync] ERREUR formulaire $formId: " . $e->getMessage());
+            throw new \Exception("Erreur récupération data_ids pour formulaire $formId: " . $e->getMessage());
         }
     }
 
     /**
-     * CORRECTION : Marquage comme non lu
+     * Version corrigée du marquage avec timeout et retry
      */
     private function markFormAsUnreadForAsync($formId, $dataIds): void
     {
         try {
+            $dataCount = count($dataIds);
+            error_log("🔄 [markFormAsUnreadForAsync] Début marquage formulaire $formId avec $dataCount data_ids");
+            
+            $startTime = microtime(true);
+            
             $response = $this->client->request('POST', 
                 'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/markasunreadbyaction/read', [
                     'headers' => [
@@ -508,19 +604,29 @@ class FormController extends AbstractController
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
                     'json' => ["data_ids" => $dataIds],
-                    'timeout' => 20
+                    'timeout' => 60 // Timeout plus long pour le marquage
                 ]
             );
             
+            $requestTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            // Vérifier que la requête s'est bien passée
             $statusCode = $response->getStatusCode();
-            if ($statusCode < 200 || $statusCode >= 300) {
-                throw new \Exception("Réponse HTTP inattendue: $statusCode");
+            if ($statusCode >= 200 && $statusCode < 300) {
+                error_log("✅ [markFormAsUnreadForAsync] Succès: Formulaire $formId marqué comme non lu en {$requestTime}ms");
+                error_log("📊 [markFormAsUnreadForAsync] $dataCount data_ids traités avec succès");
+            } else {
+                error_log("❌ [markFormAsUnreadForAsync] Code de statut inattendu: $statusCode pour formulaire $formId");
+                throw new \Exception("Code de statut HTTP inattendu: $statusCode");
             }
             
         } catch (\Symfony\Component\HttpClient\Exception\TimeoutException $e) {
-            throw new \Exception("Timeout lors du marquage");
+            error_log("⏰ [markFormAsUnreadForAsync] TIMEOUT formulaire $formId lors du marquage (60s dépassées)");
+            throw new \Exception("Timeout lors du marquage du formulaire $formId comme non lu");
+            
         } catch (\Exception $e) {
-            throw new \Exception("Erreur marquage: " . $e->getMessage());
+            error_log("❌ [markFormAsUnreadForAsync] ERREUR formulaire $formId lors du marquage: " . $e->getMessage());
+            throw new \Exception("Erreur lors du marquage du formulaire $formId: " . $e->getMessage());
         }
     }
 
