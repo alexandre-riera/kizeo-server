@@ -527,277 +527,277 @@ class FormController extends AbstractController
     public function testAsyncPage(): Response
     {
         $html = '<!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Marquage Formulaires - Traitement Asynchrone</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }
-            .container {
-                background: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            .btn {
-                background: #007bff;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 16px;
-                margin: 10px 5px;
-            }
-            .btn:hover { background: #0056b3; }
-            .btn:disabled { 
-                background: #ccc; 
-                cursor: not-allowed; 
-            }
-            .status-box {
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 4px;
-                padding: 15px;
-                margin: 15px 0;
-                min-height: 100px;
-            }
-            .progress-bar {
-                width: 100%;
-                height: 20px;
-                background: #e9ecef;
-                border-radius: 10px;
-                overflow: hidden;
-                margin: 10px 0;
-            }
-            .progress-fill {
-                height: 100%;
-                background: #28a745;
-                transition: width 0.3s ease;
-                text-align: center;
-                line-height: 20px;
-                color: white;
-                font-size: 12px;
-            }
-            .status-started { border-left: 4px solid #007bff; }
-            .status-processing { border-left: 4px solid #ffc107; }
-            .status-completed { border-left: 4px solid #28a745; }
-            .status-failed { border-left: 4px solid #dc3545; }
-            .error-list {
-                background: #f8d7da;
-                border: 1px solid #f5c6cb;
-                border-radius: 4px;
-                padding: 10px;
-                margin-top: 10px;
-                max-height: 200px;
-                overflow-y: auto;
-            }
-            .success-info {
-                background: #d4edda;
-                border: 1px solid #c3e6cb;
-                border-radius: 4px;
-                padding: 10px;
-                margin-top: 10px;
-            }
-            .timestamp {
-                color: #6c757d;
-                font-size: 12px;
-            }
-            .current-form {
-                background: #fff3cd;
-                border: 1px solid #ffeaa7;
-                border-radius: 4px;
-                padding: 8px;
-                margin: 5px 0;
-                font-size: 14px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🔄 Marquage des Formulaires de Maintenance</h1>
-            <p>Cette page permet de marquer tous les formulaires de maintenance comme "non lus" en arrière-plan.</p>
-            
-            <div>
-                <button id="startBtn" class="btn" onclick="startProcess()">
-                    🚀 Démarrer le processus
-                </button>
-                <button id="refreshBtn" class="btn" onclick="refreshStatus()" disabled>
-                    🔄 Actualiser le statut
-                </button>
-                <button id="stopBtn" class="btn" onclick="stopChecking()" style="background: #dc3545;" disabled>
-                    ⏹️ Arrêter le suivi
-                </button>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Marquage Formulaires - Traitement Asynchrone</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f5f5f5;
+                }
+                .container {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .btn {
+                    background: #007bff;
+                    color: white;
+                    padding: 12px 24px;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    margin: 10px 5px;
+                }
+                .btn:hover { background: #0056b3; }
+                .btn:disabled { 
+                    background: #ccc; 
+                    cursor: not-allowed; 
+                }
+                .status-box {
+                    background: #f8f9fa;
+                    border: 1px solid #dee2e6;
+                    border-radius: 4px;
+                    padding: 15px;
+                    margin: 15px 0;
+                    min-height: 100px;
+                }
+                .progress-bar {
+                    width: 100%;
+                    height: 20px;
+                    background: #e9ecef;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    margin: 10px 0;
+                }
+                .progress-fill {
+                    height: 100%;
+                    background: #28a745;
+                    transition: width 0.3s ease;
+                    text-align: center;
+                    line-height: 20px;
+                    color: white;
+                    font-size: 12px;
+                }
+                .status-started { border-left: 4px solid #007bff; }
+                .status-processing { border-left: 4px solid #ffc107; }
+                .status-completed { border-left: 4px solid #28a745; }
+                .status-failed { border-left: 4px solid #dc3545; }
+                .error-list {
+                    background: #f8d7da;
+                    border: 1px solid #f5c6cb;
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 10px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                }
+                .success-info {
+                    background: #d4edda;
+                    border: 1px solid #c3e6cb;
+                    border-radius: 4px;
+                    padding: 10px;
+                    margin-top: 10px;
+                }
+                .timestamp {
+                    color: #6c757d;
+                    font-size: 12px;
+                }
+                .current-form {
+                    background: #fff3cd;
+                    border: 1px solid #ffeaa7;
+                    border-radius: 4px;
+                    padding: 8px;
+                    margin: 5px 0;
+                    font-size: 14px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🔄 Marquage des Formulaires de Maintenance</h1>
+                <p>Cette page permet de marquer tous les formulaires de maintenance comme "non lus" en arrière-plan.</p>
+                
+                <div>
+                    <button id="startBtn" class="btn" onclick="startProcess()">
+                        🚀 Démarrer le processus
+                    </button>
+                    <button id="refreshBtn" class="btn" onclick="refreshStatus()" disabled>
+                        🔄 Actualiser le statut
+                    </button>
+                    <button id="stopBtn" class="btn" onclick="stopChecking()" style="background: #dc3545;" disabled>
+                        ⏹️ Arrêter le suivi
+                    </button>
+                </div>
+                
+                <div id="statusContainer" class="status-box" style="display: none;">
+                    <h3>📊 Statut du processus</h3>
+                    <div id="statusContent"></div>
+                </div>
             </div>
-            
-            <div id="statusContainer" class="status-box" style="display: none;">
-                <h3>📊 Statut du processus</h3>
-                <div id="statusContent"></div>
-            </div>
-        </div>
 
-        <script>
-            let currentProcessId = null;
-            let statusInterval = null;
-            let isProcessRunning = false;
+            <script>
+                let currentProcessId = null;
+                let statusInterval = null;
+                let isProcessRunning = false;
 
-            async function startProcess() {
-                try {
-                    document.getElementById("startBtn").disabled = true;
-                    document.getElementById("startBtn").textContent = "⏳ Démarrage...";
-                    
-                    const response = await fetch("/api/forms/markasunread");
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        currentProcessId = data.process_id;
-                        isProcessRunning = true;
+                async function startProcess() {
+                    try {
+                        document.getElementById("startBtn").disabled = true;
+                        document.getElementById("startBtn").textContent = "⏳ Démarrage...";
                         
-                        document.getElementById("statusContainer").style.display = "block";
-                        document.getElementById("refreshBtn").disabled = false;
-                        document.getElementById("stopBtn").disabled = false;
+                        const response = await fetch("/api/forms/markasunread");
+                        const data = await response.json();
                         
-                        showStatus({
-                            status: "started",
-                            message: data.message,
-                            started_at: data.started_at,
-                            process_id: data.process_id
-                        });
+                        if (data.success) {
+                            currentProcessId = data.process_id;
+                            isProcessRunning = true;
+                            
+                            document.getElementById("statusContainer").style.display = "block";
+                            document.getElementById("refreshBtn").disabled = false;
+                            document.getElementById("stopBtn").disabled = false;
+                            
+                            showStatus({
+                                status: "started",
+                                message: data.message,
+                                started_at: data.started_at,
+                                process_id: data.process_id
+                            });
+                            
+                            startStatusChecking();
+                            
+                        } else {
+                            alert("Erreur: " + data.error);
+                            resetButtons();
+                        }
                         
-                        startStatusChecking();
-                        
-                    } else {
-                        alert("Erreur: " + data.error);
+                    } catch (error) {
+                        console.error("Erreur:", error);
+                        alert("Erreur lors du démarrage: " + error.message);
                         resetButtons();
                     }
+                }
+
+                async function refreshStatus() {
+                    if (!currentProcessId) return;
                     
-                } catch (error) {
-                    console.error("Erreur:", error);
-                    alert("Erreur lors du démarrage: " + error.message);
+                    try {
+                        const response = await fetch("/api/forms/markasunread/status/" + currentProcessId);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            showStatus(data.data);
+                            
+                            if (data.data.status === "completed" || data.data.status === "failed") {
+                                stopChecking();
+                            }
+                        } else {
+                            showError("Erreur lors de la récupération du statut: " + data.error);
+                        }
+                        
+                    } catch (error) {
+                        console.error("Erreur:", error);
+                        showError("Erreur de communication: " + error.message);
+                    }
+                }
+
+                function startStatusChecking() {
+                    statusInterval = setInterval(refreshStatus, 2000);
+                }
+
+                function stopChecking() {
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                        statusInterval = null;
+                    }
+                    isProcessRunning = false;
                     resetButtons();
                 }
-            }
 
-            async function refreshStatus() {
-                if (!currentProcessId) return;
-                
-                try {
-                    const response = await fetch("/api/forms/markasunread/status/" + currentProcessId);
-                    const data = await response.json();
+                function resetButtons() {
+                    document.getElementById("startBtn").disabled = false;
+                    document.getElementById("startBtn").textContent = "🚀 Démarrer le processus";
+                    document.getElementById("refreshBtn").disabled = true;
+                    document.getElementById("stopBtn").disabled = true;
+                }
+
+                function showStatus(status) {
+                    const container = document.getElementById("statusContent");
+                    const statusClass = "status-" + status.status;
                     
-                    if (data.success) {
-                        showStatus(data.data);
-                        
-                        if (data.data.status === "completed" || data.data.status === "failed") {
-                            stopChecking();
-                        }
-                    } else {
-                        showError("Erreur lors de la récupération du statut: " + data.error);
+                    let html = "<div class=\"" + statusClass + "\">";
+                    html += "<h4>📍 Statut: " + getStatusText(status.status) + "</h4>";
+                    html += "<p><strong>ID du processus:</strong> " + currentProcessId + "</p>";
+                    html += "<p><strong>Message:</strong> " + (status.message || "En cours...") + "</p>";
+                    html += "<p class=\"timestamp\"><strong>Dernière mise à jour:</strong> " + (status.last_updated || "N/A") + "</p>";
+                    
+                    if (status.progress !== undefined) {
+                        html += "<div class=\"progress-bar\">";
+                        html += "<div class=\"progress-fill\" style=\"width: " + status.progress + "%\">";
+                        html += status.progress + "%";
+                        html += "</div></div>";
                     }
                     
-                } catch (error) {
-                    console.error("Erreur:", error);
-                    showError("Erreur de communication: " + error.message);
-                }
-            }
-
-            function startStatusChecking() {
-                statusInterval = setInterval(refreshStatus, 2000);
-            }
-
-            function stopChecking() {
-                if (statusInterval) {
-                    clearInterval(statusInterval);
-                    statusInterval = null;
-                }
-                isProcessRunning = false;
-                resetButtons();
-            }
-
-            function resetButtons() {
-                document.getElementById("startBtn").disabled = false;
-                document.getElementById("startBtn").textContent = "🚀 Démarrer le processus";
-                document.getElementById("refreshBtn").disabled = true;
-                document.getElementById("stopBtn").disabled = true;
-            }
-
-            function showStatus(status) {
-                const container = document.getElementById("statusContent");
-                const statusClass = "status-" + status.status;
-                
-                let html = "<div class=\"" + statusClass + "\">";
-                html += "<h4>📍 Statut: " + getStatusText(status.status) + "</h4>";
-                html += "<p><strong>ID du processus:</strong> " + currentProcessId + "</p>";
-                html += "<p><strong>Message:</strong> " + (status.message || "En cours...") + "</p>";
-                html += "<p class=\"timestamp\"><strong>Dernière mise à jour:</strong> " + (status.last_updated || "N/A") + "</p>";
-                
-                if (status.progress !== undefined) {
-                    html += "<div class=\"progress-bar\">";
-                    html += "<div class=\"progress-fill\" style=\"width: " + status.progress + "%\">";
-                    html += status.progress + "%";
-                    html += "</div></div>";
-                }
-                
-                if (status.total > 0) {
-                    html += "<p><strong>Progression:</strong> " + (status.processed || 0) + " / " + status.total + " formulaires</p>";
-                    html += "<p><strong>Succès:</strong> " + (status.success_count || 0) + " | <strong>Erreurs:</strong> " + (status.error_count || 0) + "</p>";
-                }
-                
-                if (status.current_form) {
-                    html += "<div class=\"current-form\">";
-                    html += "<strong>📝 En cours:</strong> " + status.current_form.name + " ";
-                    html += "(" + status.current_form.index + "/" + status.total + ")";
+                    if (status.total > 0) {
+                        html += "<p><strong>Progression:</strong> " + (status.processed || 0) + " / " + status.total + " formulaires</p>";
+                        html += "<p><strong>Succès:</strong> " + (status.success_count || 0) + " | <strong>Erreurs:</strong> " + (status.error_count || 0) + "</p>";
+                    }
+                    
+                    if (status.current_form) {
+                        html += "<div class=\"current-form\">";
+                        html += "<strong>📝 En cours:</strong> " + status.current_form.name + " ";
+                        html += "(" + status.current_form.index + "/" + status.total + ")";
+                        html += "</div>";
+                    }
+                    
+                    if (status.final_summary) {
+                        html += "<div class=\"success-info\">";
+                        html += "<h5>✅ Résumé final</h5>";
+                        html += "<p><strong>Total traité:</strong> " + status.final_summary.total_processed + "</p>";
+                        html += "<p><strong>Réussis:</strong> " + status.final_summary.successful + "</p>";
+                        html += "<p><strong>Échoués:</strong> " + status.final_summary.failed + "</p>";
+                        html += "<p><strong>Taux de réussite:</strong> " + status.final_summary.success_rate + "%</p>";
+                        html += "</div>";
+                    }
+                    
                     html += "</div>";
+                    container.innerHTML = html;
                 }
-                
-                if (status.final_summary) {
-                    html += "<div class=\"success-info\">";
-                    html += "<h5>✅ Résumé final</h5>";
-                    html += "<p><strong>Total traité:</strong> " + status.final_summary.total_processed + "</p>";
-                    html += "<p><strong>Réussis:</strong> " + status.final_summary.successful + "</p>";
-                    html += "<p><strong>Échoués:</strong> " + status.final_summary.failed + "</p>";
-                    html += "<p><strong>Taux de réussite:</strong> " + status.final_summary.success_rate + "%</p>";
-                    html += "</div>";
+
+                function showError(message) {
+                    const container = document.getElementById("statusContent");
+                    container.innerHTML = "<div class=\"status-failed\"><h4>❌ Erreur</h4><p>" + message + "</p></div>";
                 }
-                
-                html += "</div>";
-                container.innerHTML = html;
-            }
 
-            function showError(message) {
-                const container = document.getElementById("statusContent");
-                container.innerHTML = "<div class=\"status-failed\"><h4>❌ Erreur</h4><p>" + message + "</p></div>";
-            }
-
-            function getStatusText(status) {
-                const statusMap = {
-                    "started": "🟡 Démarré",
-                    "fetching_forms": "🔍 Récupération des formulaires",
-                    "processing": "⚙️ En cours de traitement",
-                    "completed": "✅ Terminé avec succès",
-                    "failed": "❌ Échec"
-                };
-                return statusMap[status] || status;
-            }
-
-            window.addEventListener("beforeunload", function() {
-                if (statusInterval) {
-                    clearInterval(statusInterval);
+                function getStatusText(status) {
+                    const statusMap = {
+                        "started": "🟡 Démarré",
+                        "fetching_forms": "🔍 Récupération des formulaires",
+                        "processing": "⚙️ En cours de traitement",
+                        "completed": "✅ Terminé avec succès",
+                        "failed": "❌ Échec"
+                    };
+                    return statusMap[status] || status;
                 }
-            });
-        </script>
-    </body>
-    </html>';
+
+                window.addEventListener("beforeunload", function() {
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                    }
+                });
+            </script>
+        </body>
+        </html>';
 
         return new Response($html);
-
+    }
     
     // ------------------------------------------------------------------------------------------------------------------------
     // ------------------------------------------------------------------------------------------------------------------------
