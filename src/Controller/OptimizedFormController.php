@@ -360,7 +360,7 @@ class OptimizedFormController extends AbstractController
     }
 
     /**
-     * Récupère les formulaires de maintenance non lus par lots
+     * Récupère les formulaires de maintenance non lus par lots avec filtrage par agence CORRIGÉ
      */
     private function getUnreadMaintenanceFormsBatch(CacheInterface $cache, int $limit, int $offset = 0, ?string $agencyFilter = null): array
     {
@@ -385,14 +385,14 @@ class OptimizedFormController extends AbstractController
         $processedCount = 0;
 
         foreach ($maintenanceForms as $form) {
-            if ($processedCount >= ($offset + $limit)) {
+            if (count($unreadForms) >= $limit) {
                 break;
             }
 
             try {
                 // Récupérer les données non lues pour ce formulaire
                 $response = $this->client->request('GET', 
-                    "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/processed/" . $limit, [
+                    "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/read/" . ($limit * 2), [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -402,21 +402,23 @@ class OptimizedFormController extends AbstractController
                 $result = $response->toArray();
                 
                 foreach ($result['data'] as $formData) {
+                    // CORRECTION : Vérifier l'offset avant de traiter
                     if ($processedCount < $offset) {
                         $processedCount++;
                         continue;
                     }
                     
                     if (count($unreadForms) >= $limit) {
-                        break 2;
+                        break 2; // Sortir des deux boucles
                     }
 
-                    // Filtrer par agence si spécifié
+                    // CORRECTION : Filtrer par agence AVANT d'ajouter à la liste
                     if ($agencyFilter) {
                         $details = $this->getFormDetails($formData['_form_id'], $formData['_id']);
                         if (!$details || !isset($details['fields']['code_agence']['value']) || 
                             $details['fields']['code_agence']['value'] !== $agencyFilter) {
-                            continue;
+                            $processedCount++;
+                            continue; // Passer au formulaire suivant si ce n'est pas la bonne agence
                         }
                     }
 
@@ -424,11 +426,87 @@ class OptimizedFormController extends AbstractController
                         'form_id' => $formData['_form_id'],
                         'data_id' => $formData['_id']
                     ];
+                    $processedCount++;
                 }
             } catch (\Exception $e) {
                 error_log("Erreur lors de la récupération des formulaires non lus pour {$form['id']}: " . $e->getMessage());
                 continue;
             }
+        }
+
+        return $unreadForms;
+    }
+
+    /**
+     * NOUVELLE MÉTHODE : Filtrage plus efficace par agence
+     */
+    private function getUnreadMaintenanceFormsByAgency(string $agency, int $limit, int $offset = 0): array
+    {
+        $unreadForms = [];
+        $processedCount = 0;
+        $foundCount = 0;
+
+        try {
+            // Récupérer tous les formulaires de maintenance
+            $response = $this->client->request('GET', 'https://forms.kizeo.com/rest/v3/forms', [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                ],
+            ]);
+            
+            $content = $response->toArray();
+            $maintenanceForms = array_filter($content['forms'], function($form) {
+                return $form['class'] == "MAINTENANCE";
+            });
+
+            foreach ($maintenanceForms as $form) {
+                if ($foundCount >= $limit) {
+                    break;
+                }
+
+                try {
+                    // Récupérer les données non lues pour ce formulaire
+                    $response = $this->client->request('GET', 
+                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/read/50", [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                    ]);
+
+                    $result = $response->toArray();
+                    
+                    foreach ($result['data'] as $formData) {
+                        if ($foundCount >= $limit) {
+                            break 2;
+                        }
+
+                        // Récupérer les détails pour vérifier l'agence
+                        $details = $this->getFormDetails($formData['_form_id'], $formData['_id']);
+                        
+                        if ($details && isset($details['fields']['code_agence']['value']) && 
+                            $details['fields']['code_agence']['value'] === $agency) {
+                            
+                            // Vérifier l'offset
+                            if ($processedCount >= $offset) {
+                                $unreadForms[] = [
+                                    'form_id' => $formData['_form_id'],
+                                    'data_id' => $formData['_id']
+                                ];
+                                $foundCount++;
+                            }
+                            $processedCount++;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    error_log("Erreur lors de la récupération pour {$form['id']}: " . $e->getMessage());
+                    continue;
+                }
+            }
+
+        } catch (\Exception $e) {
+            error_log("Erreur générale dans getUnreadMaintenanceFormsByAgency: " . $e->getMessage());
         }
 
         return $unreadForms;
@@ -1057,34 +1135,72 @@ class OptimizedFormController extends AbstractController
             'agency' => $agency,
             'processed' => 0,
             'errors' => 0,
-            'start_time' => time()
+            'start_time' => time(),
+            'details' => []
         ];
         
         try {
-            // Traiter avec filtre agence
             $offset = 0;
             $hasMore = true;
+            $batchSize = 5; // Réduire la taille pour un meilleur contrôle
             
             while ($hasMore && (time() - $stats['start_time']) < 540) { // 9 minutes max
-                $request = new Request([
-                    'offset' => $offset, 
-                    'agency' => $agency,
-                    'batch_size' => 8
-                ]);
                 
-                $response = $this->processMaintenanceBatch($entityManager, $cache, $request);
-                $batchData = json_decode($response->getContent(), true);
+                // CORRECTION : Utiliser la nouvelle méthode de filtrage
+                $unreadForms = $this->getUnreadMaintenanceFormsByAgency($agency, $batchSize, $offset);
                 
-                $processed = $batchData['processed'] ?? 0;
-                $stats['processed'] += $processed;
-                
-                if ($processed === 0) {
+                if (empty($unreadForms)) {
                     $hasMore = false;
-                } else {
-                    $offset = $batchData['next_offset'] ?? ($offset + 8);
+                    break;
                 }
                 
-                usleep(50000); // 0.05 seconde entre les lots
+                $batchProcessed = 0;
+                $batchErrors = 0;
+                
+                foreach ($unreadForms as $formData) {
+                    try {
+                        $formDetails = $this->getFormDetails($formData['form_id'], $formData['data_id']);
+                        
+                        if ($formDetails && isset($formDetails['fields'])) {
+                            // Vérifier encore une fois l'agence (double sécurité)
+                            if ($formDetails['fields']['code_agence']['value'] === $agency) {
+                                // Enregistrer les photos
+                                $this->uploadPicturesInDatabase($formDetails, $entityManager);
+                                
+                                // Enregistrer les équipements
+                                $this->processFormEquipments($formDetails['fields'], $entityManager);
+                                
+                                // Marquer comme lu
+                                $this->markFormAsRead($formData['form_id'], $formData['data_id']);
+                                
+                                $batchProcessed++;
+                            } else {
+                                error_log("ATTENTION: Formulaire {$formData['form_id']} de l'agence {$formDetails['fields']['code_agence']['value']} traité au lieu de $agency");
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        $batchErrors++;
+                        error_log("Erreur formulaire {$formData['form_id']}: " . $e->getMessage());
+                    }
+                }
+                
+                $stats['processed'] += $batchProcessed;
+                $stats['errors'] += $batchErrors;
+                $stats['details'][] = [
+                    'offset' => $offset,
+                    'batch_processed' => $batchProcessed,
+                    'batch_errors' => $batchErrors,
+                    'forms_found' => count($unreadForms)
+                ];
+                
+                $offset += $batchSize;
+                
+                // Si on a traité moins que la taille du lot, on a probablement terminé
+                if (count($unreadForms) < $batchSize) {
+                    $hasMore = false;
+                }
+                
+                usleep(100000); // 0.1 seconde entre les lots
             }
             
         } catch (\Exception $e) {
@@ -1099,5 +1215,4 @@ class OptimizedFormController extends AbstractController
             'agency_stats' => $stats
         ]);
     }
-
 }
