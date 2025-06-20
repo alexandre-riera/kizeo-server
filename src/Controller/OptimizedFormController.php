@@ -81,6 +81,9 @@ class OptimizedFormController extends AbstractController
                     $formDetails = $this->getFormDetails($formData['form_id'], $formData['data_id']);
                     
                     if ($formDetails && isset($formDetails['fields'])) {
+                        // AJOUT : Enregistrer les photos
+                        $this->uploadPicturesInDatabase($formDetails, $entityManager);
+                        
                         // Traiter et enregistrer les équipements
                         $this->processFormEquipments($formDetails['fields'], $entityManager);
                         
@@ -121,10 +124,15 @@ class OptimizedFormController extends AbstractController
 
     /**
      * Route pour traiter automatiquement tous les formulaires par lots successifs
+     * AMÉLIORATION : Augmentation du timeout et de la limite par lot
      */
     #[Route('/api/forms/process/maintenance/auto', name: 'app_process_maintenance_auto', methods: ['GET'])]
     public function processMaintenanceAuto(EntityManagerInterface $entityManager, CacheInterface $cache): JsonResponse
     {
+        // AMÉLIORATION : Augmenter la limite de temps et la taille des lots
+        set_time_limit(900); // 15 minutes
+        ini_set('memory_limit', '1024M'); // 1GB de RAM
+        
         $stats = [
             'total_processed' => 0,
             'batches_processed' => 0,
@@ -134,10 +142,11 @@ class OptimizedFormController extends AbstractController
 
         $offset = 0;
         $hasMore = true;
+        $batchSize = 10; // AMÉLIORATION : Augmenter la taille du lot
 
-        while ($hasMore && (time() - $stats['start_time']) < 300) { // 5 minutes max
+        while ($hasMore && (time() - $stats['start_time']) < 840) { // 14 minutes max (garder 1 min de marge)
             try {
-                $unreadForms = $this->getUnreadMaintenanceFormsBatch($cache, self::BATCH_SIZE, $offset);
+                $unreadForms = $this->getUnreadMaintenanceFormsBatch($cache, $batchSize, $offset);
                 
                 if (empty($unreadForms)) {
                     $hasMore = false;
@@ -150,6 +159,9 @@ class OptimizedFormController extends AbstractController
                         $formDetails = $this->getFormDetails($formData['form_id'], $formData['data_id']);
                         
                         if ($formDetails && isset($formDetails['fields'])) {
+                            // AJOUT : Enregistrer les photos
+                            $this->uploadPicturesInDatabase($formDetails, $entityManager);
+                            
                             $this->processFormEquipments($formDetails['fields'], $entityManager);
                             $this->markFormAsRead($formData['form_id'], $formData['data_id']);
                             $batchProcessed++;
@@ -162,15 +174,15 @@ class OptimizedFormController extends AbstractController
 
                 $stats['total_processed'] += $batchProcessed;
                 $stats['batches_processed']++;
-                $offset += self::BATCH_SIZE;
+                $offset += $batchSize;
                 
                 // Si on a traité moins que la taille du lot, on a terminé
-                if (count($unreadForms) < self::BATCH_SIZE) {
+                if (count($unreadForms) < $batchSize) {
                     $hasMore = false;
                 }
 
-                // Petite pause pour éviter la surcharge
-                usleep(100000); // 0.1 seconde
+                // AMÉLIORATION : Réduire la pause pour traiter plus rapidement
+                usleep(50000); // 0.05 seconde
 
             } catch (\Exception $e) {
                 $stats['errors']++;
@@ -182,8 +194,169 @@ class OptimizedFormController extends AbstractController
         return new JsonResponse([
             'status' => 'completed',
             'stats' => $stats,
-            'execution_time' => (time() - $stats['start_time'])
+            'execution_time' => (time() - $stats['start_time']),
+            'remaining_check' => $hasMore ? 'Il pourrait y avoir encore des formulaires à traiter' : 'Tous les formulaires disponibles ont été traités'
         ]);
+    }
+
+    /**
+     * NOUVEAU : Route pour continuer le traitement là où on s'est arrêté
+     */
+    #[Route('/api/forms/process/maintenance/continue', name: 'app_process_maintenance_continue', methods: ['GET'])]
+    public function processMaintenanceContinue(
+        EntityManagerInterface $entityManager, 
+        CacheInterface $cache,
+        Request $request
+    ): JsonResponse {
+        $startOffset = $request->query->get('offset', 0);
+        $maxBatches = $request->query->get('max_batches', 20); // Limite de lots à traiter
+        
+        $totalProcessed = 0;
+        $batchesProcessed = 0;
+        $errors = 0;
+        $currentOffset = $startOffset;
+        
+        for ($i = 0; $i < $maxBatches; $i++) {
+            $response = $this->processMaintenanceBatch($entityManager, $cache, new Request(['offset' => $currentOffset]));
+            $data = json_decode($response->getContent(), true);
+            
+            if ($data['status'] === 'completed' && $data['processed'] === 0) {
+                break; // Plus de formulaires à traiter
+            }
+            
+            $totalProcessed += $data['processed'] ?? 0;
+            $batchesProcessed++;
+            
+            if ($data['status'] === 'completed' || !isset($data['next_offset'])) {
+                break;
+            }
+            
+            $currentOffset = $data['next_offset'];
+            
+            // Petite pause entre les lots
+            usleep(100000); // 0.1 seconde
+        }
+        
+        return new JsonResponse([
+            'status' => 'completed',
+            'start_offset' => $startOffset,
+            'final_offset' => $currentOffset,
+            'batches_processed' => $batchesProcessed,
+            'total_processed' => $totalProcessed,
+            'continue_url' => $currentOffset > $startOffset ? 
+                $this->generateUrl('app_process_maintenance_continue', ['offset' => $currentOffset]) : null
+        ]);
+    }
+
+    /**
+     * AJOUT : Méthode pour enregistrer les photos (adaptée de FormRepository)
+     */
+    private function uploadPicturesInDatabase(array $formData, EntityManagerInterface $entityManager): void
+    {
+        try {
+            // Traiter les équipements AU CONTRAT
+            if (isset($formData['fields']['contrat_de_maintenance']['value'])) {
+                foreach ($formData['fields']['contrat_de_maintenance']['value'] as $additionalEquipment) {
+                    $this->saveEquipmentPictures($formData, $additionalEquipment, null, $entityManager);
+                }
+            }
+            
+            // Traiter les équipements HORS CONTRAT
+            if (isset($formData['fields']['tableau2']['value'])) {
+                foreach ($formData['fields']['tableau2']['value'] as $equipmentSupplementaire) {
+                    $this->saveEquipmentPictures($formData, null, $equipmentSupplementaire, $entityManager);
+                }
+            }
+            
+            $entityManager->flush();
+            
+        } catch (\Exception $e) {
+            error_log("Erreur lors de l'enregistrement des photos: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * AJOUT : Méthode pour sauvegarder les photos d'un équipement
+     */
+    private function saveEquipmentPictures(array $formData, ?array $contractEquipment, ?array $offContractEquipment, EntityManagerInterface $entityManager): void
+    {
+        $equipement = new \App\Entity\Form();
+
+        $equipement->setFormId($formData['form_id']);
+        $equipement->setDataId($formData['id']);
+        $equipement->setUpdateTime($formData['update_time']);
+
+        if ($contractEquipment) {
+            // Équipement AU CONTRAT
+            $equipement->setCodeEquipement($contractEquipment['equipement']['value']);
+            $equipement->setRaisonSocialeVisite($contractEquipment['equipement']['path']);
+            
+            // Photos des équipements au contrat
+            if (isset($contractEquipment['photo_etiquette_somafi']['value'])) {
+                $equipement->setPhotoEtiquetteSomafi($contractEquipment['photo_etiquette_somafi']['value']);
+            }
+            $equipement->setPhotoPlaque($contractEquipment['photo_plaque']['value'] ?? '');
+            $equipement->setPhotoChoc($contractEquipment['photo_choc']['value'] ?? '');
+            
+            // Toutes les autres photos du contrat
+            $this->setContractEquipmentPhotos($equipement, $contractEquipment);
+            
+        } elseif ($offContractEquipment) {
+            // Équipement HORS CONTRAT
+            $equipement->setRaisonSocialeVisite($formData['fields']['contrat_de_maintenance']['value'][0]['equipement']['path'] ?? '');
+            $equipement->setPhotoCompteRendu($offContractEquipment['photo3']['value'] ?? '');
+        }
+
+        $entityManager->persist($equipement);
+    }
+
+    /**
+     * AJOUT : Méthode pour définir toutes les photos des équipements au contrat
+     */
+    private function setContractEquipmentPhotos($equipement, array $contractEquipment): void
+    {
+        $photoFields = [
+            'photo_choc_tablier_porte', 'photo_choc_tablier', 'photo_axe', 'photo_serrure',
+            'photo_serrure1', 'photo_feux', 'photo_panneau_intermediaire_i', 'photo_panneau_bas_inter_ext',
+            'photo_lame_basse_int_ext', 'photo_lame_intermediaire_int_', 'photo_environnement_equipemen1',
+            'photo_coffret_de_commande', 'photo_carte', 'photo_rail', 'photo_equerre_rail',
+            'photo_fixation_coulisse', 'photo_moteur', 'photo_deformation_plateau', 'photo_deformation_plaque',
+            'photo_deformation_structure', 'photo_deformation_chassis', 'photo_deformation_levre',
+            'photo_fissure_cordon', 'photo_joue', 'photo_butoir', 'photo_vantail', 'photo_linteau',
+            'photo_marquage_au_sol_', 'photo2'
+        ];
+
+        foreach ($photoFields as $field) {
+            if (isset($contractEquipment[$field]['value'])) {
+                $methodName = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
+                if (method_exists($equipement, $methodName)) {
+                    $equipement->$methodName($contractEquipment[$field]['value']);
+                }
+            }
+        }
+        
+        // Cas spéciaux avec des noms différents
+        if (isset($contractEquipment['photo_panneau_intermediaire_i']['value'])) {
+            $equipement->setPhotoPanneauIntermediaireI($contractEquipment['photo_panneau_intermediaire_i']['value']);
+        }
+        if (isset($contractEquipment['photo_panneau_bas_inter_ext']['value'])) {
+            $equipement->setPhotoPanneauBasInterExt($contractEquipment['photo_panneau_bas_inter_ext']['value']);
+        }
+        if (isset($contractEquipment['photo_lame_basse_int_ext']['value'])) {
+            $equipement->setPhotoLameBasseIntExt($contractEquipment['photo_lame_basse_int_ext']['value']);
+        }
+        if (isset($contractEquipment['photo_lame_intermediaire_int_']['value'])) {
+            $equipement->setPhotoLameIntermediaireInt($contractEquipment['photo_lame_intermediaire_int_']['value']);
+        }
+        if (isset($contractEquipment['photo_environnement_equipemen1']['value'])) {
+            $equipement->setPhotoEnvironnementEquipement1($contractEquipment['photo_environnement_equipemen1']['value']);
+        }
+        if (isset($contractEquipment['photo_marquage_au_sol_']['value'])) {
+            $equipement->setPhotoMarquageAuSol2($contractEquipment['photo_marquage_au_sol_']['value']);
+        }
+        if (isset($contractEquipment['photo2']['value'])) {
+            $equipement->setPhoto2($contractEquipment['photo2']['value']);
+        }
     }
 
     /**
@@ -684,4 +857,247 @@ class OptimizedFormController extends AbstractController
         
         return $dernierNumero + 1;
     }
+
+    /**
+     * STRATÉGIE DE TRAITEMENT COMPLÈTE
+     * 
+     * 1. Utilisez d'abord cette route pour connaître le nombre total :
+     */
+    #[Route('/api/forms/count/maintenance/unread', name: 'app_count_maintenance_unread', methods: ['GET'])]
+    public function countUnreadMaintenanceForms(CacheInterface $cache): JsonResponse
+    {
+        try {
+            $maintenanceForms = $cache->get('maintenance_forms_list', function($item) {
+                $item->expiresAfter(300); // 5 minutes
+                
+                $response = $this->client->request('GET', 'https://forms.kizeo.com/rest/v3/forms', [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                ]);
+                
+                $content = $response->toArray();
+                return array_filter($content['forms'], function($form) {
+                    return $form['class'] == "MAINTENANCE";
+                });
+            });
+
+            $totalUnread = 0;
+            $formDetails = [];
+            
+            foreach ($maintenanceForms as $form) {
+                try {
+                    $response = $this->client->request('GET', 
+                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/read/100", [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'timeout' => 10
+                    ]);
+
+                    $result = $response->toArray();
+                    $count = count($result['data']);
+                    $totalUnread += $count;
+                    
+                    if ($count > 0) {
+                        $formDetails[] = [
+                            'form_id' => $form['id'],
+                            'form_name' => $form['name'],
+                            'unread_count' => $count
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    error_log("Erreur form {$form['id']}: " . $e->getMessage());
+                    continue;
+                }
+            }
+
+            $estimatedBatches = ceil($totalUnread / 10); // Avec lots de 10
+            $estimatedTime = $estimatedBatches * 2; // 2 minutes par lot
+
+            return new JsonResponse([
+                'total_unread_forms' => $totalUnread,
+                'forms_with_unread' => count($formDetails),
+                'estimated_batches' => $estimatedBatches,
+                'estimated_time_minutes' => $estimatedTime,
+                'forms_details' => $formDetails,
+                'recommendations' => [
+                    'use_continue_route' => $totalUnread > 50,
+                    'suggested_batch_size' => min(10, max(3, floor(50 / count($maintenanceForms)))),
+                    'max_iterations_needed' => ceil($totalUnread / 10)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => 'Erreur lors du comptage: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 2. Route pour traitement en boucle jusqu'à completion
+     */
+    #[Route('/api/forms/process/maintenance/complete', name: 'app_process_maintenance_complete', methods: ['GET'])]
+    public function processMaintenanceComplete(
+        EntityManagerInterface $entityManager, 
+        CacheInterface $cache,
+        Request $request
+    ): JsonResponse {
+        set_time_limit(0); // Pas de limite
+        ini_set('memory_limit', '2048M'); // 2GB
+        
+        $maxIterations = $request->query->get('max_iterations', 50); // Limite de sécurité
+        $batchSize = $request->query->get('batch_size', 5);
+        
+        $globalStats = [
+            'total_processed' => 0,
+            'total_errors' => 0,
+            'iterations' => 0,
+            'start_time' => time(),
+            'batches_details' => []
+        ];
+        
+        $offset = 0;
+        $hasMore = true;
+        $consecutiveEmptyBatches = 0;
+        
+        while ($hasMore && $globalStats['iterations'] < $maxIterations) {
+            $iterationStart = time();
+            
+            try {
+                // Traiter un lot
+                $request = new Request(['offset' => $offset, 'batch_size' => $batchSize]);
+                $response = $this->processMaintenanceBatch($entityManager, $cache, $request);
+                $batchData = json_decode($response->getContent(), true);
+                
+                $processed = $batchData['processed'] ?? 0;
+                $globalStats['total_processed'] += $processed;
+                
+                if ($processed === 0) {
+                    $consecutiveEmptyBatches++;
+                    if ($consecutiveEmptyBatches >= 3) {
+                        $hasMore = false; // Arrêter si 3 lots vides consécutifs
+                        break;
+                    }
+                } else {
+                    $consecutiveEmptyBatches = 0;
+                }
+                
+                $globalStats['batches_details'][] = [
+                    'iteration' => $globalStats['iterations'] + 1,
+                    'offset' => $offset,
+                    'processed' => $processed,
+                    'status' => $batchData['status'] ?? 'unknown',
+                    'execution_time' => time() - $iterationStart
+                ];
+                
+                // Avancer l'offset
+                if (isset($batchData['next_offset'])) {
+                    $offset = $batchData['next_offset'];
+                } else {
+                    $offset += $batchSize;
+                }
+                
+                $globalStats['iterations']++;
+                
+                // Pause entre les itérations
+                usleep(100000); // 0.1 seconde
+                
+            } catch (\Exception $e) {
+                $globalStats['total_errors']++;
+                error_log("Erreur iteration {$globalStats['iterations']}: " . $e->getMessage());
+                
+                // Avancer même en cas d'erreur
+                $offset += $batchSize;
+                $globalStats['iterations']++;
+            }
+            
+            // Vérification de sécurité temps
+            if ((time() - $globalStats['start_time']) > 1800) { // 30 minutes max
+                break;
+            }
+        }
+        
+        $globalStats['end_time'] = time();
+        $globalStats['total_execution_time'] = $globalStats['end_time'] - $globalStats['start_time'];
+        
+        return new JsonResponse([
+            'status' => 'completed',
+            'global_stats' => $globalStats,
+            'summary' => [
+                'total_forms_processed' => $globalStats['total_processed'],
+                'total_iterations' => $globalStats['iterations'],
+                'total_time_minutes' => round($globalStats['total_execution_time'] / 60, 2),
+                'average_time_per_iteration' => $globalStats['iterations'] > 0 ? 
+                    round($globalStats['total_execution_time'] / $globalStats['iterations'], 2) : 0,
+                'stopped_reason' => $hasMore ? 'max_iterations_reached' : 'no_more_data'
+            ]
+        ]);
+    }
+
+    /**
+     * 3. Route pour traitement par agence (plus efficace)
+     */
+    #[Route('/api/forms/process/maintenance/by-agency/{agency}', name: 'app_process_maintenance_by_agency', methods: ['GET'])]
+    public function processMaintenanceByAgency(
+        string $agency,
+        EntityManagerInterface $entityManager, 
+        CacheInterface $cache
+    ): JsonResponse {
+        set_time_limit(600); // 10 minutes par agence
+        
+        $validAgencies = ['S10', 'S40', 'S50', 'S60', 'S70', 'S80', 'S100', 'S120', 'S130', 'S140', 'S150', 'S160', 'S170'];
+        
+        if (!in_array($agency, $validAgencies)) {
+            return new JsonResponse(['error' => 'Agence non valide'], 400);
+        }
+        
+        $stats = [
+            'agency' => $agency,
+            'processed' => 0,
+            'errors' => 0,
+            'start_time' => time()
+        ];
+        
+        try {
+            // Traiter avec filtre agence
+            $offset = 0;
+            $hasMore = true;
+            
+            while ($hasMore && (time() - $stats['start_time']) < 540) { // 9 minutes max
+                $request = new Request([
+                    'offset' => $offset, 
+                    'agency' => $agency,
+                    'batch_size' => 8
+                ]);
+                
+                $response = $this->processMaintenanceBatch($entityManager, $cache, $request);
+                $batchData = json_decode($response->getContent(), true);
+                
+                $processed = $batchData['processed'] ?? 0;
+                $stats['processed'] += $processed;
+                
+                if ($processed === 0) {
+                    $hasMore = false;
+                } else {
+                    $offset = $batchData['next_offset'] ?? ($offset + 8);
+                }
+                
+                usleep(50000); // 0.05 seconde entre les lots
+            }
+            
+        } catch (\Exception $e) {
+            $stats['errors']++;
+            error_log("Erreur agence $agency: " . $e->getMessage());
+        }
+        
+        $stats['execution_time'] = time() - $stats['start_time'];
+        
+        return new JsonResponse([
+            'status' => 'completed',
+            'agency_stats' => $stats
+        ]);
+    }
+
 }
