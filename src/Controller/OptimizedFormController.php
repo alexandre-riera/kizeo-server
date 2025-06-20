@@ -392,7 +392,7 @@ class OptimizedFormController extends AbstractController
             try {
                 // Récupérer les données non lues pour ce formulaire
                 $response = $this->client->request('GET', 
-                    "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/lus/" . $limit, [
+                    "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/processed/" . $limit, [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -488,7 +488,7 @@ class OptimizedFormController extends AbstractController
     {
         try {
             $this->client->request('POST', 
-                "https://forms.kizeo.com/rest/v3/forms/{$formId}/markasreadbyaction/lus", [
+                "https://forms.kizeo.com/rest/v3/forms/{$formId}/markasreadbyaction/processed", [
                 'headers' => [
                     'Accept' => 'application/json',
                     'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -532,7 +532,7 @@ class OptimizedFormController extends AbstractController
             foreach ($maintenanceForms as $form) {
                 try {
                     $response = $this->client->request('GET', 
-                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/lus/100", [
+                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/processed/100", [
                         'headers' => [
                             'Accept' => 'application/json',
                             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
