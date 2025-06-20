@@ -889,7 +889,7 @@ class OptimizedFormController extends AbstractController
             foreach ($maintenanceForms as $form) {
                 try {
                     $response = $this->client->request('GET', 
-                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/read/100", [
+                        "https://forms.kizeo.com/rest/v3/forms/{$form['id']}/data/unread/processed/100", [
                         'headers' => [
                             'Accept' => 'application/json',
                             'Authorization' => $_ENV["KIZEO_API_TOKEN"],
