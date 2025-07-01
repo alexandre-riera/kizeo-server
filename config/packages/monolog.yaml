@@ -1,6 +1,7 @@
 monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - maintenance_cache # Ajout du canal maintenance_cache
 
 when@dev:
     monolog:
@@ -22,6 +23,12 @@ when@dev:
                 type: console
                 process_psr_3_messages: false
                 channels: ["!event", "!doctrine", "!console"]
+            maintenance_cache:
+                type: rotating_file
+                path: '%kernel.logs_dir%/maintenance_cache.log'
+                level: info
+                channels: ['maintenance_cache']
+                max_files: 10
 
 when@test:
     monolog:
@@ -60,3 +67,9 @@ when@prod:
                 channels: [deprecation]
                 path: php://stderr
                 formatter: monolog.formatter.json
+            maintenance_cache:
+                type: rotating_file
+                path: '%kernel.logs_dir%/maintenance_cache.log'
+                level: warning
+                channels: ['maintenance_cache']
+                max_files: 30

@@ -151,19 +151,621 @@ class FormController extends AbstractController
         // Commenter pour éviter de mettre les listes Kizeo à jour à chaque fois que l'on sauvegarde les équipements de maintenance
         return $this->redirectToRoute('app_api_form_update_lists_equipements_from_bdd'); 
     }
-
     /**
      * -------------------------------------------------------------------------- SECOND CALL IN CRON TASK
      * This route is going to replace the route above to update equipments list on Kizeo Forms
+     * VERSION AVEC CACHE REDIS ET GESTION D'ERREURS AMÉLIORÉE
      */
     #[Route('/api/forms/update/lists/kizeo', name: 'app_api_form_update_lists_equipements_from_bdd', methods: ['GET','PUT'])]
-    public function updateKizeoFormsByEquipmentsListFromBdd(FormRepository $formRepository, CacheInterface $cache, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $formRepository->updateKizeoWithEquipmentsListFromBdd($entityManager, $formRepository, $cache);
-
-        return new JsonResponse('La mise à jour sur KIZEO a été réalisée !', Response::HTTP_OK, [], true);
-        // return $this->redirectToRoute('app_api_form_save_maintenance_equipments'); // A remettre pour faire tourner la boucle des 2 URL
+    public function updateKizeoFormsByEquipmentsListFromBdd(
+        FormRepository $formRepository, 
+        CacheInterface $cache, 
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        
+        try {
+            // Mesure du temps d'exécution
+            $startTime = microtime(true);
+            
+            // Exécution de la mise à jour avec métriques
+            $results = $formRepository->updateKizeoWithEquipmentsListFromBddWithMetrics(
+                $entityManager, 
+                $formRepository, 
+                $cache
+            );
+            
+            $endTime = microtime(true);
+            $executionTime = round($endTime - $startTime, 2);
+            
+            // Comptage des succès et erreurs
+            $successCount = $results['metrics']['success_count'];
+            $errorCount = $results['metrics']['error_count'];
+            $totalEntities = $results['metrics']['total_entities'];
+            
+            // Construction du message de réponse
+            $message = sprintf(
+                'Mise à jour Kizeo terminée - %d/%d entités mises à jour avec succès en %ds',
+                $successCount,
+                $totalEntities,
+                $executionTime
+            );
+            
+            // Ajout des détails d'erreur si il y en a
+            if ($errorCount > 0) {
+                $errors = array_filter($results['results'], fn($r) => $r['status'] === 'error');
+                $errorDetails = array_map(fn($e) => $e['entite'] . ': ' . $e['error_message'], $errors);
+                
+                return new JsonResponse([
+                    'message' => $message,
+                    'status' => 'partial_success',
+                    'metrics' => $results['metrics'],
+                    'errors' => $errorDetails,
+                    'details' => $results['results']
+                ], Response::HTTP_OK);
+            }
+            
+            // Succès total
+            return new JsonResponse([
+                'message' => $message,
+                'status' => 'success',
+                'metrics' => $results['metrics'],
+                'details' => $results['results']
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            // Gestion des erreurs globales
+            return new JsonResponse([
+                'message' => 'Erreur lors de la mise à jour Kizeo',
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
+
+    /**
+     * Route de diagnostic à ajouter temporairement dans FormController
+     */
+    #[Route('/api/forms/diagnose/sync', name: 'app_api_form_diagnose_sync', methods: ['GET'])]
+    public function diagnoseSyncIssues(FormRepository $formRepository): JsonResponse
+    {
+        try {
+            $diagnostic = $formRepository->diagnoseSyncIssues();
+            
+            return new JsonResponse([
+                'status' => 'success',
+                'diagnostic' => $diagnostic,
+                'recommendations' => $this->generateRecommendations($diagnostic)
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    /**
+     * Génère des recommandations basées sur le diagnostic
+     */
+    private function generateRecommendations(array $diagnostic): array
+    {
+        $recommendations = [];
+        
+        // Si aucune correspondance exacte
+        $hasExactMatch = false;
+        if (!empty($diagnostic['potential_matches'])) {
+            foreach ($diagnostic['potential_matches'] as $match) {
+                if (!empty($match['matches'])) {
+                    foreach ($match['matches'] as $m) {
+                        if ($m['type'] === 'exact_match') {
+                            $hasExactMatch = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!$hasExactMatch) {
+            $recommendations[] = "Aucune correspondance exacte trouvée - vérifier le format des clés";
+        }
+        
+        // Si les structures diffèrent
+        $bddStructures = [];
+        $kizeoStructures = [];
+        
+        if (!empty($diagnostic['bdd_samples'])) {
+            foreach ($diagnostic['bdd_samples'] as $sample) {
+                $bddStructures[] = $sample['key_structure'];
+            }
+        }
+        
+        if (!empty($diagnostic['kizeo_samples'])) {
+            foreach ($diagnostic['kizeo_samples'] as $sample) {
+                $kizeoStructures[] = $sample['key_structure'];
+            }
+        }
+        
+        $bddStructures = array_unique($bddStructures, SORT_REGULAR);
+        $kizeoStructures = array_unique($kizeoStructures, SORT_REGULAR);
+        
+        if (count($bddStructures) > 1 || count($kizeoStructures) > 1) {
+            $recommendations[] = "Structures de clés incohérentes détectées";
+        }
+        
+        // Si problème d'encodage
+        $encodingIssues = 0;
+        $allSamples = array_merge($diagnostic['bdd_samples'] ?? [], $diagnostic['kizeo_samples'] ?? []);
+        
+        foreach ($allSamples as $sample) {
+            if (isset($sample['key_structure']['encoding']) && $sample['key_structure']['encoding'] !== 'UTF-8') {
+                $encodingIssues++;
+            }
+        }
+            
+        if ($encodingIssues > 0) {
+            $recommendations[] = "Problèmes d'encodage détectés - normaliser les caractères";
+        }
+        
+        return $recommendations;
+    }
+
+    /**
+     * Route pour appliquer la correction sur S50 uniquement
+     */
+    #[Route('/api/forms/fix/s50-sync', name: 'app_api_form_fix_s50_sync', methods: ['POST'])]
+    public function fixS50Sync(
+        FormRepository $formRepository,
+        CacheInterface $cache,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        
+        try {
+            $entityClass = 'App\\Entity\\EquipementS50';
+            $startTime = microtime(true);
+            
+            // Récupérer les équipements de la BDD
+            $equipements = $entityManager->getRepository($entityClass)->findAll();
+            $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
+            
+            // Récupérer l'ID de liste et vider le cache
+            $idListeKizeo = $formRepository->getIdListeKizeoPourEntite($entityClass);
+            $cache->delete('kizeo_equipments_s50');
+            
+            // Récupérer les données Kizeo
+            $kizeoEquipments = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
+            
+            // Appliquer la nouvelle logique
+            $updatedEquipments = $formRepository->compareAndSyncEquipments(
+                $structuredEquipements,
+                $kizeoEquipments,
+                $idListeKizeo
+            );
+            
+            $endTime = microtime(true);
+            
+            return new JsonResponse([
+                'status' => 'success',
+                'entity' => 'S50',
+                'results' => [
+                    'bdd_count' => count($structuredEquipements),
+                    'kizeo_before' => count($kizeoEquipments),
+                    'kizeo_after' => count($updatedEquipments),
+                    'execution_time' => round($endTime - $startTime, 2)
+                ],
+                'message' => 'Logique corrigée appliquée avec succès pour S50'
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Route pour appliquer la correction SEULEMENT sur S50 - AJOUTER cette méthode
+     */
+    #[Route('/api/forms/fix/s50-only', name: 'app_api_form_fix_s50_only', methods: ['POST'])]
+    public function fixS50Only(
+        FormRepository $formRepository,
+        CacheInterface $cache,
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        
+        try {
+            $entityClass = 'App\\Entity\\EquipementS50';
+            $startTime = microtime(true);
+            
+            // Récupérer les équipements de la BDD
+            $equipements = $entityManager->getRepository($entityClass)->findAll();
+            $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
+            
+            // Récupérer l'ID de liste et vider le cache
+            $idListeKizeo = $formRepository->getIdListeKizeoPourEntite($entityClass);
+            $cache->delete('kizeo_equipments_s50');
+            
+            // Récupérer les données Kizeo
+            $kizeoEquipments = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
+            
+            // Appliquer la nouvelle logique
+            $updatedEquipments = $formRepository->compareAndSyncEquipments(
+                $structuredEquipements,
+                $kizeoEquipments,
+                $idListeKizeo
+            );
+            
+            $endTime = microtime(true);
+            
+            return new JsonResponse([
+                'status' => 'success',
+                'entity' => 'S50',
+                'results' => [
+                    'bdd_count' => count($structuredEquipements),
+                    'kizeo_before' => count($kizeoEquipments),
+                    'kizeo_after' => count($updatedEquipments),
+                    'execution_time' => round($endTime - $startTime, 2)
+                ],
+                'message' => 'Logique corrigée appliquée avec succès pour S50'
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    /**
+     * Route de diagnostic pour les équipements multi-visites
+     * À ajouter dans FormController
+     */
+    #[Route('/api/forms/diagnose/multi-visits', name: 'app_api_form_diagnose_multi_visits', methods: ['GET'])]
+    public function diagnoseMultiVisitEquipments(FormRepository $formRepository): JsonResponse
+    {
+        try {
+            $diagnostic = $formRepository->diagnoseMultiVisitEquipments();
+            
+            return new JsonResponse([
+                'status' => 'success',
+                'diagnostic' => $diagnostic,
+                'insights' => $this->generateMultiVisitInsights($diagnostic)
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Génère des insights sur la répartition des visites
+     */
+    private function generateMultiVisitInsights(array $diagnostic): array
+    {
+        $insights = [];
+        
+        // Analyse de la distribution
+        $visitDistribution = $diagnostic['visit_distribution'];
+        $maxVisits = max(array_keys($visitDistribution));
+        $equipmentsWithMultipleVisits = array_sum(
+            array_filter($visitDistribution, fn($count, $visits) => $visits > 1, ARRAY_FILTER_USE_BOTH)
+        );
+        
+        $insights[] = "Total d'équipements: " . $diagnostic['total_equipments'];
+        $insights[] = "Équipements uniques: " . count($diagnostic['equipment_groups']);
+        $insights[] = "Équipements avec plusieurs visites: " . $equipmentsWithMultipleVisits;
+        $insights[] = "Maximum de visites par équipement: " . $maxVisits;
+        
+        // Identifier les équipements problématiques potentiels
+        $problematicEquipments = array_filter(
+            $diagnostic['equipment_groups'],
+            fn($group) => $group['visit_count'] > 4 // Plus de 4 visites = suspect
+        );
+        
+        if (!empty($problematicEquipments)) {
+            $insights[] = "Équipements avec beaucoup de visites (>4): " . count($problematicEquipments);
+        }
+        
+        return $insights;
+    }
+
+    /**
+     * Méthode de simulation à ajouter dans FormRepository
+     * Simule la synchronisation sans envoyer à Kizeo
+     */
+    public function simulateSync($structuredEquipements, $kizeoEquipments): array
+    {
+        $updatedKizeoEquipments = $kizeoEquipments;
+
+        foreach ($structuredEquipements as $structuredEquipment) {
+            $structuredFullKey = explode('|', $structuredEquipment)[0];
+            $keyParts = explode('\\', $structuredFullKey);
+            $equipmentBaseKey = ($keyParts[0] ?? '') . '\\' . ($keyParts[2] ?? '');
+
+            $foundAndReplaced = false;
+            
+            foreach ($updatedKizeoEquipments as $key => $kizeoEquipment) {
+                $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+
+                if ($kizeoFullKey === $structuredFullKey) {
+                    $updatedKizeoEquipments[$key] = $structuredEquipment;
+                    $foundAndReplaced = true;
+                    break;
+                }
+            }
+
+            if (!$foundAndReplaced) {
+                $updatedKizeoEquipments[] = $structuredEquipment;
+            }
+
+            // Simulation de updateAllVisitsForEquipment
+            $this->simulateUpdateAllVisits($updatedKizeoEquipments, $equipmentBaseKey, $structuredEquipment);
+        }
+
+        return $updatedKizeoEquipments;
+    }
+
+    /**
+     * Simulation de updateAllVisitsForEquipment
+     */
+    private function simulateUpdateAllVisits(&$kizeoEquipments, $equipmentBaseKey, $newEquipment): void
+    {
+        $newEquipmentData = explode('|', $newEquipment);
+        $newEquipmentFullKey = $newEquipmentData[0];
+        
+        foreach ($kizeoEquipments as $key => $kizeoEquipment) {
+            $kizeoEquipmentData = explode('|', $kizeoEquipment);
+            $kizeoFullKey = $kizeoEquipmentData[0];
+            
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey && $kizeoFullKey !== $newEquipmentFullKey) {
+                // Simulation de la mise à jour des données techniques
+                for ($i = 2; $i < count($newEquipmentData); $i++) {
+                    if (isset($newEquipmentData[$i])) {
+                        if (isset($kizeoEquipmentData[$i])) {
+                            $kizeoEquipmentData[$i] = $newEquipmentData[$i];
+                        } else {
+                            $kizeoEquipmentData[] = $newEquipmentData[$i];
+                        }
+                    }
+                }
+                
+                $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData);
+            }
+        }
+    }
+
+    /**
+     * Vérifie si un équipement existe déjà dans Kizeo (peu importe la visite)
+     */
+    private function equipmentExistsInKizeo($kizeoEquipments, $equipmentBaseKey): bool
+    {
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Vérifie si une visite spécifique existe déjà
+     */
+    private function specificVisitExists($kizeoEquipments, $structuredFullKey): bool
+    {
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            if ($kizeoFullKey === $structuredFullKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Version de updateAllVisitsForEquipment qui retourne le nombre de mises à jour
+     */
+    private function updateAllVisitsForEquipmentWithCount(&$kizeoEquipments, $equipmentBaseKey, $newEquipment): int
+    {
+        $newEquipmentData = explode('|', $newEquipment);
+        $newEquipmentFullKey = $newEquipmentData[0];
+        $updateCount = 0;
+        
+        foreach ($kizeoEquipments as $key => $kizeoEquipment) {
+            $kizeoEquipmentData = explode('|', $kizeoEquipment);
+            $kizeoFullKey = $kizeoEquipmentData[0];
+            
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey && $kizeoFullKey !== $newEquipmentFullKey) {
+                // Mettre à jour les données techniques
+                for ($i = 2; $i < count($newEquipmentData); $i++) {
+                    if (isset($newEquipmentData[$i])) {
+                        if (isset($kizeoEquipmentData[$i])) {
+                            $kizeoEquipmentData[$i] = $newEquipmentData[$i];
+                        } else {
+                            $kizeoEquipmentData[] = $newEquipmentData[$i];
+                        }
+                    }
+                }
+                
+                $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData);
+                $updateCount++;
+            }
+        }
+        
+        return $updateCount;
+    }
+
+    /**
+     * Route pour appliquer temporairement la nouvelle logique sur une seule entité
+     */
+    #[Route('/api/forms/apply/new-sync-logic/{entity}', name: 'app_api_form_apply_new_sync_logic', methods: ['POST'])]
+    public function applyNewSyncLogic(
+        string $entity,
+        FormRepository $formRepository, 
+        CacheInterface $cache, 
+        EntityManagerInterface $entityManager
+    ): JsonResponse {
+        
+        try {
+            // Valider l'entité
+            $validEntities = [
+                's10' => 'App\\Entity\\EquipementS10',
+                's40' => 'App\\Entity\\EquipementS40', 
+                's50' => 'App\\Entity\\EquipementS50',
+                's60' => 'App\\Entity\\EquipementS60',
+                's70' => 'App\\Entity\\EquipementS70',
+                's80' => 'App\\Entity\\EquipementS80',
+                's100' => 'App\\Entity\\EquipementS100',
+                's120' => 'App\\Entity\\EquipementS120',
+                's130' => 'App\\Entity\\EquipementS130',
+                's140' => 'App\\Entity\\EquipementS140',
+                's150' => 'App\\Entity\\EquipementS150',
+                's160' => 'App\\Entity\\EquipementS160',
+                's170' => 'App\\Entity\\EquipementS170',
+            ];
+            
+            if (!isset($validEntities[$entity])) {
+                return new JsonResponse([
+                    'status' => 'error',
+                    'error' => 'Entité non valide. Utilisez: ' . implode(', ', array_keys($validEntities))
+                ], Response::HTTP_BAD_REQUEST);
+            }
+            
+            $entityClass = $validEntities[$entity];
+            
+            // Appliquer la nouvelle logique pour cette entité uniquement
+            $startTime = microtime(true);
+            
+            // Récupérer les équipements de la BDD
+            $equipements = $entityManager->getRepository($entityClass)->findAll();
+            $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
+            
+            // Récupérer l'ID de liste et vider le cache
+            $idListeKizeo = $formRepository->getIdListeKizeoPourEntite($entityClass);
+            $cache->delete('kizeo_equipments_' . $entity);
+            
+            // Récupérer les données Kizeo
+            $kizeoEquipments = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
+            
+            // Appliquer la nouvelle logique avec logging détaillé
+            $updatedEquipments = $formRepository->compareAndSyncEquipmentsWithDetailedLogging(
+                $structuredEquipements,
+                $kizeoEquipments,
+                $idListeKizeo
+            );
+            
+            $endTime = microtime(true);
+            
+            return new JsonResponse([
+                'status' => 'success',
+                'entity' => $entity,
+                'results' => [
+                    'bdd_count' => count($structuredEquipements),
+                    'kizeo_before' => count($kizeoEquipments),
+                    'kizeo_after' => count($updatedEquipments),
+                    'execution_time' => round($endTime - $startTime, 2)
+                ],
+                'message' => 'Nouvelle logique appliquée avec succès pour ' . $entity
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Route pour vérifier le statut du cache Redis (optionnel - pour monitoring)
+     */
+    #[Route('/api/forms/cache/status', name: 'app_api_form_cache_status', methods: ['GET'])]
+    public function getCacheStatus(CacheInterface $cache): JsonResponse
+    {
+        try {
+            // Test de connexion au cache
+            $testKey = 'cache_test_' . time();
+            $cache->get($testKey, function(ItemInterface $item) {
+                $item->expiresAfter(10);
+                return 'test_value';
+            });
+            
+            // Suppression de la clé de test
+            $cache->delete($testKey);
+            
+            // Information sur les clés existantes liées aux équipements
+            $cacheInfo = [
+                'status' => 'connected',
+                'type' => 'redis',
+                'test_passed' => true,
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            return new JsonResponse($cacheInfo, Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+    }
+
+    /**
+     * Route pour vider le cache des équipements Kizeo (optionnel - pour maintenance)
+     */
+    #[Route('/api/forms/cache/clear/kizeo', name: 'app_api_form_cache_clear_kizeo', methods: ['DELETE'])]
+    public function clearKizeoCache(CacheInterface $cache): JsonResponse
+    {
+        try {
+            $clearedKeys = [];
+            
+            // Liste des entités pour construire les clés de cache
+            $entities = ['s10', 's40', 's50', 's60', 's70', 's80', 's100', 's120', 's130', 's140', 's150', 's160', 's170'];
+            
+            foreach ($entities as $entity) {
+                $cacheKey = 'kizeo_equipments_' . $entity;
+                if ($cache->delete($cacheKey)) {
+                    $clearedKeys[] = $cacheKey;
+                }
+            }
+            
+            return new JsonResponse([
+                'message' => 'Cache Kizeo vidé avec succès',
+                'cleared_keys' => $clearedKeys,
+                'count' => count($clearedKeys),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], Response::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'message' => 'Erreur lors du vidage du cache',
+                'error' => $e->getMessage(),
+                'timestamp' => date('Y-m-d H:i:s')
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * 
      * Save PDF maintenance on remote server --                                  THIRD CALL IN CRON TASK
@@ -653,293 +1255,6 @@ class FormController extends AbstractController
             error_log("Erreur updateAsyncStatus: " . $e->getMessage());
         }
     }
-
-    // ================================================================
-    // CORRECTION HTML : Page de test sans erreur JSON
-    // ================================================================
-
-    /**
-     * ROUTE CORRIGÉE pour la page de test
-     */
-    #[Route('/test_async', name: 'app_test_async', methods: ['GET'])]
-    public function testAsyncPage(): Response
-    {
-        $html = '<!DOCTYPE html>
-        <html lang="fr">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Marquage Formulaires - Traitement Asynchrone</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    max-width: 800px;
-                    margin: 0 auto;
-                    padding: 20px;
-                    background-color: #f5f5f5;
-                }
-                .container {
-                    background: white;
-                    padding: 30px;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                }
-                .btn {
-                    background: #007bff;
-                    color: white;
-                    padding: 12px 24px;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 16px;
-                    margin: 10px 5px;
-                }
-                .btn:hover { background: #0056b3; }
-                .btn:disabled { 
-                    background: #ccc; 
-                    cursor: not-allowed; 
-                }
-                .status-box {
-                    background: #f8f9fa;
-                    border: 1px solid #dee2e6;
-                    border-radius: 4px;
-                    padding: 15px;
-                    margin: 15px 0;
-                    min-height: 100px;
-                }
-                .progress-bar {
-                    width: 100%;
-                    height: 20px;
-                    background: #e9ecef;
-                    border-radius: 10px;
-                    overflow: hidden;
-                    margin: 10px 0;
-                }
-                .progress-fill {
-                    height: 100%;
-                    background: #28a745;
-                    transition: width 0.3s ease;
-                    text-align: center;
-                    line-height: 20px;
-                    color: white;
-                    font-size: 12px;
-                }
-                .status-started { border-left: 4px solid #007bff; }
-                .status-processing { border-left: 4px solid #ffc107; }
-                .status-completed { border-left: 4px solid #28a745; }
-                .status-failed { border-left: 4px solid #dc3545; }
-                .error-list {
-                    background: #f8d7da;
-                    border: 1px solid #f5c6cb;
-                    border-radius: 4px;
-                    padding: 10px;
-                    margin-top: 10px;
-                    max-height: 200px;
-                    overflow-y: auto;
-                }
-                .success-info {
-                    background: #d4edda;
-                    border: 1px solid #c3e6cb;
-                    border-radius: 4px;
-                    padding: 10px;
-                    margin-top: 10px;
-                }
-                .timestamp {
-                    color: #6c757d;
-                    font-size: 12px;
-                }
-                .current-form {
-                    background: #fff3cd;
-                    border: 1px solid #ffeaa7;
-                    border-radius: 4px;
-                    padding: 8px;
-                    margin: 5px 0;
-                    font-size: 14px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>🔄 Marquage des Formulaires de Maintenance</h1>
-                <p>Cette page permet de marquer tous les formulaires de maintenance comme "non lus" en arrière-plan.</p>
-                
-                <div>
-                    <button id="startBtn" class="btn" onclick="startProcess()">
-                        🚀 Démarrer le processus
-                    </button>
-                    <button id="refreshBtn" class="btn" onclick="refreshStatus()" disabled>
-                        🔄 Actualiser le statut
-                    </button>
-                    <button id="stopBtn" class="btn" onclick="stopChecking()" style="background: #dc3545;" disabled>
-                        ⏹️ Arrêter le suivi
-                    </button>
-                </div>
-                
-                <div id="statusContainer" class="status-box" style="display: none;">
-                    <h3>📊 Statut du processus</h3>
-                    <div id="statusContent"></div>
-                </div>
-            </div>
-
-            <script>
-                let currentProcessId = null;
-                let statusInterval = null;
-                let isProcessRunning = false;
-
-                async function startProcess() {
-                    try {
-                        document.getElementById("startBtn").disabled = true;
-                        document.getElementById("startBtn").textContent = "⏳ Démarrage...";
-                        
-                        const response = await fetch("/api/forms/markasunread");
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            currentProcessId = data.process_id;
-                            isProcessRunning = true;
-                            
-                            document.getElementById("statusContainer").style.display = "block";
-                            document.getElementById("refreshBtn").disabled = false;
-                            document.getElementById("stopBtn").disabled = false;
-                            
-                            showStatus({
-                                status: "started",
-                                message: data.message,
-                                started_at: data.started_at,
-                                process_id: data.process_id
-                            });
-                            
-                            startStatusChecking();
-                            
-                        } else {
-                            alert("Erreur: " + data.error);
-                            resetButtons();
-                        }
-                        
-                    } catch (error) {
-                        console.error("Erreur:", error);
-                        alert("Erreur lors du démarrage: " + error.message);
-                        resetButtons();
-                    }
-                }
-
-                async function refreshStatus() {
-                    if (!currentProcessId) return;
-                    
-                    try {
-                        const response = await fetch("/api/forms/markasunread/status/" + currentProcessId);
-                        const data = await response.json();
-                        
-                        if (data.success) {
-                            showStatus(data.data);
-                            
-                            if (data.data.status === "completed" || data.data.status === "failed") {
-                                stopChecking();
-                            }
-                        } else {
-                            showError("Erreur lors de la récupération du statut: " + data.error);
-                        }
-                        
-                    } catch (error) {
-                        console.error("Erreur:", error);
-                        showError("Erreur de communication: " + error.message);
-                    }
-                }
-
-                function startStatusChecking() {
-                    statusInterval = setInterval(refreshStatus, 2000);
-                }
-
-                function stopChecking() {
-                    if (statusInterval) {
-                        clearInterval(statusInterval);
-                        statusInterval = null;
-                    }
-                    isProcessRunning = false;
-                    resetButtons();
-                }
-
-                function resetButtons() {
-                    document.getElementById("startBtn").disabled = false;
-                    document.getElementById("startBtn").textContent = "🚀 Démarrer le processus";
-                    document.getElementById("refreshBtn").disabled = true;
-                    document.getElementById("stopBtn").disabled = true;
-                }
-
-                function showStatus(status) {
-                    const container = document.getElementById("statusContent");
-                    const statusClass = "status-" + status.status;
-                    
-                    let html = "<div class=\"" + statusClass + "\">";
-                    html += "<h4>📍 Statut: " + getStatusText(status.status) + "</h4>";
-                    html += "<p><strong>ID du processus:</strong> " + currentProcessId + "</p>";
-                    html += "<p><strong>Message:</strong> " + (status.message || "En cours...") + "</p>";
-                    html += "<p class=\"timestamp\"><strong>Dernière mise à jour:</strong> " + (status.last_updated || "N/A") + "</p>";
-                    
-                    if (status.progress !== undefined) {
-                        html += "<div class=\"progress-bar\">";
-                        html += "<div class=\"progress-fill\" style=\"width: " + status.progress + "%\">";
-                        html += status.progress + "%";
-                        html += "</div></div>";
-                    }
-                    
-                    if (status.total > 0) {
-                        html += "<p><strong>Progression:</strong> " + (status.processed || 0) + " / " + status.total + " formulaires</p>";
-                        html += "<p><strong>Succès:</strong> " + (status.success_count || 0) + " | <strong>Erreurs:</strong> " + (status.error_count || 0) + "</p>";
-                    }
-                    
-                    if (status.current_form) {
-                        html += "<div class=\"current-form\">";
-                        html += "<strong>📝 En cours:</strong> " + status.current_form.name + " ";
-                        html += "(" + status.current_form.index + "/" + status.total + ")";
-                        html += "</div>";
-                    }
-                    
-                    if (status.final_summary) {
-                        html += "<div class=\"success-info\">";
-                        html += "<h5>✅ Résumé final</h5>";
-                        html += "<p><strong>Total traité:</strong> " + status.final_summary.total_processed + "</p>";
-                        html += "<p><strong>Réussis:</strong> " + status.final_summary.successful + "</p>";
-                        html += "<p><strong>Échoués:</strong> " + status.final_summary.failed + "</p>";
-                        html += "<p><strong>Taux de réussite:</strong> " + status.final_summary.success_rate + "%</p>";
-                        html += "</div>";
-                    }
-                    
-                    html += "</div>";
-                    container.innerHTML = html;
-                }
-
-                function showError(message) {
-                    const container = document.getElementById("statusContent");
-                    container.innerHTML = "<div class=\"status-failed\"><h4>❌ Erreur</h4><p>" + message + "</p></div>";
-                }
-
-                function getStatusText(status) {
-                    const statusMap = {
-                        "started": "🟡 Démarré",
-                        "fetching_forms": "🔍 Récupération des formulaires",
-                        "processing": "⚙️ En cours de traitement",
-                        "completed": "✅ Terminé avec succès",
-                        "failed": "❌ Échec"
-                    };
-                    return statusMap[status] || status;
-                }
-
-                window.addEventListener("beforeunload", function() {
-                    if (statusInterval) {
-                        clearInterval(statusInterval);
-                    }
-                });
-            </script>
-        </body>
-        </html>';
-
-        return new Response($html);
-    }
-    
-    // ------------------------------------------------------------------------------------------------------------------------
-    // ------------------------------------------------------------------------------------------------------------------------
-    // ------------------------------------------------------------------------------------------------------------------------
 
     /**
      * 

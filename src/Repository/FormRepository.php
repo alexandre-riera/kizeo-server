@@ -34,7 +34,7 @@ use stdClass;
  */
 class FormRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry,  private HttpClientInterface $client)
+    public function __construct(ManagerRegistry $registry,  public HttpClientInterface $client)
     {
         parent::__construct($registry, Form::class);
     }
@@ -276,7 +276,7 @@ class FormRepository extends ServiceEntityRepository
      * Récupère tous les data_ids pour un form_id donné
      * Utilise l'endpoint /data/advanced qui est plus efficace
      */
-    private function getDataIdsForForm($formId, $cache): array
+    public function getDataIdsForForm($formId, $cache): array
     {
         $cacheKey = "form_data_ids_$formId";
         
@@ -323,7 +323,7 @@ class FormRepository extends ServiceEntityRepository
      * Marque tous les data_ids d'un formulaire comme "non lus"
      * Suit exactement la spec Kizeo: POST /forms/{formId}/markasunreadbyaction/read
      */
-    private function markFormDataAsUnread($formId, $dataIds): void
+    public function markFormDataAsUnread($formId, $dataIds): void
     {
         try {
             // Construire l'URL selon la spec Kizeo
@@ -459,7 +459,7 @@ class FormRepository extends ServiceEntityRepository
         foreach ($allFormsKeyId as $key) {
             $responseUnread = $this->client->request(
                 'GET',
-                'https://forms.kizeo.com/rest/v3/forms/' .  $key . '/data/unread/read/5', [
+                'https://forms.kizeo.com/rest/v3/forms/' .  $key . '/data/unread/enfintraite/5', [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
@@ -837,7 +837,7 @@ class FormRepository extends ServiceEntityRepository
      * @param string $typeLibelle Le libellé du type d'équipement
      * @return string Le code du type (ex: SEC pour porte sectionnelle)
      */
-    private function getTypeCodeFromLibelle(string $typeLibelle): string
+    public function getTypeCodeFromLibelle(string $typeLibelle): string
     {
         // Mappings connus pour les types d'équipement courants
         $typeCodeMap = [
@@ -911,7 +911,7 @@ class FormRepository extends ServiceEntityRepository
     * @param string $entityAgency La classe de l'entité d'agence
     * @return int Le prochain numéro à utiliser
     */
-    private function getNextEquipmentNumberFromDatabase(string $typeCode, string $idClient, string $entityAgency): int
+    public function getNextEquipmentNumberFromDatabase(string $typeCode, string $idClient, string $entityAgency): int
     {
         // Requête pour trouver tous les équipements du même type pour ce client
         $equipements = $this->getEntityManager()->getRepository($entityAgency)
@@ -1131,9 +1131,13 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get equipments in BDD by agency. Then read them and prepare a list of equipments by agency. Then send the list to Kizeo with her list ID
+     * Get equipments in BDD by agency. Then read them and prepare a list of equipments by agency. 
+     * Then send the list to Kizeo with her list ID - VERSION AVEC CACHE REDIS
      */
-    public function updateKizeoWithEquipmentsListFromBdd($entityManager, $formRepository, $cache){
+    public function updateKizeoWithEquipmentsListFromBdd($entityManager, $formRepository, $cache): array
+    {
+        $results = [];
+        
         // Liste des entités d'équipement
         $entitesEquipements = [
             EquipementS10::class,
@@ -1153,29 +1157,64 @@ class FormRepository extends ServiceEntityRepository
 
         // Traitement par entité d'équipement
         foreach ($entitesEquipements as $entite) {
-            // Récupérer les équipements depuis la BDD
-            $equipements = $entityManager->getRepository($entite)->findAll();
-            // Structurer les équipements pour ressembler à la structure de Kizeo
-            $structuredEquipements = $formRepository->structureLikeKizeoEquipmentsList($equipements);
+            try {
+                // Récupérer les équipements depuis la BDD
+                $equipements = $entityManager->getRepository($entite)->findAll();
+                
+                // Structurer les équipements pour ressembler à la structure de Kizeo
+                $structuredEquipements = $this->structureLikeKizeoEquipmentsList($equipements);
 
-            // Diviser les équipements pour faciliter la comparaison
-            // $structuredEquipementsSplitted = $formRepository->splitStructuredEquipmentsToKeepFirstPart($structuredEquipements);
+                // Initialisation de la variable contenant l'id de la liste d'équipements sur Kizeo
+                $idListeKizeo = $this->getIdListeKizeoPourEntite($entite);
 
-            // Initialisation de la variable contenant l'id de la liste d'équipements sur Kizeo
-            $idListeKizeo = $this->getIdListeKizeoPourEntite($entite); // Obtenir l'ID de la liste Kizeo associée à l'entité
+                // Nom du cache basé sur l'entité
+                $nomCache = strtolower(str_replace('Equipement', '', $entite));
+                
+                // Récupérer la liste des équipements Kizeo depuis le cache Redis
+                $kizeoEquipments = $cache->get(
+                    'kizeo_equipments_' . $nomCache, 
+                    function(ItemInterface $item) use ($formRepository, $idListeKizeo) {
+                        // Cache expirant après 15 minutes
+                        $item->expiresAfter(900);
+                        
+                        // Récupérer les données depuis l'API Kizeo
+                        return $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
+                    }
+                );
 
-            // Récupérer la liste des équipements Kizeo depuis le cache
-            $nomCache = strtolower(str_replace('Equipement', '', $entite)); 
-            $kizeoEquipments = $cache->get('kizeo_equipments_' . $nomCache, function(ItemInterface $item) use ($formRepository, $entite, $idListeKizeo) {
-                $item->expiresAfter(900); // 15 minutes en cache
-                $idListeKizeo = $this->getIdListeKizeoPourEntite($entite); // Obtenir l'ID de la liste Kizeo associée à l'entité
-                $result = $formRepository->getAgencyListEquipementsFromKizeoByListId($idListeKizeo);
-                return $result;
-            });
-            // Comparer et mettre à jour la liste Kizeo
-            $this->compareAndSyncEquipments($structuredEquipements, $kizeoEquipments, $idListeKizeo);
-            
+                // Comparer et mettre à jour la liste Kizeo
+                $updatedEquipments = $this->compareAndSyncEquipments(
+                    $structuredEquipements, 
+                    $kizeoEquipments, 
+                    $idListeKizeo
+                );
+                
+                // Invalider le cache après mise à jour
+                $cache->delete('kizeo_equipments_' . $nomCache);
+                
+                // Ajouter le résultat au tableau de retour
+                $results[$nomCache] = [
+                    'entite' => $entite,
+                    'id_liste_kizeo' => $idListeKizeo,
+                    'equipments_count' => count($structuredEquipements),
+                    'updated_count' => count($updatedEquipments),
+                    'status' => 'success'
+                ];
+                
+            } catch (\Exception $e) {
+                // Log de l'erreur et continuation avec l'entité suivante
+                $results[$nomCache] = [
+                    'entite' => $entite,
+                    'status' => 'error',
+                    'error_message' => $e->getMessage()
+                ];
+                
+                // Log l'erreur (si vous avez un logger configuré)
+                // $this->logger->error('Erreur mise à jour Kizeo pour ' . $entite, ['exception' => $e]);
+            }
         }
+        
+        return $results;
     }
 
     /**
@@ -1202,40 +1241,287 @@ class FormRepository extends ServiceEntityRepository
     *   La fonction updateAllVisits gère la mise à jour des visites associées en parcourant la liste et en remplaçant les lignes qui correspondent au préfixe.
     *   Assurez-vous que la fonction envoyerListeKizeo est correctement implémentée pour envoyer les données mises à jour à Kizeo Forms.
     *   J'ai modifié la fonction updateAllVisits pour qu'elle modifie directement le tableau $kizeoEquipments qui lui est passé en paramètre.
+    * Compare et synchronise les équipements entre BDD et Kizeo - VERSION CORRIGÉE
+    * 
+    * Le format des équipements est : "RAISON_SOCIALE\VISITE\NUMERO_EQUIPEMENT|libelle|type|..."
+    * La comparaison doit se faire sur l'ensemble de la partie avant le premier "|"
     */
-    private function compareAndSyncEquipments($structuredEquipements, $kizeoEquipments, $idListeKizeo) {
-        $updatedKizeoEquipments = $kizeoEquipments; // Initialiser avec les données Kizeo existantes
-    
+    public function compareAndSyncEquipments($structuredEquipements, $kizeoEquipments, $idListeKizeo): array 
+    {
+        // Nettoyer d'abord tous les équipements Kizeo
+        $cleanedKizeoEquipments = [];
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $cleanedKizeoEquipments[] = $this->cleanKizeoFormat($kizeoEquipment);
+        }
+        
+        $updatedKizeoEquipments = $cleanedKizeoEquipments;
+
         foreach ($structuredEquipements as $structuredEquipment) {
-            $structuredPrefix = explode('|', $structuredEquipment)[0]; // Extraire le préfixe de la BDD
-    
-            $foundAndReplaced = false;
-            foreach ($updatedKizeoEquipments as $key => $kizeoEquipment) {
-                $kizeoPrefix = explode('|', $kizeoEquipment)[0]; // Extraire le préfixe de Kizeo
-    
-                if ($kizeoPrefix === $structuredPrefix) {
-                    // Remplacer l'élément Kizeo correspondant par celui de la BDD
-                    $updatedKizeoEquipments[$key] = $structuredEquipment;
-                    $foundAndReplaced = true;
-                    break; // Sortir de la boucle interne une fois le remplacement effectué
+            $structuredFullKey = explode('|', $structuredEquipment)[0];
+            $keyParts = explode('\\', $structuredFullKey);
+            $equipmentBaseKey = ($keyParts[0] ?? '') . '\\' . ($keyParts[2] ?? '');
+
+            $equipmentExistsInKizeo = $this->equipmentExistsInKizeo($updatedKizeoEquipments, $equipmentBaseKey);
+            
+            if ($equipmentExistsInKizeo) {
+                $this->updateAllVisitsForEquipment($updatedKizeoEquipments, $equipmentBaseKey, $structuredEquipment);
+                
+                $specificVisitExists = $this->specificVisitExists($updatedKizeoEquipments, $structuredFullKey);
+                if (!$specificVisitExists) {
+                    $updatedKizeoEquipments[] = $structuredEquipment;
                 }
-            }
-    
-            // Si aucun élément correspondant n'a été trouvé dans Kizeo, ajouter le nouvel élément
-            if (!$foundAndReplaced) {
+            } else {
                 $updatedKizeoEquipments[] = $structuredEquipment;
             }
-    
-            // Mettre à jour toutes les visites associées (si nécessaire)
-            $this->updateAllVisits($updatedKizeoEquipments, $structuredPrefix, $structuredEquipment);
         }
-    
-        // Envoyer la liste mise à jour à Kizeo Forms
+
         $this->envoyerListeKizeo($updatedKizeoEquipments, $idListeKizeo);
-    
         return $updatedKizeoEquipments;
     }
-    
+
+    /**
+     * Met à jour toutes les visites d'un même équipement avec les nouvelles données
+     * FONCTION CORRIGÉE
+     */
+    public function updateAllVisitsForEquipment(&$kizeoEquipments, $equipmentBaseKey, $newEquipment): void
+    {
+        $newEquipmentData = explode('|', $newEquipment);
+        $newEquipmentFullKey = $newEquipmentData[0]; // RAISON_SOCIALE\VISITE\NUMERO_EQUIPEMENT
+        
+        foreach ($kizeoEquipments as $key => $kizeoEquipment) {
+            $kizeoEquipmentData = explode('|', $kizeoEquipment);
+            $kizeoFullKey = $kizeoEquipmentData[0];
+            
+            // Extraire la clé de base de l'équipement Kizeo (sans visite)
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            // Si c'est le même équipement (même raison sociale + même numéro d'équipement)
+            // MAIS pas la même ligne (éviter de re-traiter la ligne qu'on vient d'ajouter/modifier)
+            if ($kizeoBaseKey === $equipmentBaseKey && $kizeoFullKey !== $newEquipmentFullKey) {
+                
+                // Mettre à jour seulement les données techniques (à partir de l'index 2)
+                // On garde : [0] = clé complète Kizeo, [1] = libellé équipement
+                // On met à jour : [2] = année, [3] = n° série, [4] = marque, etc.
+                for ($i = 2; $i < count($newEquipmentData); $i++) {
+                    if (isset($newEquipmentData[$i])) {
+                        if (isset($kizeoEquipmentData[$i])) {
+                            $kizeoEquipmentData[$i] = $newEquipmentData[$i];
+                        } else {
+                            $kizeoEquipmentData[] = $newEquipmentData[$i];
+                        }
+                    }
+                }
+                
+                // Reconstruire la ligne mise à jour
+                $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData);
+            }
+        }
+    }
+
+    /**
+     * Normalise une clé en supprimant les espaces et caractères indésirables
+     */
+    public function normalizeKey(string $key): string
+    {
+        // Supprimer les espaces en début/fin
+        $key = trim($key);
+        
+        // Supprimer les caractères de contrôle invisibles
+        $key = preg_replace('/[\x00-\x1F\x7F]/', '', $key);
+        
+        // Normaliser les séparateurs de chemin
+        $key = str_replace(['/', '\\\\'], '\\', $key);
+        
+        return $key;
+    }
+
+    /////////////////// TEMPORAIRE ////////////////////////////////////////////////
+    public function structureEquipmentsForKizeo($equipements): array
+    {
+        $structuredEquipements = [];
+        
+        foreach ($equipements as $equipement) {
+            $equipmentLine = 
+                ($equipement->getRaisonSociale() ?? '') . '\\' .
+                ($equipement->getVisite() ?? '') . '\\' .
+                ($equipement->getNumeroEquipement() ?? '') . '|' .
+                ($equipement->getLibelleEquipement() ?? '') . '|' .
+                ($equipement->getMiseEnService() ?? '') . '|' .
+                ($equipement->getNumeroDeSerie() ?? '') . '|' .
+                ($equipement->getMarque() ?? '') . '|' .
+                ($equipement->getHauteur() ?? '') . '|' .
+                ($equipement->getLargeur() ?? '') . '|' .
+                ($equipement->getRepereSiteClient() ?? '') . '|' .
+                ($equipement->getIdContact() ?? '') . '|' .
+                ($equipement->getCodeSociete() ?? '') . '|' .
+                ($equipement->getCodeAgence() ?? '');
+                
+            $structuredEquipements[] = $equipmentLine;
+        }
+        
+        return $structuredEquipements;
+    }
+
+    /**
+     * Versions adaptées des méthodes avec nettoyage - AJOUTER DANS FormRepository.php
+     */
+    private function equipmentExistsInKizeoWithCleaning($cleanedKizeoEquipments, $equipmentBaseKey): bool
+    {
+        foreach ($cleanedKizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Simulation simple - AJOUTER cette méthode dans FormRepository.php
+     */
+    public function simulateSimpleSync($structuredEquipements, $kizeoEquipments): array
+    {
+        $result = $kizeoEquipments; // Commencer avec les équipements Kizeo existants
+        
+        foreach ($structuredEquipements as $structuredEquipment) {
+            $structuredKey = explode('|', $structuredEquipment)[0]; // RAISON_SOCIALE\VISITE\NUMERO
+            
+            // Vérifier si cet équipement exact existe déjà
+            $found = false;
+            foreach ($result as $key => $existingEquipment) {
+                $existingKey = explode('|', $existingEquipment)[0];
+                if ($existingKey === $structuredKey) {
+                    // Remplacer l'équipement existant
+                    $result[$key] = $structuredEquipment;
+                    $found = true;
+                    break;
+                }
+            }
+            
+            // Si pas trouvé, ajouter
+            if (!$found) {
+                $result[] = $structuredEquipment;
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Simulation de sync avec nettoyage
+     */
+    private function simulateSyncWithCleaning($structuredEquipements, $cleanedKizeoEquipments): array
+    {
+        $result = $cleanedKizeoEquipments;
+        
+        foreach ($structuredEquipements as $structuredEquipment) {
+            $structuredKey = explode('|', $structuredEquipment)[0]; // RAISON_SOCIALE\VISITE\NUMERO
+            
+            // Chercher dans les équipements Kizeo nettoyés
+            $found = false;
+            foreach ($result as $key => $existingEquipment) {
+                $existingKey = explode('|', $existingEquipment)[0];
+                if ($existingKey === $structuredKey) {
+                    // Remplacer par les données de la BDD
+                    $result[$key] = $structuredEquipment;
+                    $found = true;
+                    break;
+                }
+            }
+            
+            // Si pas trouvé, ajouter
+            if (!$found) {
+                $result[] = $structuredEquipment;
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Version finale de compareAndSyncEquipmentsWithKizeoFormatFix - AJOUTER DANS FormRepository.php
+     */
+    public function compareAndSyncEquipmentsWithKizeoFormatFix($structuredEquipements, $kizeoEquipments, $idListeKizeo): array 
+    {
+        // Nettoyer d'abord tous les équipements Kizeo
+        $cleanedKizeoEquipments = [];
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $cleanedKizeoEquipments[] = $this->cleanKizeoFormat($kizeoEquipment);
+        }
+        
+        $updatedKizeoEquipments = $cleanedKizeoEquipments;
+
+        foreach ($structuredEquipements as $structuredEquipment) {
+            $structuredFullKey = explode('|', $structuredEquipment)[0];
+            $keyParts = explode('\\', $structuredFullKey);
+            $equipmentBaseKey = ($keyParts[0] ?? '') . '\\' . ($keyParts[2] ?? '');
+
+            // Vérifier si cet équipement existe déjà sur Kizeo (peu importe la visite)
+            $equipmentExistsInKizeo = $this->equipmentExistsInKizeoWithCleaning($updatedKizeoEquipments, $equipmentBaseKey);
+            
+            if ($equipmentExistsInKizeo) {
+                // L'équipement existe déjà : mettre à jour toutes ses visites
+                $this->updateAllVisitsForEquipmentWithCleaning($updatedKizeoEquipments, $equipmentBaseKey, $structuredEquipment);
+                
+                // Vérifier si la visite spécifique existe, sinon l'ajouter
+                $specificVisitExists = $this->specificVisitExistsWithCleaning($updatedKizeoEquipments, $structuredFullKey);
+                if (!$specificVisitExists) {
+                    $updatedKizeoEquipments[] = $structuredEquipment;
+                }
+            } else {
+                // L'équipement n'existe pas du tout : l'ajouter
+                $updatedKizeoEquipments[] = $structuredEquipment;
+            }
+        }
+
+        $this->envoyerListeKizeo($updatedKizeoEquipments, $idListeKizeo);
+        return $updatedKizeoEquipments;
+    }
+
+    private function specificVisitExistsWithCleaning($cleanedKizeoEquipments, $structuredFullKey): bool
+    {
+        foreach ($cleanedKizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            if ($kizeoFullKey === $structuredFullKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function updateAllVisitsForEquipmentWithCleaning(&$cleanedKizeoEquipments, $equipmentBaseKey, $newEquipment): void
+    {
+        $newEquipmentData = explode('|', $newEquipment);
+        $newEquipmentFullKey = $newEquipmentData[0];
+        
+        foreach ($cleanedKizeoEquipments as $key => $kizeoEquipment) {
+            $kizeoEquipmentData = explode('|', $kizeoEquipment);
+            $kizeoFullKey = $kizeoEquipmentData[0];
+            
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey && $kizeoFullKey !== $newEquipmentFullKey) {
+                // Mettre à jour les données techniques
+                for ($i = 2; $i < count($newEquipmentData); $i++) {
+                    if (isset($newEquipmentData[$i])) {
+                        if (isset($kizeoEquipmentData[$i])) {
+                            $kizeoEquipmentData[$i] = $newEquipmentData[$i];
+                        } else {
+                            $kizeoEquipmentData[] = $newEquipmentData[$i];
+                        }
+                    }
+                }
+                
+                $cleanedKizeoEquipments[$key] = implode('|', $kizeoEquipmentData);
+            }
+        }
+    }
+
     /**
      * Explication des modifications:
 
@@ -1266,34 +1552,35 @@ class FormRepository extends ServiceEntityRepository
     * 2. Comparaison basée sur le client ET le numéro d'équipement exact
     * 3. Évite la mise à jour de tous les équipements du même type
     */
-    private function updateAllVisits(&$kizeoEquipments, $prefixToUpdate, $newEquipment) {
-        $clientPrefix = explode('\\', $prefixToUpdate)[0]; // Extrait le préfixe du client (raison_sociale)
-        $newEquipmentData = explode('|', $newEquipment); // Tableau des nouvelles données de l'équipement
+    public function updateAllVisits(&$kizeoEquipments, $structuredPrefix, $newEquipment): void
+    {
+        $newEquipmentData = explode('|', $newEquipment);
         
-        // CORRECTION : Extraire le numéro d'équipement spécifique depuis le préfixe
-        // Format du préfixe : "RAISON_SOCIALE\VISITE\NUMERO_EQUIPEMENT"
-        $equipmentNumberFromPrefix = explode('\\', $prefixToUpdate)[2]; // Ex: "SEC01"
+        // Extraire le préfixe client et le numéro d'équipement pour une comparaison plus précise
+        $clientPrefix = explode('\\', $structuredPrefix)[0] ?? '';
+        $equipmentNumberFromPrefix = explode('\\', $structuredPrefix)[2] ?? '';
 
         foreach ($kizeoEquipments as $key => $equipment) {
-            $kizeoClientPrefix = explode('\\', $equipment)[0];
-            $kizeoEquipmentData = explode('|', $equipment); // Tableau des données actuelles de l'équipement Kizeo
+            $kizeoEquipmentData = explode('|', $equipment);
             
-            // CORRECTION : Extraire le numéro d'équipement depuis la ligne Kizeo
-            $kizeoEquipmentNumber = explode('\\', $equipment)[2]; // Ex: "SEC01", "SEC02", etc.
+            // Extraire les mêmes informations depuis l'équipement Kizeo
+            $kizeoFullPrefix = explode('|', $equipment)[0] ?? '';
+            $kizeoClientPrefix = explode('\\', $kizeoFullPrefix)[0] ?? '';
+            $kizeoEquipmentNumber = explode('\\', $kizeoFullPrefix)[2] ?? '';
 
-            // CORRECTION : Comparer le client ET le numéro d'équipement spécifique
+            // Comparer le client ET le numéro d'équipement spécifique
             if ($kizeoClientPrefix === $clientPrefix && $kizeoEquipmentNumber === $equipmentNumberFromPrefix) {
                 // Met à jour les données après le "|" (pipe)
-                for ($i = 2; $i < count($newEquipmentData); $i++) { // Commence à l'indice 2 pour les données après le nom de l'équipement
+                for ($i = 2; $i < count($newEquipmentData); $i++) {
                     if (isset($kizeoEquipmentData[$i])) {
                         $kizeoEquipmentData[$i] = $newEquipmentData[$i];
                     } else {
                         $kizeoEquipmentData[] = $newEquipmentData[$i];
                     }
                 }
-                $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData); // Reconstruit la ligne avec les données mises à jour
+                $kizeoEquipments[$key] = implode('|', $kizeoEquipmentData);
                 
-                // CORRECTION : Sortir de la boucle une fois l'équipement trouvé et mis à jour
+                // Sortir de la boucle une fois l'équipement trouvé et mis à jour
                 break;
             }
         }
@@ -1302,99 +1589,120 @@ class FormRepository extends ServiceEntityRepository
     /**
      * Envoie la liste d'équipements mise à jour à Kizeo
      */
-    private function envoyerListeKizeo($kizeoEquipments, $idListeKizeo)
+    public function envoyerListeKizeo($kizeoEquipments, $idListeKizeo): void
     {
-
         Request::enableHttpMethodParameterOverride();
         $client = new Client();
-        $response = $client->request(
-            'PUT',
-            'https://forms.kizeo.com/rest/v3/lists/' . $idListeKizeo,
-            [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                ],
-                'json' => [
-                    'items' => $kizeoEquipments,
+        
+        try {
+            $response = $client->request(
+                'PUT',
+                'https://forms.kizeo.com/rest/v3/lists/' . $idListeKizeo,
+                [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'json' => [
+                        'items' => array_values($kizeoEquipments), // Réindexer le tableau
+                    ],
+                    'timeout' => 30, // Timeout de 30 secondes
                 ]
-            ]
-        );
+            );
+            
+            // Log du succès (optionnel)
+            // $this->logger->info('Liste Kizeo mise à jour avec succès', ['liste_id' => $idListeKizeo]);
+            
+        } catch (\Exception $e) {
+            // Log de l'erreur et relancer l'exception
+            // $this->logger->error('Erreur envoi liste Kizeo', ['liste_id' => $idListeKizeo, 'error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 
     /**
-     * Obtient le nom de la liste Kizeo associée à l'entité d'équipement
+     * Obtient l'ID de liste Kizeo associé à l'entité d'équipement
      */
-    private function getIdListeKizeoPourEntite($entite)
+    public function getIdListeKizeoPourEntite($entite): int
     {
-        // Implémentez ici la logique pour obtenir le nom de la liste Kizeo 
-        // en fonction de l'entité d'équipement (par exemple, à partir d'une configuration)
-        // Exemple :
-        switch ($entite) {
-            case EquipementS10::class:
-                return 437895; // ID de test liste Kizeo Group           : 437895         ID liste en prod : NON EN PRODUCTION 
-            case EquipementS40::class:
-                return 427442; // ID de test liste Kizeo St Etienne      : 437995         ID liste en prod  : 427442
-            case EquipementS50::class:
-                return 414025; // ID de test liste Kizeo Grenoble        : 437695         ID liste en prod  : 414025
-            case EquipementS60::class:
-                return 427444; // ID de test liste Kizeo Lyon            : 437996         ID liste en prod  : 427444
-            case EquipementS70::class:
-                return 440263; // ID de test liste Kizeo Bordeaux        : 437897         ID liste en prod  : 440263
-            case EquipementS80::class:
-                return 421993; // ID de test liste Kizeo Paris Nord      : 438000         ID liste en prod  : 421993
-            case EquipementS100::class:
-                return 423853; // ID de test liste Kizeo Montpellier     : 437997         ID liste en prod  : 423853
-            case EquipementS120::class:
-                return 434252; // ID de test liste Kizeo Hauts de France : 437999         ID liste en prod  : 434252
-            case EquipementS130::class:
-                return 440667; // ID de test liste Kizeo Toulouse        : 437977         ID liste en prod  : 440667
-            case EquipementS140::class:
-                return 427682; // ID de test liste Kizeo SMP             : 438006         ID liste en prod  : 427682
-            case EquipementS150::class:
-                return 440276; // ID de test liste Kizeo SOGEFI          : 437976         ID liste en prod  : 440276
-            case EquipementS160::class:
-                return 441758; // ID de test liste Kizeo Rouen           : 437978         ID liste en prod  : 441758 
-            case EquipementS170::class:
-                return 437979; // ID de test liste Kizeo Rennes          : 437979         ID liste en prod  : NON EN PRODUCTION 
-            default:
-                throw new Exception("Nom de liste Kizeo non défini pour l'entité " . $entite);
-        }
-    }
-
-    // Function for agency equipments lists to structure them like Kizeo, to set their "if_exist_DB" with the structured string tuple
-    public function structureLikeKizeoEquipmentsList($agencyEquipmentsList){
-        $equipmentsList = [];
-        foreach ($agencyEquipmentsList as $equipement) {
-            
-            $theProcessedEquipment = 
-            $equipement->getRaisonSociale() . ":" . $equipement->getRaisonSociale() . "\\" .
-            $equipement->getVisite() . ":" . $equipement->getVisite() . "\\" .
-            $equipement->getNumeroEquipement() . ":" . $equipement->getNumeroEquipement() . "|" .
-            ucfirst($equipement->getLibelleEquipement()) . ":" . ucfirst($equipement->getLibelleEquipement()) . "|" .
-            $equipement->getMiseEnService() . ":" . $equipement->getMiseEnService() . "|" .
-            $equipement->getNumeroDeSerie() . ":" . $equipement->getNumeroDeSerie() . "|" .
-            trim($equipement->getMarque()) . ":" . $equipement->getMarque() . "|" .
-            $equipement->getHauteur() . ":" . $equipement->getHauteur() . "|" .
-            $equipement->getLargeur() . ":" . $equipement->getLargeur() . "|" .
-            $equipement->getRepereSiteClient() . ":" . $equipement->getRepereSiteClient() . "|" .
-            $equipement->getIdContact() . ":" . $equipement->getIdContact() . "|" .
-            $equipement->getCodeSociete() . ":" . $equipement->getCodeSociete() . "|" .
-            $equipement->getCodeAgence() . ":" . $equipement->getCodeAgence()
-            ;
-
-            // Set if equipment exist DB with new value from structured agency list for all agencies to match strings from Kizeo Forms
-            $equipement->setIfExistDB($theProcessedEquipment);
-            array_push($equipmentsList, $theProcessedEquipment);
-
-            // Trying to update without 
-            // // tell Doctrine you want to (eventually) save the Product (no queries yet)
-            // $this->getEntityManager()->persist($equipement);
-            // // actually executes the queries (i.e. the INSERT query)
-            // $this->getEntityManager()->flush();
+        // Mapping des entités vers les IDs de listes Kizeo
+        $mapping = [
+            EquipementS10::class => 437895,  // Group - Test: 437895, Prod: 445024
+            EquipementS40::class => 437995,  // St Etienne - Test: 437995, Prod: 427442
+            EquipementS50::class => 437695,  // Grenoble - Test: 437695, Prod: 414025
+            EquipementS60::class => 437996,  // Lyon - Test: 437996, Prod: 427444
+            EquipementS70::class => 437897,  // Bordeaux - Test: 437897, Prod: 440263
+            EquipementS80::class => 438000,  // Paris Nord - Test: 438000, Prod: 421993
+            EquipementS100::class => 437997, // Montpellier - Test: 437997, Prod: 423853
+            EquipementS120::class => 437999, // Hauts de France - Test: 437999, Prod: 434252
+            EquipementS130::class => 437977, // Toulouse - Test: 437977, Prod: 440667
+            EquipementS140::class => 438006, // SMP - Test: 438006, Prod: 427682
+            EquipementS150::class => 437976, // SOGEFI - Test: 437976, Prod: 440276
+            EquipementS160::class => 437978, // Rouen - Test: 437978, Prod: 441758
+            EquipementS170::class => 437979, // Rennes - Test: 437979, Prod: 454540
+        ];
+        
+        if (!isset($mapping[$entite])) {
+            throw new \Exception("ID de liste Kizeo non défini pour l'entité " . $entite);
         }
         
-        return $equipmentsList;
+        return $mapping[$entite];
+    }
+
+    /**
+     * Version optimisée avec gestion d'erreurs et métriques (optionnel)
+     */
+    public function updateKizeoWithEquipmentsListFromBddWithMetrics($entityManager, $formRepository, $cache): array
+    {
+        $startTime = microtime(true);
+        $results = $this->updateKizeoWithEquipmentsListFromBdd($entityManager, $formRepository, $cache);
+        $endTime = microtime(true);
+        
+        // Calcul des métriques
+        $totalTime = $endTime - $startTime;
+        $successCount = count(array_filter($results, fn($r) => $r['status'] === 'success'));
+        $errorCount = count($results) - $successCount;
+        
+        return [
+            'results' => $results,
+            'metrics' => [
+                'total_entities' => count($results),
+                'success_count' => $successCount,
+                'error_count' => $errorCount,
+                'execution_time' => round($totalTime, 2),
+                'cache_status' => 'redis'
+            ]
+        ];
+    }
+
+    /**
+     * Structure les équipements de la BDD pour correspondre au format Kizeo
+     */
+    public function structureLikeKizeoEquipmentsList($equipements): array
+    {
+        $structuredEquipements = [];
+         
+        foreach ($equipements as $equipement) {
+            // Format Kizeo : "Libelle|Type|Année|N° série|Marque|Hauteur|Largeur|Repère|Id client|Id societe|Code agence"
+            $equipmentLine = 
+                ($equipement->getRaisonSociale() ?? '') . '/\/' .           // Raison sociale
+                ($equipement->getVisite() ?? '') . '/\/' .           // Visite
+                ($equipement->getNumeroEquipement() ?? '') . '|' .           // Numéro équipement
+                ($equipement->getLibelleEquipement() ?? '') . '|' .          // Libellé équipement
+                ($equipement->getMiseEnService() ?? '') . '|' .             // Année
+                ($equipement->getNumeroDeSerie() ?? '') . '|' .             // N° de série
+                ($equipement->getMarque() ?? '') . '|' .                    // Marque
+                ($equipement->getHauteur() ?? '') . '|' .                   // Hauteur
+                ($equipement->getLargeur() ?? '') . '|' .                   // Largeur
+                ($equipement->getRepereSiteClient() ?? '') . '|' .          // Repère site client
+                ($equipement->getIdContact() ?? '') . '|' .                  // Id client
+                ($equipement->getCodeSociete() ?? '') . '|' .                 // Id société
+                ($equipement->getCodeAgence() ?? '');                       // Code agence
+                
+            $structuredEquipements[] = $equipmentLine;
+        }
+        
+        return $structuredEquipements;
     }
 
     // Function to preg_split structured equipments to keep only the first part  raison_sociale|visit|numero_equipment
@@ -1407,6 +1715,7 @@ class FormRepository extends ServiceEntityRepository
         }
         return $structuredEquipmentsListSplitted;
     }
+
     //      ----------------------------------------------------------------------------------------------------------------------
     //      ---------------------------------------- SAVE BASE EQUIPMENTS LIST TO LOCAL BDD --------------------------------------
     //      ----------------------------------------------------------------------------------------------------------------------
@@ -2197,5 +2506,62 @@ class FormRepository extends ServiceEntityRepository
         }
         return $picturesdata;
     }
+
+    public function cleanKizeoFormat($kizeoEquipment): string
+    {
+        $parts = explode('|', $kizeoEquipment);
+        $cleanedParts = [];
+        
+        foreach ($parts as $index => $part) {
+            if ($index === 0) {
+                if (strpos($part, ':') !== false) {
+                    $colonParts = explode(':', $part);
+                    $reconstructed = '';
+                    for ($i = 0; $i < count($colonParts); $i += 2) {
+                        if ($i > 0) {
+                            $reconstructed .= '\\';
+                        }
+                        $reconstructed .= $colonParts[$i];
+                    }
+                    $cleanedParts[] = $reconstructed;
+                } else {
+                    $cleanedParts[] = $part;
+                }
+            } else {
+                if (strpos($part, ':') !== false) {
+                    $subParts = explode(':', $part);
+                    $cleanedParts[] = $subParts[0];
+                } else {
+                    $cleanedParts[] = $part;
+                }
+            }
+        }
+        
+        return implode('|', $cleanedParts);
+    }
     
+    public function equipmentExistsInKizeo($kizeoEquipments, $equipmentBaseKey): bool
+    {
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            $kizeoKeyParts = explode('\\', $kizeoFullKey);
+            $kizeoBaseKey = ($kizeoKeyParts[0] ?? '') . '\\' . ($kizeoKeyParts[2] ?? '');
+            
+            if ($kizeoBaseKey === $equipmentBaseKey) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function specificVisitExists($kizeoEquipments, $structuredFullKey): bool
+    {
+        foreach ($kizeoEquipments as $kizeoEquipment) {
+            $kizeoFullKey = explode('|', $kizeoEquipment)[0];
+            if ($kizeoFullKey === $structuredFullKey) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
