@@ -1182,6 +1182,7 @@ class FormRepository extends ServiceEntityRepository
                     }
                 );
 
+ 
                 // Comparer et mettre à jour la liste Kizeo
                 $updatedEquipments = $this->compareAndSyncEquipments(
                     $structuredEquipements, 
@@ -1192,6 +1193,10 @@ class FormRepository extends ServiceEntityRepository
                 // Invalider le cache après mise à jour
                 $cache->delete('kizeo_equipments_' . $nomCache);
                 
+
+                // Avant l'envoi à Kizeo, ajoutez :
+                error_log("Envoi pour entité $entite : " . count($updatedEquipments) . " équipements");
+
                 // Ajouter le résultat au tableau de retour
                 $results[$nomCache] = [
                     'entite' => $entite,
@@ -1274,7 +1279,7 @@ class FormRepository extends ServiceEntityRepository
                 $updatedKizeoEquipments[] = $structuredEquipment;
             }
         }
-
+        
         $this->envoyerListeKizeo($updatedKizeoEquipments, $idListeKizeo);
         return $updatedKizeoEquipments;
     }
@@ -1627,19 +1632,19 @@ class FormRepository extends ServiceEntityRepository
     {
         // Mapping des entités vers les IDs de listes Kizeo
         $mapping = [
-            EquipementS10::class => 445024,  // Group - Test: 437895, Prod: 445024
-            EquipementS40::class => 427442,  // St Etienne - Test: 437995, Prod: 427442
-            EquipementS50::class => 414025,  // Grenoble - Test: 437695, Prod: 414025
-            EquipementS60::class => 427444,  // Lyon - Test: 437996, Prod: 427444
-            EquipementS70::class => 440263,  // Bordeaux - Test: 437897, Prod: 440263
-            EquipementS80::class => 421993,  // Paris Nord - Test: 438000, Prod: 421993
-            EquipementS100::class => 423853, // Montpellier - Test: 437997, Prod: 423853
-            EquipementS120::class => 434252, // Hauts de France - Test: 437999, Prod: 434252
-            EquipementS130::class => 440667, // Toulouse - Test: 437977, Prod: 440667
-            EquipementS140::class => 427682, // SMP - Test: 438006, Prod: 427682
-            EquipementS150::class => 440276, // SOGEFI - Test: 437976, Prod: 440276
-            EquipementS160::class => 441758, // Rouen - Test: 437978, Prod: 441758
-            EquipementS170::class => 454540, // Rennes - Test: 437979, Prod: 454540
+            EquipementS10::class => 437895,  // Group - Test: 437895, Prod: 445024
+            EquipementS40::class => 437995,  // St Etienne - Test: 437995, Prod: 427442
+            EquipementS50::class => 437695,  // Grenoble - Test: 437695, Prod: 414025
+            EquipementS60::class => 437996,  // Lyon - Test: 437996, Prod: 427444
+            EquipementS70::class => 437897,  // Bordeaux - Test: 437897, Prod: 440263
+            EquipementS80::class => 438000,  // Paris Nord - Test: 438000, Prod: 421993
+            EquipementS100::class => 437997, // Montpellier - Test: 437997, Prod: 423853
+            EquipementS120::class => 437999, // Hauts de France - Test: 437999, Prod: 434252
+            EquipementS130::class => 437977, // Toulouse - Test: 437977, Prod: 440667
+            EquipementS140::class => 438006, // SMP - Test: 438006, Prod: 427682
+            EquipementS150::class => 437976, // SOGEFI - Test: 437976, Prod: 440276
+            EquipementS160::class => 437978, // Rouen - Test: 437978, Prod: 441758
+            EquipementS170::class => 437979, // Rennes - Test: 437979, Prod: 454540
         ];
         
         if (!isset($mapping[$entite])) {
@@ -1685,8 +1690,8 @@ class FormRepository extends ServiceEntityRepository
         foreach ($equipements as $equipement) {
             // Format Kizeo : "Libelle|Type|Année|N° série|Marque|Hauteur|Largeur|Repère|Id client|Id societe|Code agence"
             $equipmentLine = 
-                ($equipement->getRaisonSociale() ?? '') . '/\/' .           // Raison sociale
-                ($equipement->getVisite() ?? '') . '/\/' .           // Visite
+                ($equipement->getRaisonSociale() ?? '') . '\\' .           // Raison sociale
+                ($equipement->getVisite() ?? '') . '\\' .           // Visite
                 ($equipement->getNumeroEquipement() ?? '') . '|' .           // Numéro équipement
                 ($equipement->getLibelleEquipement() ?? '') . '|' .          // Libellé équipement
                 ($equipement->getMiseEnService() ?? '') . '|' .             // Année
