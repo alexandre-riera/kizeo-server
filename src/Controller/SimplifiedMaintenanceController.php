@@ -171,8 +171,6 @@ class SimplifiedMaintenanceController extends AbstractController
             'off_contract' => $offContractEquipments
         ];
     }
-
-    // ... Le reste des méthodes reste identique (setCommonEquipmentData, setContractEquipmentData, etc.) ...
     
     /**
      * Définir les données communes à tous les équipements - ADAPTÉE AUX PROPRIÉTÉS EXISTANTES
@@ -2772,7 +2770,9 @@ class SimplifiedMaintenanceController extends AbstractController
             $form->setDataId($entryId);
             $form->setEquipmentId($equipmentCode);
             $form->setCodeEquipement($equipmentCode);
-            $form->setRaisonSocialeVisite($fields['nom_client']['value'] ?? '');
+            $form->setRaisonSocialeVisite(
+                ($equipmentData['nom_client']['value'] ?? '') . '\\' . ($equipmentData['visite']['value'] ?? '')
+            );
             $form->setUpdateTime(date('Y-m-d H:i:s'));
             
             // Photo étiquette SOMAFI
@@ -2914,13 +2914,13 @@ class SimplifiedMaintenanceController extends AbstractController
         return [
             'S10' => '1090092',  // V4- Group / Visite maintenance
             'S40' => '1055931',  // V4- St Etienne / Visite maintenance
-            'S50' => '1065302',  // V5- GRENOBLE / Visite de maintenance
-            // 'S50' => '1052966',  // V4- GRENOBLE / Visite de maintenance
+            // 'S50' => '1065302',  // V5- GRENOBLE / Visite de maintenance
+            'S50' => '1052966',  // V4- GRENOBLE / Visite de maintenance
             'S60' => '1055932',  // V4- Lyon /Visite maintenance
             'S70' => '1057365',  // V4- Bordeaux /Visite maintenance
             'S80' => '1053175',  // V4 - Paris / Visite maintenance
-            'S100' => '1071913', // V5- Montpellier /Visite maintenance
-            // 'S100' => '1052982', // V4- Montpellier /Visite maintenance
+            // 'S100' => '1071913', // V5- Montpellier /Visite maintenance
+            'S100' => '1052982', // V4- Montpellier /Visite maintenance
             'S120' => '1062555', // v4- Portland / visite de maintenance
             'S130' => '1057880', // V4- Toulouse / visite de maintenance
             'S140' => '1088761', // V4 - Smp / visite de maintenance
@@ -3253,7 +3253,7 @@ class SimplifiedMaintenanceController extends AbstractController
             $form->setDataId($entryId);
             $form->setEquipmentId($equipmentCode);
             $form->setCodeEquipement($equipmentCode);
-            $form->setRaisonSocialeVisite($fields['nom_client']['value'] ?? '');
+            $form->setRaisonSocialeVisite($equipmentData['equipement']['path']);
             $form->setUpdateTime(date('Y-m-d H:i:s'));
             
             // Photos (même logique que précédemment)
