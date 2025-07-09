@@ -231,22 +231,53 @@ class EquipementPdfController extends AbstractController
 
         // Pour chaque équipement filtré, récupérer ses photos
         foreach ($equipments as $equipment) {
-            $picturesArray = $entityManager->getRepository(Form::class)->findBy([
-                'code_equipement' => $equipment->getNumeroEquipement(), 
-                'raison_sociale_visite' => $equipment->getRaisonSociale() . "\\" . $equipment->getVisite()
-            ]);
+            $picturesData = [];
             
-            $picturesData = $entityManager->getRepository(Form::class)->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+            // Distinguer entre équipements au contrat et supplémentaires
+            if ($equipment->isEnMaintenance()) {
+                // AU CONTRAT: photo_2
+                // Équipements AU CONTRAT - utilisation de la méthode existante
+                $picturesArray = $entityManager->getRepository(Form::class)->findBy([
+                    'code_equipement' => $equipment->getNumeroEquipement(), 
+                    'raison_sociale_visite' => $equipment->getRaisonSociale() . "\\" . $equipment->getVisite()
+                ]);
+                $picturesData = $entityManager->getRepository(Form::class)->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+            } else {
+                // SUPPLÉMENTAIRES: photo_compte_rendu
+                // Équipements SUPPLÉMENTAIRES - nouvelle méthode spécialisée
+                $picturesData = $entityManager->getRepository(Form::class)->getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment);
+            }
             
             $equipmentsWithPictures[] = [
                 'equipment' => $equipment,
                 'pictures' => $picturesData
             ];
-        } 
+        }
 
         $equipementsSupplementaires = array_filter($equipmentsWithPictures, function($equipement) {
             return $equipement['equipment']->isEnMaintenance() === false;
         });
+
+        // Calculer les statistiques pour les équipements supplémentaires
+        $statistiquesSupplementaires = [];
+        $etatsCountSupplementaires = [];
+
+        foreach ($equipementsSupplementaires as $equipmentData) {
+            $equipment = $equipmentData['equipment'];
+            $etat = $equipment->getEtat();
+            
+            if ($etat && $etat !== "Equipement non présent sur site" && $etat !== "G") {
+                if (!isset($etatsCountSupplementaires[$etat])) {
+                    $etatsCountSupplementaires[$etat] = 0;
+                }
+                $etatsCountSupplementaires[$etat]++;
+            }
+        }
+
+        $statistiquesSupplementaires = [
+            'etatsCount' => $etatsCountSupplementaires
+        ];
+
         $equipementsNonPresents = [];
         foreach ($equipmentsWithPictures as $equipement) {
             if ($equipement['equipment']->getEtat() === "Equipement non présent sur site" || $equipement['equipment']->getEtat() === "G") {
@@ -257,7 +288,7 @@ class EquipementPdfController extends AbstractController
 
         // Déterminer l'URL de l'image en fonction du nom de l'agence
         $imageUrl = $this->getImageUrlForAgency($agence);
-        // dd($imageUrl);
+        
         // Générer le HTML pour le PDF
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $equipmentsWithPictures,
@@ -269,6 +300,7 @@ class EquipementPdfController extends AbstractController
             'clientAnneeFilter' => $clientAnneeFilter,
             'clientVisiteFilter' => $clientVisiteFilter,
             'statistiques' => $statistiques, // 🎯 Nouvelle variable ajoutée,
+            'statistiquesSupplementaires' => $statistiquesSupplementaires, // 🎯 Nouvelle variable
             'dateDeDerniererVisite' => $dateDeDerniererVisite,
             'clientSelectedInformations' => $clientSelectedInformations,
             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter)
