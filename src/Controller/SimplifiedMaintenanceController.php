@@ -2927,7 +2927,7 @@ class SimplifiedMaintenanceController extends AbstractController
             'S140' => '1088761', // V4 - Smp / visite de maintenance
             'S150' => '1057408', // V4- Paca / visite de maintenance
             'S160' => '1060720', // V4- Rouen / visite de maintenance
-            'S170' => '1090092', // V4- Rennes / visite de maintenance MEME QUE GROUP CAR PAS EN PRODUCTION
+            'S170' => '1094209', // V5- Rennes / visite de maintenance
         ];
     }
 
@@ -5044,6 +5044,7 @@ class SimplifiedMaintenanceController extends AbstractController
 
     /**
      * Extrait uniquement les valeurs des anomalies des champs spécifiés
+     * Gère le cas spécial "autres_composants"
      */
     private function getAnomaliesValues(array $equipmentData, array $fieldNames): array
     {
@@ -5087,10 +5088,47 @@ class SimplifiedMaintenanceController extends AbstractController
             $anomaliesArray = $this->extractSimpleAnomaliesArrayByEquipmentType($equipmentData, $numeroEquipement);
             
             if (!empty($anomaliesArray)) {
-                // Convertir le tableau en chaîne séparée par des virgules
-                $anomaliesString = implode(', ', $anomaliesArray);
-                $equipement->setAnomalies($anomaliesString);
-                error_log("Anomalies définies pour l'équipement " . $numeroEquipement . ": " . $anomaliesString);
+                // Traiter chaque anomalie pour gérer le cas "autres_composants"
+                $processedAnomalies = [];
+                
+                foreach ($anomaliesArray as $anomalie) {
+                    dump('Je suis $anomalie : ' . $anomalie); // Pour débogage
+                    // if ($anomalie === 'autres_composants' || $anomalie === 'Autres composants') {
+                    if ($anomalie === 'Autres composants') {
+                        // CORRECTION: Récupérer d'abord la valeur du champ "autres_composants" lui-même
+                        $autresComposantsValue = $equipmentData['autres_composants']['value'] ?? '';
+                        dump('Je suis $autresComposantsValue : ' . $autresComposantsValue); // Pour débogage
+                        if (!empty($autresComposantsValue) && trim($autresComposantsValue) !== '') {
+                            $processedAnomalies[] = trim($autresComposantsValue);
+                            dump("Anomalie 'Autres_composants' remplacée par la valeur: " . trim($autresComposantsValue));
+                        } else {
+                            // Si pas de valeur dans "autres_composants", essayer "information_autre_composant"
+                            $informationAutreComposant = $equipmentData['information_autre_composant']['value'];
+                            
+                            if (!empty($informationAutreComposant) && trim($informationAutreComposant) !== '') {
+                                $processedAnomalies[] = trim($informationAutreComposant);
+                                dump("Anomalie 'Autres_composants' remplacée par information_autre_composant: " . trim($informationAutreComposant));
+                            } else {
+                                // Si aucune des deux valeurs n'est disponible, on set à rien, pas garder "autres_composants"
+                                // $processedAnomalies[] = $anomalie;
+                                $processedAnomalies[] = '';
+                                // error_log("Anomalie 'autres_composants' gardée (pas d'information spécifique)");
+                                dump("Anomalie 'Autres_composants' settée à rien, pas gardée (pas d'information spécifique)");
+                            }
+                        }
+                    } else {
+                        // Anomalie normale, on la garde telle quelle
+                        $processedAnomalies[] = $anomalie;
+                        dump("Anomalie normale gardée car elle contient : " . $anomalie); // Pour débogage
+                    }
+                }
+                
+                if (!empty($processedAnomalies)) {
+                    // Convertir le tableau en chaîne séparée par des virgules
+                    $anomaliesString = implode(', ', $processedAnomalies);
+                    $equipement->setAnomalies($anomaliesString);
+                    dump("Anomalies définies pour l'équipement " . $numeroEquipement . ": " . $anomaliesString);
+                }
             } else {
                 error_log("Aucune anomalie trouvée pour l'équipement " . $numeroEquipement);
             }
