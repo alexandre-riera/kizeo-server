@@ -20,17 +20,16 @@
             <div class="card-body">
                 <h4 class="card-title">CR tech KIZEO</h4>
                 {#<ul style="list-style-type:none;">#}
+                    <select name="compte-rendu-tech-kizeo" id="compte-rendu-tech-kizeo" onchange="window.open(this.value)">
                     {% for objectFile in directoriesLists %}
                         {% if  objectFile.path %}
-                            <select name="compte-rendu-tech-kizeo" id="compte-rendu-tech-kizeo" onchange="window.open(this.value)">
-                                <option value="">---------</option>
-                                <option value="{{ objectFile.path }}">
-                                    {{ objectFile.visite }} du {{ objectFile.date }}
-                                </option>
-                            </select>
-                            {#<li style="margin-bottom:10px;"><a href="{{ objectFile.path }}" target="_blank">{{ objectFile.visite }} du {{ objectFile.date }}</a></li>#}
+                            <option value="{{ objectFile.path }}">
+                                {{ objectFile.visite }} du {{ objectFile.date }}
+                            </option>
+                        {#<li style="margin-bottom:10px;"><a href="{{ objectFile.path }}" target="_blank">{{ objectFile.visite }} du {{ objectFile.date }}</a></li>#}
                         {% endif %}
-                    {% endfor %}
+                        {% endfor %}
+                    </select>
                 {#</ul>#}
             </div>
         </div>
@@ -118,7 +117,7 @@
                                 {% endif %}
                                 
                                 <td>
-                                {% if is_granted('ROLE_ADMIN') %}
+                                {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
                                     <button onclick="editEquipement(
                                         '{{ equipment.getId() }}',
                                         '{{ equipment.getLibelleEquipement() }}',
