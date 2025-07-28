@@ -35,6 +35,7 @@ class SimplifiedMaintenanceController extends AbstractController
     private ImageStorageService $imageStorageService;
     private HttpClientInterface $client;
     private LoggerInterface $logger;
+
     public function __construct(
         ImageStorageService $imageStorageService,
         HttpClientInterface $client,
