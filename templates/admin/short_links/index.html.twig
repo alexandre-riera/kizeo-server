@@ -1,0 +1,415 @@
+{# templates/admin/short_links/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration des Liens Courts{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .links-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-expired {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .short-url {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .agency-filter {
+            margin-bottom: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="fas fa-link"></i>
+                    Administration des Liens Courts
+                </h1>
+                <button class="btn btn-danger" onclick="cleanupExpiredLinks()">
+                    <i class="fas fa-trash"></i>
+                    Nettoyer les liens expirés
+                </button>
+            </div>
+
+            {# Statistiques globales #}
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_links }}</div>
+                    <div class="stat-label">Total des liens</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.active_links }}</div>
+                    <div class="stat-label">Liens actifs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.expired_links }}</div>
+                    <div class="stat-label">Liens expirés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ stats.total_clicks }}</div>
+                    <div class="stat-label">Total des clics</div>
+                </div>
+            </div>
+
+            {# Filtre par agence #}
+            <div class="agency-filter">
+                <form method="GET" class="d-flex align-items-center gap-3">
+                    <label for="agence" class="form-label mb-0">Filtrer par agence :</label>
+                    <select name="agence" id="agence" class="form-select" style="width: auto;" onchange="this.form.submit()">
+                        <option value="">Toutes les agences</option>
+                        {% for agency in agencies %}
+                            <option value="{{ agency }}" {{ current_agence == agency ? 'selected' : '' }}>
+                                {{ agency }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+
+            {# Table des liens #}
+            <div class="links-table">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Code Court</th>
+                            <th>Agence</th>
+                            <th>Client</th>
+                            <th>Année/Visite</th>
+                            <th>Créé le</th>
+                            <th>Expire le</th>
+                            <th>Clics</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for link in links %}
+                            <tr>
+                                <td>
+                                    <code class="short-url">{{ link.shortCode }}</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ link.agence }}</span>
+                                </td>
+                                <td>{{ link.clientId }}</td>
+                                <td>
+                                    <small>
+                                        {{ link.annee }} - {{ link.visite }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <small>{{ link.createdAt|date('d/m/Y H:i') }}</small>
+                                </td>
+                                <td>
+                                    {% if link.expiresAt %}
+                                        <small>{{ link.expiresAt|date('d/m/Y H:i') }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Jamais</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ link.clickCount }}</span>
+                                </td>
+                                <td>
+                                    {% if link.isExpired %}
+                                        <span class="status-badge status-expired">Expiré</span>
+                                    {% else %}
+                                        <span class="status-badge status-active">Actif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary btn-sm" 
+                                                data-short-url="{{ path('short_link_redirect', {'shortCode': link.shortCode}) }}"
+                                                onclick="copyToClipboard(this.dataset.shortUrl)"
+                                                title="Copier le lien">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <a href="{{ link.originalUrl }}" 
+                                           class="btn btn-outline-info btn-sm"
+                                           target="_blank"
+                                           title="Voir l'original">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                        <!-- Prolonger (pour liens actifs) -->
+                                        {% if not link.isExpired %}
+                                            <button class="btn btn-outline-warning btn-sm" 
+                                                    data-link-id="{{ link.id }}"
+                                                    onclick="extendLink(this.dataset.linkId)"
+                                                    title="Prolonger">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                        {% endif %}
+                                        {% if link.isExpired %}
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    data-link-id="{{ link.id }}"
+                                                    onclick="deleteLink(this.dataset.linkId)"
+                                                    title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4">
+                                    <i class="fas fa-info-circle"></i>
+                                    Aucun lien court trouvé
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de confirmation #}
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmAction">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmAction">Confirmer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Afficher une notification de succès
+                showToast('Lien copié dans le presse-papiers !', 'success');
+            }).catch(function(err) {
+                console.error('Erreur lors de la copie:', err);
+                showToast('Erreur lors de la copie', 'error');
+            });
+        }
+
+        function deleteLink(linkId) {
+            document.getElementById('confirmMessage').textContent = 
+                'Êtes-vous sûr de vouloir supprimer ce lien court ?';
+            
+            document.getElementById('confirmAction').onclick = function() {
+                fetch('/admin/short-links/delete/' + linkId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Lien supprimé avec succès', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('Erreur lors de la suppression: ' + (data.message || 'Erreur inconnue'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showToast('Erreur lors de la suppression', 'error');
+                });
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                modal.hide();
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            modal.show();
+        }
+
+        function cleanupExpiredLinks() {
+            document.getElementById('confirmMessage').textContent = 
+                'Êtes-vous sûr de vouloir supprimer tous les liens expirés ?';
+            
+            document.getElementById('confirmAction').onclick = function() {
+                fetch('/admin/short-links/cleanup', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(data.count + ' liens expirés supprimés', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast('Erreur lors du nettoyage: ' + (data.message || 'Erreur inconnue'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showToast('Erreur lors du nettoyage', 'error');
+                });
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                modal.hide();
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            modal.show();
+        }
+
+        // Fonction helper pour afficher les notifications
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+            toast.className = 'toast align-items-center text-white ' + bgClass + ' border-0 position-fixed';
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            // Auto-suppression après 3 secondes
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+
+        function extendLink(linkId) {
+            // Demander le nombre de jours
+            const days = prompt('Prolonger de combien de jours ?', '30');
+            if (!days || isNaN(days)) return;
+            
+            fetch('/admin/short-links/extend/' + linkId, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ days: parseInt(days) })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Lien prolongé jusqu'au ${data.new_expiry}`, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Erreur: ' + (data.message || 'Erreur inconnue'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showToast('Erreur lors de la prolongation', 'error');
+            });
+        }
+        // Actualisation automatique des statistiques
+        setInterval(function() {
+            fetch('/admin/short-links/api/stats')
+                .then(response => response.json())
+                .then(data => {
+                    // Mise à jour des compteurs en temps réel
+                    const statCards = document.querySelectorAll('.stat-value');
+                    if (statCards.length >= 4) {
+                        statCards[0].textContent = data.total_links;
+                        statCards[1].textContent = data.active_links || 0;
+                        statCards[2].textContent = data.expired_links || 0;
+                        statCards[3].textContent = data.total_clicks;
+                    }
+                })
+                .catch(error => console.error('Erreur actualisation stats:', error));
+        }, 30000); // Toutes les 30 secondes
+    </script>
+{% endblock %}
