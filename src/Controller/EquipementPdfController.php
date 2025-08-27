@@ -247,7 +247,11 @@ class EquipementPdfController extends AbstractController
             });
 
             // URL de l'image d'agence
-            $imageUrl = $this->getImageUrlForAgency($agence);
+            if ($this->getImageUrlForAgency($agence)) {
+                $imageUrl = $this->getImageUrlForAgency($agence);
+            }else{
+                $imageUrl = 'https://www.pdf.somafi-group.fr/background/group.jpg';
+            }
             
             // GÉNÉRATION DU PDF avec template équipements (multi-équipements)
             $html = $this->renderView('pdf/equipements.html.twig', [
