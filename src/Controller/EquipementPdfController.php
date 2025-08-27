@@ -1488,7 +1488,7 @@ class EquipementPdfController extends AbstractController
             case 'S50':
                 return $basePath . 'grenoble.jpg';
             case 'S60':
-                return $basePath . 'lyon.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/lyon.jpg';
             case 'S70':
                 return $basePath . 'bordeaux.jpg';
             case 'S80':
