@@ -1482,33 +1482,33 @@ class EquipementPdfController extends AbstractController
         // Assurez-vous d'ajouter vos conditions pour les URL spécifiques
         switch ($agencyName) {
             case 'S10':
-                return $basePath . 'group.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/group.jpg';
             case 'S40':
-                return $basePath . 'st-etienne.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/st-etienne.jpg';
             case 'S50':
-                return $basePath . 'grenoble.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/grenoble.jpg';
             case 'S60':
                 return 'https://www.pdf.somafi-group.fr/background/lyon.jpg';
             case 'S70':
-                return $basePath . 'bordeaux.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/bordeaux.jpg';
             case 'S80':
-                return $basePath . 'paris.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/paris.jpg';
             case 'S100':
-                return $basePath . 'montpellier.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/montpellier.jpg';
             case 'S120':
-                return $basePath . 'portland.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/portland.jpg';
             case 'S130':
-                return $basePath . 'toulouse.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/toulouse.jpg';
             case 'S140':
-                return $basePath . 'grand-est.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/grand-est.jpg';
             case 'S150':
-                return $basePath . 'paca.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/paca.jpg';
             case 'S160':
-                return $basePath . 'rouen.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/rouen.jpg';
             case 'S170':
-                return $basePath . 'rennes.jpg';
+                return 'https://www.pdf.somafi-group.fr/background/rennes.jpg';
             default:
-                return $basePath . 'group.jpg'; // Image par défaut
+                return 'https://www.pdf.somafi-group.fr/background/group.jpg'; // Image par défaut
         }
     }
 
