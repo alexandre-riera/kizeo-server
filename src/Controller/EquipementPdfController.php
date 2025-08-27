@@ -1477,7 +1477,7 @@ class EquipementPdfController extends AbstractController
     private function getImageUrlForAgency(string $agencyName): string
     {
         // Assurer que cela renvoie un chemin absolu
-        $basePath = 'public/img/background/';
+        $basePath = 'https://www.pdf.somafi-group.fr/background/';
 
         // Assurez-vous d'ajouter vos conditions pour les URL spécifiques
         switch ($agencyName) {
