@@ -1477,7 +1477,7 @@ class EquipementPdfController extends AbstractController
     private function getImageUrlForAgency(string $agencyName): string
     {
         // Assurer que cela renvoie un chemin absolu
-        $basePath = 'img/background/';
+        $basePath = '%kernel.project_dir%/public/img/background/';
 
         // Assurez-vous d'ajouter vos conditions pour les URL spécifiques
         switch ($agencyName) {
@@ -1508,7 +1508,7 @@ class EquipementPdfController extends AbstractController
             case 'S170':
                 return $basePath . 'rennes.jpg';
             default:
-                return $basePath . 'default.jpg'; // Image par défaut
+                return $basePath . 'group.jpg'; // Image par défaut
         }
     }
 
