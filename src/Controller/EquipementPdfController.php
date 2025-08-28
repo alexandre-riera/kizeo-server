@@ -380,6 +380,32 @@ class EquipementPdfController extends AbstractController
         }
     }
 
+    #[Route('/diagnostic/photos/{agence}/{clientId}', name: 'diagnostic_photos')]
+    public function diagnosticPhotos(string $agence, string $clientId, EntityManagerInterface $entityManager): Response
+    {
+        $basePhotoPath = $_SERVER['DOCUMENT_ROOT'] . '/public/img/' . $agence . '/GEODIS_CORBAS/2025/CE1/';
+        
+        $results = [];
+        
+        // Vérifier si le répertoire existe
+        if (is_dir($basePhotoPath)) {
+            $files = scandir($basePhotoPath);
+            $generalePhotos = array_filter($files, function($file) {
+                return strpos($file, '_generale.jpg') !== false;
+            });
+            
+            $results['directory_exists'] = true;
+            $results['total_files'] = count($files) - 2; // Enlever . et ..
+            $results['generale_photos'] = array_values($generalePhotos);
+            $results['photo_count'] = count($generalePhotos);
+        } else {
+            $results['directory_exists'] = false;
+            $results['expected_path'] = $basePhotoPath;
+        }
+        
+        return $this->json($results);
+    }
+
 /**
  * Génère un PDF d'erreur informatif
  */
