@@ -488,14 +488,14 @@ class EquipementPdfController extends AbstractController
     /**
      * Diagnostic complet accessible via URL
      */
-    #[Route('/debug/diagnostic/{agence}/{clientId}', name: 'debug_diagnostic_complete')]
-    public function diagnosticComplet(string $agence, string $clientId, EntityManagerInterface $entityManager): Response
+    #[Route('/debug/diagnostic/{agence}/{raisonSociale}', name: 'debug_diagnostic_complete')]
+    public function diagnosticComplet(string $agence, string $raisonSociale, EntityManagerInterface $entityManager): Response
     {
         $results = [];
         
         try {
             $this->customLog("=== DÉBUT DIAGNOSTIC COMPLET ===");
-            $this->customLog("Agence: {$agence}, Client: {$clientId}");
+            $this->customLog("Agence: {$agence}, Client: {$raisonSociale}");
             
             // 1. Test des répertoires
             $baseImagePath = $_SERVER['DOCUMENT_ROOT'] . '/public/img/' . $agence . '/';
@@ -510,9 +510,9 @@ class EquipementPdfController extends AbstractController
                 $this->customLog("Répertoires clients: " . implode(', ', $dirs));
                 
                 // Test spécifique du client
-                $clientPath = $baseImagePath . $clientId . '/';
+                $clientPath = $baseImagePath . $raisonSociale . '/';
                 if (is_dir($clientPath)) {
-                    $this->customLog("Répertoire client {$clientId}: EXISTE");
+                    $this->customLog("Répertoire client {$raisonSociale}: EXISTE");
                     
                     // Scanner les années
                     $years = array_filter(scandir($clientPath), function($item) use ($clientPath) {
@@ -546,7 +546,7 @@ class EquipementPdfController extends AbstractController
                         }
                     }
                 } else {
-                    $this->customLog("Répertoire client {$clientId}: N'EXISTE PAS");
+                    $this->customLog("Répertoire client {$raisonSociale}: N'EXISTE PAS");
                 }
             }
             
@@ -554,7 +554,7 @@ class EquipementPdfController extends AbstractController
             $repository = $this->getRepositoryForAgency($agence, $entityManager);
             $equipments = $repository->createQueryBuilder('e')
                 ->where('e.raisonSociale LIKE :client')
-                ->setParameter('client', "%{$clientId}%")
+                ->setParameter('client', "%{$raisonSociale}%")
                 ->setMaxResults(3)
                 ->getQuery()
                 ->getResult();
@@ -603,7 +603,7 @@ class EquipementPdfController extends AbstractController
             $formData = $entityManager->getRepository(Form::class)
                 ->createQueryBuilder('f')
                 ->where('f.raisonSocialeVisite LIKE :client')
-                ->setParameter('client', "%{$clientId}%")
+                ->setParameter('client', "%{$raisonSociale}%")
                 ->setMaxResults(5)
                 ->getQuery()
                 ->getResult();
@@ -715,69 +715,6 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
 }
 
     /**
-     * Gestion spécialisée pour les gros volumes
-     */
-    // private function handleLargeVolumeGeneration(array $equipments, string $agence, string $id, EntityManagerInterface $entityManager, string $imageUrl, string $clientAnneeFilter, string $clientVisiteFilter): Response
-    // {
-    //     $this->customLog("Mode gros volume activé pour " . count($equipments) . " équipements");
-        
-    //     try {
-    //         // Configuration MySQL optimisée
-    //         $entityManager->getConnection()->executeStatement('SET SESSION sql_mode = ""');
-    //         $entityManager->getConnection()->executeStatement('SET SESSION max_execution_time = 0');
-            
-    //         // Augmenter les limites PHP
-    //         ini_set('memory_limit', '1G');
-    //         ini_set('max_execution_time', 300);
-            
-    //         // Traitement ultra-optimisé sans photos pour éviter le timeout
-    //         $equipmentsWithPictures = [];
-    //         foreach ($equipments as $equipment) {
-    //             $equipmentsWithPictures[] = [
-    //                 'equipment' => $equipment,
-    //                 'pictures' => [], // Pas de photos pour éviter les timeouts
-    //                 'photo_source' => 'disabled_for_performance'
-    //             ];
-    //         }
-            
-    //         $statistiques = $this->calculateEquipmentStatistics($equipments);
-            
-    //         $filename = "equipements_client_{$id}_{$agence}_performance.pdf";
-    //         $clientInformations = $this->getClientInformations($agence, $id, $this->entityManager);
-    //         $html = $this->renderView('pdf/equipements.html.twig', [
-    //             'equipmentsWithPictures' => $equipmentsWithPictures,
-    //             'equipementsSupplementaires' => [],
-    //             'equipementsNonPresents' => [],
-    //             'clientId' => $id,
-    //             'agence' => $agence,
-    //             'imageUrl' => $imageUrl, // Toujours définie
-    //             'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini
-    //             'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini
-    //             'clientSelectedInformations' => $this->getClientInformations($agence, $id, $entityManager),
-    //             'statistiques' => $statistiques,
-    //             'performance_mode' => true,
-    //             'equipment_count' => count($equipments),
-    //             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
-    //             'dateDeDerniererVisite' => null,
-    //             'clientSelectedInformations' => $clientInformations,
-    //         ]);
-            
-    //         $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-            
-    //         return new Response($pdfContent, Response::HTTP_OK, [
-    //             'Content-Type' => 'application/pdf',
-    //             'Content-Disposition' => "inline; filename=\"$filename\"",
-    //             'X-Performance-Mode' => 'large-volume',
-    //             'X-Equipment-Count' => count($equipments)
-    //         ]);
-            
-    //     } catch (\Exception $e) {
-    //         $this->customLog("Erreur mode gros volume: " . $e->getMessage());
-    //         throw $e;
-    //     }
-    // }
-
-    /**
      * Traitement par batch des équipements
      */
     private function processBatchEquipments(array $equipmentBatch, EntityManagerInterface $entityManager): array
@@ -819,126 +756,6 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         
         return $equipmentsWithPictures;
     }
-
-    /**
-     * PDF simplifié en cas d'erreur
-     */
-    // private function generateSimplifiedPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager): Response
-    // {
-    //     $this->customLog("Génération PDF simplifiée pour {$agence}/{$id}");
-        
-    //     $html = $this->renderView('pdf/equipements.html.twig', [
-    //         'equipmentsWithPictures' => [],
-    //         'equipementsSupplementaires' => [],
-    //         'equipementsNonPresents' => [],
-    //         'clientId' => $id,
-    //         'agence' => $agence,
-    //         'imageUrl' => $imageUrl, // TOUJOURS définie
-    //         'clientAnneeFilter' => '', // Défini même si vide
-    //         'clientVisiteFilter' => '', // Défini même si vide
-    //         'error_mode' => true,
-    //         'error_message' => 'Trop d\'équipements pour la génération complète. Veuillez utiliser les filtres.',
-    //         'isFiltered' => false,
-    //         'dateDeDerniererVisite' => null
-    //     ]);
-        
-    //     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
-    //     $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-        
-    //     return new Response($pdfContent, Response::HTTP_OK, [
-    //         'Content-Type' => 'application/pdf',
-    //         'Content-Disposition' => "inline; filename=\"$filename\"",
-    //         'X-Generation-Mode' => 'error-fallback'
-    //     ]);
-    // }
-
-    // private function getEquipmentsByAgencyFixed(string $agence, string $clientId, EntityManagerInterface $entityManager, ?string $anneeFilter = null, ?string $visiteFilter = null): array
-    // {
-    //     $this->customLog("=== RÉCUPÉRATION ÉQUIPEMENTS ===");
-    //     $this->customLog("Agence: {$agence}, Client: {$clientId}");
-    //     $this->customLog("Filtres - Année: {$anneeFilter}, Visite: {$visiteFilter}");
-        
-    //     $equipmentEntity = "App\\Entity\\Equipement{$agence}";
-        
-    //     if (!class_exists($equipmentEntity)) {
-    //         $this->customLog("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
-    //         throw new \Exception("Classe d'équipement {$equipmentEntity} introuvable");
-    //     }
-        
-    //     try {
-    //         $repository = $entityManager->getRepository($equipmentEntity);
-            
-    //         // D'abord, essayer de trouver des équipements sans filtres
-    //         $allEquipments = $repository->findBy(['id_contact' => $clientId]);
-    //         $this->customLog("Total équipements pour client {$clientId}: " . count($allEquipments));
-            
-    //         if (empty($allEquipments)) {
-    //             // Pas d'équipements du tout pour ce client
-    //             $this->customLog("AUCUN équipement trouvé pour le client {$clientId}");
-                
-    //             // Essayer de voir s'il y a des équipements dans la table
-    //             $sampleEquipments = $repository->findBy([], [], 5);
-    //             $this->customLog("Échantillon d'équipements dans la table: " . count($sampleEquipments));
-                
-    //             if (!empty($sampleEquipments)) {
-    //                 $sampleIds = array_map(function($eq) {
-    //                     return method_exists($eq, 'getIdContact') ? $eq->getIdContact() : 'N/A';
-    //                 }, $sampleEquipments);
-    //                 $this->customLog("IDs clients échantillon: " . implode(', ', $sampleIds));
-    //             }
-                
-    //             return [];
-    //         }
-            
-    //         // Si on a des équipements, appliquer les filtres
-    //         $criteria = ['id_contact' => $clientId];
-            
-    //         // Pour les filtres, il faut connaître les noms exacts des propriétés
-    //         // Regardons un équipement pour voir les propriétés disponibles
-    //         $firstEquipment = $allEquipments[0];
-    //         $methods = get_class_methods($firstEquipment);
-    //         $getterMethods = array_filter($methods, function($method) {
-    //             return strpos($method, 'get') === 0;
-    //         });
-            
-    //         $this->customLog("Méthodes disponibles sur l'équipement: " . implode(', ', $getterMethods));
-            
-    //         // Essayer différents noms de propriétés pour l'année
-    //         if ($anneeFilter) {
-    //             $yearProperties = ['annee', 'year', 'dateVisite', 'date_visite', 'anneeVisite'];
-    //             foreach ($yearProperties as $prop) {
-    //                 $getter = 'get' . ucfirst($prop);
-    //                 if (method_exists($firstEquipment, $getter)) {
-    //                     $this->customLog("Propriété année trouvée: {$prop}");
-    //                     // Pour l'instant, on n'applique pas le filtre année car on ne connaît pas la structure exacte
-    //                     break;
-    //                 }
-    //             }
-    //         }
-            
-    //         // Essayer différents noms de propriétés pour la visite
-    //         if ($visiteFilter) {
-    //             $visiteProperties = ['visite', 'typeVisite', 'type_visite', 'maintenance'];
-    //             foreach ($visiteProperties as $prop) {
-    //                 $getter = 'get' . ucfirst($prop);
-    //                 if (method_exists($firstEquipment, $getter)) {
-    //                     $this->customLog("Propriété visite trouvée: {$prop}");
-    //                     // Pour l'instant, on n'applique pas le filtre visite car on ne connaît pas la structure exacte
-    //                     break;
-    //                 }
-    //             }
-    //         }
-            
-    //         // Pour le moment, retourner tous les équipements du client
-    //         // Vous pourrez affiner les filtres une fois que vous connaîtrez la structure exacte
-    //         $this->customLog("Retour de " . count($allEquipments) . " équipements");
-    //         return $allEquipments;
-            
-    //     } catch (\Exception $e) {
-    //         $this->customLog("Erreur récupération équipements {$agence}: " . $e->getMessage());
-    //         throw new \Exception("Erreur lors de la récupération des équipements: " . $e->getMessage());
-    //     }
-    // }
 
     // ===== ROUTE DE DEBUG POUR ANALYSER LA STRUCTURE DES ÉQUIPEMENTS =====
     #[Route('/api/test-equipment/{agence}/{clientId}', name: 'api_test_equipment', methods: ['GET'])]
