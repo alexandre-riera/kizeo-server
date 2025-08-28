@@ -308,10 +308,10 @@
     
     {# Pied de page #}
     <div style="margin-top: 30px; font-size: 9px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px;">
-        Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} - {{ equipmentsWithPictures|length ?? 0 }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
+        Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} - {{ equipmentsWithPictures|length }} équipement traités
         {% if isFiltered is defined and isFiltered %}
             <br><em>Filtres appliqués lors de la génération</em>
-        {% endif %}
+        {% endif %} 
     </div>
 </body>
 </html>
