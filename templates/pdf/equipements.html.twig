@@ -58,42 +58,39 @@
         }
         
         .equipement {
-            margin-bottom: 20px;
+            margin-bottom: 40px;
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 15px;
             background-color: rgba(255, 255, 255, 0.95);
+            page-break-inside: avoid;
+            min-height: 300px;
         }
         
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-        
-        .info-table th, .info-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        
-        .info-table th {
-            background-color: #f9f9f9;
-            width: 30%;
-            font-weight: bold;
+        .equipement-pair {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
         }
         
         .equipment-image {
-            width: 30%;
+            width: 35%;
             text-align: center;
             vertical-align: top;
             padding: 10px;
         }
         
+        .equipment-details {
+            width: 60%;
+            padding-left: 20px;
+        }
+        
         .main-photo {
-            max-width: 250px;
-            max-height: 200px;
+            max-width: 280px;
+            max-height: 220px;
             border: 2px solid #ddd;
             border-radius: 4px;
+            object-fit: contain;
         }
         
         .no-image {
@@ -132,6 +129,7 @@
         {% if equipmentsWithPictures is not empty %}
             Premier équipement: {{ equipmentsWithPictures[0].equipment.numeroEquipement|default('N/A') }}
         {% endif %}
+        <br><strong>Photos du premier équipement:</strong> {{ equipmentsWithPictures[0].pictures|length|default(0) }} photo(s)
     </div>
     
     {# PREMIÈRE PAGE AVEC CARTOUCHE ET STATISTIQUES #}
@@ -182,70 +180,68 @@
                 {% set pictures = equipmentData.pictures %}
                 
                 <div class="equipement">
-                    <table class="info-table">
-                        <tr>
-                            <td rowspan="8" class="equipment-image">
-                                {% if pictures|length > 0 %}
-                                    <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
-                                {% else %}
-                                    <div class="no-image">
-                                        Aucune photo disponible
-                                    </div>
+                    <div class="equipement-pair">
+                        <div class="equipment-image">
+                            {% if pictures|length > 0 %}
+                                <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
+                            {% else %}
+                                <div class="no-image">
+                                    Aucune photo disponible
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="equipment-details">
+                            <h3 style="background-color: #f5f5f5; padding: 8px; margin: 0 0 15px 0; border-left: 4px solid #007bff;">
+                                Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
+                                {% if equipment.etat == "A" %}
+                                    <span style="color: green; float: right;">✓</span>
+                                {% elseif equipment.etat == "C" %}
+                                    <span style="color: red; float: right;">✗</span>
+                                {% elseif equipment.etat == "Travaux urgent ou à l'arrêt" %}
+                                    <span style="color: red; float: right;">⚠</span>
                                 {% endif %}
-                            </td>
-                            <td style="width: 70%;">
-                                <table style="width: 100%; border: none;">
-                                    <tr>
-                                        <th colspan="2" style="border: none; background: #f5f5f5; text-align: center; padding: 8px; font-size: 14px;">
-                                            Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
-                                            {% if equipment.etat == "A" %}
-                                                <span style="color: green; float: right;">✓</span>
-                                            {% elseif equipment.etat == "C" %}
-                                                <span style="color: red; float: right;">✗</span>
-                                            {% elseif equipment.etat == "Travaux urgent ou à l'arrêt" %}
-                                                <span style="color: red; float: right;">⚠</span>
-                                            {% endif %}
-                                        </th>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Numéro</th>
-                                        <td style="border: none;">{{ equipment.numeroEquipement }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Type</th>
-                                        <td style="border: none;">{{ equipment.libelleEquipement|default('Non renseigné') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Marque</th>
-                                        <td style="border: none;">{{ equipment.marque|default('Non renseigné') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Modèle</th>
-                                        <td style="border: none;">{{ equipment.modele|default('Non renseigné') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">État</th>
-                                        <td style="border: none;">{{ equipment.etat|default('Non défini') }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Mise en service</th>
-                                        <td style="border: none;">{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="border: none; background: none;">Repère site client</th>
-                                        <td style="border: none;">{{ equipment.repereSiteClient|default('Non repèré') }}</td>
-                                    </tr>
-                                    {# ANOMALIES #}
-                                    {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
-                                    <tr style="background-color: #fff3cd;">
-                                        <th style="border: none; background: #fff3cd;">Anomalies</th>
-                                        <td style="border: none; background: #fff3cd; color: #856404; font-weight: bold;">{{ equipment.anomalies }}</td>
-                                    </tr>
-                                    {% endif %}
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
+                            </h3>
+                            
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                                <tr>
+                                    <th style="width: 30%; padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Numéro</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.numeroEquipement }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Type</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.libelleEquipement|default('Non renseigné') }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Marque</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.marque|default('Non renseigné') }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Modèle</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.modele|default('Non renseigné') }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">État</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.etat|default('Non défini') }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Mise en service</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 4px; background-color: #f9f9f9; border: 1px solid #ddd;">Repère site client</th>
+                                    <td style="padding: 4px; border: 1px solid #ddd;">{{ equipment.repereSiteClient|default('Non repèré') }}</td>
+                                </tr>
+                                {# ANOMALIES #}
+                                {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
+                                <tr style="background-color: #fff3cd;">
+                                    <th style="padding: 4px; background-color: #fff3cd; border: 1px solid #ddd;">Anomalies</th>
+                                    <td style="padding: 4px; background-color: #fff3cd; border: 1px solid #ddd; color: #856404; font-weight: bold;">{{ equipment.anomalies }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 {# Saut de page tous les 2 équipements #}
