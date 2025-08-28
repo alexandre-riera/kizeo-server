@@ -289,7 +289,6 @@ public function generateClientEquipementsPdf(Request $request, string $agence, s
             'clientAnneeFilter' => $clientAnneeFilter ?: '',
             'clientVisiteFilter' => $clientVisiteFilter ?: '',
             'statistiques' => $statistiques,
-            'clientInfo' => $clientInfo ?? [],
             'photoSourceStats' => $photoSourceStats,
             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
             'dateDeDerniererVisite' => $dateDeDerniererVisite,
