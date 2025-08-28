@@ -252,72 +252,30 @@ class EquipementPdfController extends AbstractController
             
             foreach ($equipmentsFiltered as $equipment) {
                 try {
-                    // 🔍 DEBUG - Informations équipement
-                    $this->customLog("🔍 Traitement équipement: " . $equipment->getNumeroEquipement());
+                    // ANCIEN CODE - À REMPLACER
+                    // Les 3 méthodes qui échouent actuellement
                     
-                    // NOUVEAU CODE - Utiliser les photos locales
-                    // Méthode 1 : Récupérer la photo générale depuis le stockage local
-                    $picturesData = $entityManager->getRepository(Form::class)
-                        ->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                    // NOUVEAU CODE - Utilisez directement le scan direct
+                    $photoResult = $this->getPhotosForEquipmentWithDirectScan($equipment);
+                    $picturesData = $photoResult['photos'];
+                    $photoSource = $photoResult['source'];
                     
-                    $photoSource = 'none';
-                    
-                    // Si photo locale trouvée
-                    if (!empty($picturesData)) {
-                        $photoSource = 'local';
-                        $this->customLog("✅ Photo locale trouvée pour {$equipment->getNumeroEquipement()}");
-                    } else {
-                        // Méthode 2 : Essayer le scan si pas de photo via la méthode normale
-                        $this->customLog("🔄 Tentative scan pour {$equipment->getNumeroEquipement()}");
-                        $picturesData = $entityManager->getRepository(Form::class)
-                            ->findGeneralPhotoByScanning($equipment);
-                        
-                        if (!empty($picturesData)) {
-                            $photoSource = 'local_scan';
-                            $this->customLog("✅ Photo trouvée par scan pour {$equipment->getNumeroEquipement()}");
-                        } else {
-                            // Méthode 3 : Fallback vers l'ancienne méthode API
-                            $this->customLog("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
-                            
-                            $picturesArray = [
-                                "numeroEquipement" => $equipment->getNumeroEquipement(),
-                                "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
-                                "annee" => $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement() ?: 'now')),
-                                "visite" => $clientVisiteFilter ?: ($equipment->getVisite() ?? 'CEA')
-                            ];
-                            
-                            $picturesData = $entityManager->getRepository(Form::class)
-                                ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                            
-                            if (!empty($picturesData)) {
-                                $photoSource = 'api_fallback';
-                                $this->customLog("✅ Photo API fallback pour {$equipment->getNumeroEquipement()}");
-                            } else {
-                                $photoSource = 'none';
-                                $this->customLog("❌ Aucune photo trouvée pour {$equipment->getNumeroEquipement()}");
-                            }
-                        }
-                    }
-                    
-                    // Mettre à jour les statistiques
                     $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
                     
+                    $equipmentsWithPictures[] = [
+                        'equipment' => $equipment,
+                        'pictures' => $picturesData,
+                        'photo_source' => $photoSource
+                    ];
                 } catch (\Exception $e) {
-                    $this->customLog("❌ Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                    $picturesData = [];
-                    $photoSource = 'error';
+                    $this->customLog("Erreur équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                     $photoSourceStats['error'] = ($photoSourceStats['error'] ?? 0) + 1;
-                }
-                
-                $equipmentsWithPictures[] = [
-                    'equipment' => $equipment,
-                    'pictures' => $picturesData,
-                    'photo_source' => $photoSource
-                ];
-                
-                // Récupérer la date de dernière visite
-                if (!$dateDeDerniererVisite && $equipment->getDerniereVisite()) {
-                    $dateDeDerniererVisite = $equipment->getDerniereVisite();
+                    
+                    $equipmentsWithPictures[] = [
+                        'equipment' => $equipment,
+                        'pictures' => [],
+                        'photo_source' => 'error'
+                    ];
                 }
             }
 
@@ -422,6 +380,85 @@ class EquipementPdfController extends AbstractController
             // En cas d'erreur, générer un PDF d'erreur détaillé
             return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), [], $clientSelectedInformations);
         }
+    }
+
+    /**
+     * Méthode de récupération photos avec scan direct en priorité
+     */
+    private function getPhotosForEquipmentWithDirectScan($equipment): array
+    {
+        $numeroEquipement = $equipment->getNumeroEquipement();
+        $agence = 'S60';
+        $client = 'GEODIS_CORBAS';
+        $annee = '2025';
+        $typeVisite = 'CE1';
+        
+        // Chemin de base des photos
+        $basePath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$client}/{$annee}/{$typeVisite}/";
+        
+        if (!is_dir($basePath)) {
+            $this->customLog("Répertoire photos n'existe pas: {$basePath}");
+            return ['photos' => [], 'source' => 'no_directory'];
+        }
+        
+        // Chercher les photos de cet équipement
+        $photoFiles = scandir($basePath);
+        $equipmentPhotos = array_filter($photoFiles, function($file) use ($numeroEquipement) {
+            return strpos($file, $numeroEquipement . '_') === 0 && pathinfo($file, PATHINFO_EXTENSION) === 'jpg';
+        });
+        
+        if (empty($equipmentPhotos)) {
+            return ['photos' => [], 'source' => 'no_photos_found'];
+        }
+        
+        $photos = [];
+        foreach ($equipmentPhotos as $photoFile) {
+            $fullPath = $basePath . $photoFile;
+            $photoType = $this->extractPhotoType($photoFile);
+            
+            // URL publique pour affichage dans le PDF
+            $publicUrl = "/img/{$agence}/{$client}/{$annee}/{$typeVisite}/{$photoFile}";
+            
+            // Format compatible avec le template PDF existant
+            $photos[$photoType] = [
+                'url' => $publicUrl,
+                'base64' => 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fullPath)),
+                'filename' => $photoFile,
+                'path' => $fullPath
+            ];
+        }
+        
+        $this->customLog("Scan direct: {$numeroEquipement} = " . count($photos) . " photos trouvées");
+        
+        return ['photos' => $photos, 'source' => 'direct_scan'];
+    }
+
+    /**
+     * Extrait le type de photo depuis le nom de fichier
+     */
+    private function extractPhotoType(string $filename): string
+    {
+        if (strpos($filename, '_generale') !== false) {
+            return 'photo_generale';
+        }
+        if (strpos($filename, '_plaque') !== false) {
+            return 'photo_plaque';
+        }
+        if (strpos($filename, '_etiquette') !== false) {
+            return 'photo_etiquette';
+        }
+        if (strpos($filename, '_choc') !== false) {
+            return 'photo_choc';
+        }
+        
+        // Extraire le type après le numéro d'équipement
+        $parts = explode('_', $filename, 2);
+        if (isset($parts[1])) {
+            $type = str_replace('.jpg', '', $parts[1]);
+            return 'photo_' . $type;
+        }
+        
+        return 'photo_inconnue';
     }
 
     /**
