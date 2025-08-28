@@ -520,9 +520,16 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     "visite" => explode("\\", $equipment->getVisite())[0] ?? $equipment->getVisite()
                 ];
                 
+                // $picturesData = $entityManager->getRepository(Form::class)
+                //     ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                // NOUVEAU CODE  
                 $picturesData = $entityManager->getRepository(Form::class)
-                    ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                    
+                    ->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+
+                if (empty($picturesData)) {
+                    $picturesData = $entityManager->getRepository(Form::class)
+                        ->findGeneralPhotoByScanning($equipment);
+                } 
             } catch (\Exception $e) {
                 error_log("Erreur récupération photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                 $picturesData = [];

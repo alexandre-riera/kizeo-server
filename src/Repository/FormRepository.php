@@ -3253,4 +3253,144 @@ class FormRepository extends ServiceEntityRepository
         return $this->imageStorageService->getBaseImagePath();
     }
 
+    /**
+     * Récupère spécifiquement la photo générale depuis le stockage local
+     * Architecture: backend-kizeo.somafi-group.fr/public/img/S60/GEODIS_CORBAS/2025/CE1/
+     * Photo format: {CODE_EQUIPEMENT}_generale.jpg
+     */
+    public function getGeneralPhotoFromLocalStorage($equipment, EntityManagerInterface $entityManager): array
+    {
+        $picturesdata = [];
+        
+        try {
+            // Construire le chemin vers la photo générale
+            $agence = $equipment->getCodeAgence(); // Ex: S60
+            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(); // Ex: GEODIS_CORBAS
+            $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement())); // Ex: 2025  
+            $typeVisite = $equipment->getVisite(); // Ex: CE1
+            $codeEquipement = $equipment->getNumeroEquipement(); // Ex: BLE01
+            
+            // Construire le chemin de la photo générale
+            $photoGeneraleName = $codeEquipement . '_generale.jpg';
+            $photoPath = sprintf(
+                '%s/public/img/%s/%s/%s/%s/%s',
+                $_SERVER['DOCUMENT_ROOT'],
+                $agence,
+                $raisonSociale,
+                $anneeVisite,
+                $typeVisite,
+                $photoGeneraleName
+            );
+            
+            // Vérifier si le fichier existe
+            if (file_exists($photoPath) && is_readable($photoPath)) {
+                // Lire et encoder la photo
+                $photoContent = file_get_contents($photoPath);
+                $pictureEncoded = base64_encode($photoContent);
+                
+                // Créer l'objet photo au format attendu
+                $picturesdataObject = new \stdClass();
+                $picturesdataObject->picture = $pictureEncoded;
+                $picturesdataObject->update_time = date('Y-m-d H:i:s', filemtime($photoPath));
+                $picturesdataObject->photo_type = 'generale';
+                $picturesdataObject->local_path = $photoPath;
+                $picturesdataObject->equipment_number = $codeEquipement;
+                
+                $picturesdata[] = $picturesdataObject;
+                
+                error_log("✅ Photo générale trouvée pour {$codeEquipement}: {$photoPath}");
+            } else {
+                error_log("⚠️ Photo générale non trouvée pour {$codeEquipement}: {$photoPath}");
+            }
+            
+        } catch (\Exception $e) {
+            error_log("❌ Erreur récupération photo générale pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+        }
+        
+        return $picturesdata;
+    }
+
+    /**
+     * Méthode de scan alternatif pour trouver la photo générale
+     * Utile si la structure exacte varie légèrement
+     */
+    public function findGeneralPhotoByScanning($equipment): array
+    {
+        $picturesdata = [];
+        
+        try {
+            $agence = $equipment->getCodeAgence();
+            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
+            $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
+            $typeVisite = $equipment->getVisite();
+            $codeEquipement = $equipment->getNumeroEquipement();
+            
+            // Répertoire de base à scanner
+            $baseDir = sprintf(
+                '%s/public/img/%s/%s/%s/%s',
+                $_SERVER['DOCUMENT_ROOT'],
+                $agence,
+                $raisonSociale,
+                $anneeVisite,
+                $typeVisite
+            );
+            
+            if (is_dir($baseDir)) {
+                // Scanner le répertoire pour trouver les photos de cet équipement
+                $files = scandir($baseDir);
+                
+                foreach ($files as $file) {
+                    // Chercher spécifiquement la photo générale
+                    if (strpos($file, $codeEquipement . '_generale.jpg') !== false) {
+                        $fullPath = $baseDir . '/' . $file;
+                        
+                        if (is_file($fullPath) && is_readable($fullPath)) {
+                            $photoContent = file_get_contents($fullPath);
+                            $pictureEncoded = base64_encode($photoContent);
+                            
+                            $picturesdataObject = new \stdClass();
+                            $picturesdataObject->picture = $pictureEncoded;
+                            $picturesdataObject->update_time = date('Y-m-d H:i:s', filemtime($fullPath));
+                            $picturesdataObject->photo_type = 'generale_scan';
+                            $picturesdataObject->local_path = $fullPath;
+                            $picturesdataObject->equipment_number = $codeEquipement;
+                            
+                            $picturesdata[] = $picturesdataObject;
+                            
+                            error_log("✅ Photo générale trouvée par scan pour {$codeEquipement}: {$fullPath}");
+                            break; // Ne prendre que la première trouvée
+                        }
+                    }
+                }
+            }
+            
+        } catch (\Exception $e) {
+            error_log("❌ Erreur scan photo générale pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+        }
+        
+        return $picturesdata;
+    }
+
+    /**
+     * Version améliorée de getPictureArrayByIdEquipment qui privilégie les photos locales
+     */
+    public function getPictureArrayByIdEquipmentWithLocalPhotos($picturesArray, EntityManagerInterface $entityManager, $equipment): array
+    {
+        // D'abord essayer de récupérer la photo générale locale
+        $localPhotos = $this->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+        
+        // Si aucune photo locale n'est trouvée, essayer le scan
+        if (empty($localPhotos)) {
+            $localPhotos = $this->findGeneralPhotoByScanning($equipment);
+        }
+        
+        // Si des photos locales sont trouvées, les retourner
+        if (!empty($localPhotos)) {
+            return $localPhotos;
+        }
+        
+        // Sinon, fallback vers l'ancienne méthode avec l'API
+        error_log("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
+        return $this->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+    }
 }
