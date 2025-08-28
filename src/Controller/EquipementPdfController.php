@@ -386,6 +386,7 @@ class EquipementPdfController extends AbstractController
         // Initialiser les métriques de performance
         $startTime = microtime(true);
         $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
+        
         try {
             // 2. Optimiser la configuration MySQL pour les gros volumes
             $entityManager->getConnection()->executeStatement('SET SESSION wait_timeout = 300');
@@ -458,12 +459,14 @@ class EquipementPdfController extends AbstractController
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl, // CRUCIAL : toujours définie
-                'clientAnneeFilter' => $clientAnneeFilter,
-                'clientVisiteFilter' => $clientVisiteFilter,
+                'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini, même vide
+                'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini, même vide
                 'statistiques' => $statistiques,
                 'clientInfo' => $clientInfo ?? [],
                 'clientSelectedInformations' => $clientSelectedInformations ?? [],
-                'photoSourceStats' => $photoSourceStats
+                'photoSourceStats' => $photoSourceStats,
+                'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter), // Variable pour savoir si des filtres sont appliqués
+                'dateDeDerniererVisite' => $dateDeDerniererVisite ?? null
             ];
             
             // Vérifier que imageUrl est bien définie
@@ -528,11 +531,13 @@ class EquipementPdfController extends AbstractController
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl, // Toujours définie
-                'clientAnneeFilter' => $clientAnneeFilter,
-                'clientVisiteFilter' => $clientVisiteFilter,
+                'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini
+                'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini
                 'statistiques' => $statistiques,
                 'performance_mode' => true,
-                'equipment_count' => count($equipments)
+                'equipment_count' => count($equipments),
+                'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
+                'dateDeDerniererVisite' => null
             ]);
             
             $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
@@ -599,8 +604,12 @@ class EquipementPdfController extends AbstractController
             'clientId' => $id,
             'agence' => $agence,
             'imageUrl' => $imageUrl, // TOUJOURS définie
+            'clientAnneeFilter' => '', // Défini même si vide
+            'clientVisiteFilter' => '', // Défini même si vide
             'error_mode' => true,
-            'error_message' => 'Trop d\'équipements pour la génération complète. Veuillez utiliser les filtres.'
+            'error_message' => 'Trop d\'équipements pour la génération complète. Veuillez utiliser les filtres.',
+            'isFiltered' => false,
+            'dateDeDerniererVisite' => null
         ]);
         
         $filename = "equipements_client_{$id}_{$agence}_error.pdf";

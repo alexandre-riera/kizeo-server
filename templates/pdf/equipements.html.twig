@@ -104,7 +104,9 @@
     {# Debug info - à supprimer en production #}
     {% if app.environment == 'dev' %}
         <div style="background: yellow; padding: 5px; font-size: 10px;">
-            DEBUG: imageUrl = {{ imageUrl|default('NON DÉFINIE') }}
+            DEBUG: imageUrl = {{ imageUrl|default('NON DÉFINIE') }}<br>
+            clientAnneeFilter = {{ clientAnneeFilter|default('NON DÉFINIE') }}<br>
+            clientVisiteFilter = {{ clientVisiteFilter|default('NON DÉFINIE') }}
         </div>
     {% endif %}
 
@@ -134,13 +136,13 @@
     {% endif %}
 
     {# Affichage des filtres actifs #}
-    {% if clientAnneeFilter or clientVisiteFilter %}
+    {% if (clientAnneeFilter is defined and clientAnneeFilter) or (clientVisiteFilter is defined and clientVisiteFilter) %}
         <div class="filter-info">
             <strong>Filtres appliqués:</strong>
-            {% if clientAnneeFilter %}
+            {% if clientAnneeFilter is defined and clientAnneeFilter %}
                 <span class="filter-badge">Année: {{ clientAnneeFilter }}</span>
             {% endif %}
-            {% if clientVisiteFilter %}
+            {% if clientVisiteFilter is defined and clientVisiteFilter %}
                 <span class="filter-badge">Visite: {{ clientVisiteFilter }}</span>
             {% endif %}
         </div>
