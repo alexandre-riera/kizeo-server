@@ -130,12 +130,14 @@ class EquipementPdfController extends AbstractController
             error_log("Agence: {$agence}, Client: {$id}");
             error_log("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
             
-            // Récupérer les informations client
+            // Récupérer les informations client TOUT DE SUITE
+            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
+            
+            // Récupérer les informations client (autre méthode)
             $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
             error_log("Client info récupérées: " . json_encode($clientInfo));
             
             // 2. RÉCUPÉRATION SIMPLIFIÉE ET SÉCURISÉE DES ÉQUIPEMENTS
-            // Ne pas passer les filtres à la méthode de récupération pour éviter les erreurs
             $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
             error_log("Équipements bruts trouvés: " . count($equipments));
             
@@ -143,62 +145,91 @@ class EquipementPdfController extends AbstractController
                 throw new \Exception("Aucun équipement trouvé pour le client {$id}");
             }
             
-            // 3. FILTRAGE SÉCURISÉ ET LOGGING DÉTAILLÉ
-            $equipmentsFiltered = $equipments; // Par défaut, tous les équipements
+            // 3. LOGIQUE DE FILTRAGE CORRIGÉE SELON VOS SPÉCIFICATIONS
+            $equipmentsFiltered = [];
             $filtreApplique = false;
             
             if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-                error_log("Application des filtres...");
+                // CAS AVEC FILTRES : équipements de la visite sélectionnée avec année de dernière visite
+                error_log("Application des filtres spécifiques...");
                 
-                $equipmentsFiltered = array_filter($equipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter, &$filtreApplique) {
-                    $matches = true;
-                    
+                foreach ($equipments as $equipment) {
                     try {
-                        // Filtre par année si défini
-                        if (!empty($clientAnneeFilter)) {
+                        $matches = true;
+                        
+                        // Filtre par visite si défini
+                        if (!empty($clientVisiteFilter)) {
+                            $visiteEquipment = $equipment->getVisite();
+                            if ($visiteEquipment !== $clientVisiteFilter) {
+                                $matches = false;
+                            }
+                            error_log("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matches ? 'OUI' : 'NON'));
+                        }
+                        
+                        // Filtre par année de dernière visite si défini
+                        if ($matches && !empty($clientAnneeFilter)) {
                             $derniereVisite = $equipment->getDerniereVisite();
                             if ($derniereVisite) {
                                 $anneeEquipment = date("Y", strtotime($derniereVisite));
-                                $matchesAnnee = ($anneeEquipment === $clientAnneeFilter);
-                                $matches = $matches && $matchesAnnee;
-                                
-                                error_log("Équipement {$equipment->getNumeroEquipement()}: année {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matchesAnnee ? 'OUI' : 'NON'));
+                                if ($anneeEquipment !== $clientAnneeFilter) {
+                                    $matches = false;
+                                }
+                                error_log("Équipement {$equipment->getNumeroEquipement()}: année dernière visite {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matches ? 'OUI' : 'NON'));
                             } else {
                                 $matches = false;
                                 error_log("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
                             }
                         }
                         
-                        // Filtre par visite si défini  
-                        if (!empty($clientVisiteFilter) && $matches) {
-                            $visiteEquipment = $equipment->getVisite();
-                            $matchesVisite = ($visiteEquipment === $clientVisiteFilter);
-                            $matches = $matches && $matchesVisite;
-                            
-                            error_log("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matchesVisite ? 'OUI' : 'NON'));
-                        }
-                        
                         if ($matches) {
+                            $equipmentsFiltered[] = $equipment;
                             $filtreApplique = true;
                         }
                         
-                        return $matches;
-                        
                     } catch (\Exception $e) {
                         error_log("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                        return false; // En cas d'erreur, exclure l'équipement
                     }
-                });
+                }
                 
                 error_log("Après filtrage: " . count($equipmentsFiltered) . " équipements");
+                
+            } else {
+                // CAS PAR DÉFAUT : équipements de la dernière visite uniquement
+                error_log("Pas de filtres - récupération équipements de la dernière visite");
+                
+                // Trouver la date de dernière visite la plus récente
+                $derniereVisiteMax = null;
+                foreach ($equipments as $equipment) {
+                    $derniereVisite = $equipment->getDerniereVisite();
+                    if ($derniereVisite && (!$derniereVisiteMax || strtotime($derniereVisite) > strtotime($derniereVisiteMax))) {
+                        $derniereVisiteMax = $derniereVisite;
+                    }
+                }
+                
+                if ($derniereVisiteMax) {
+                    $anneeDerniereVisite = date("Y", strtotime($derniereVisiteMax));
+                    error_log("Dernière visite trouvée: {$derniereVisiteMax} (année: {$anneeDerniereVisite})");
+                    
+                    // Filtrer les équipements de cette dernière visite (même année)
+                    foreach ($equipments as $equipment) {
+                        $derniereVisite = $equipment->getDerniereVisite();
+                        if ($derniereVisite && date("Y", strtotime($derniereVisite)) === $anneeDerniereVisite) {
+                            $equipmentsFiltered[] = $equipment;
+                        }
+                    }
+                } else {
+                    // Fallback : tous les équipements si aucune date trouvée
+                    error_log("Aucune date de dernière visite trouvée - utilisation de tous les équipements");
+                    $equipmentsFiltered = $equipments;
+                }
             }
             
             // 4. VÉRIFICATION APRÈS FILTRAGE
             if (empty($equipmentsFiltered)) {
                 error_log("ATTENTION: Aucun équipement après filtrage!");
                 
-                // Essayer de récupérer au moins quelques équipements pour debug
-                $sampleEquipments = array_slice($equipments, 0, 3);
+                // Debug des équipements disponibles
+                $sampleEquipments = array_slice($equipments, 0, 5);
                 foreach ($sampleEquipments as $eq) {
                     error_log("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
                 }
@@ -210,11 +241,12 @@ class EquipementPdfController extends AbstractController
                         'filtre_annee' => $clientAnneeFilter,
                         'filtre_visite' => $clientVisiteFilter,
                         'total_equipements_bruts' => count($equipments)
-                    ]
+                    ], 
+                    $clientSelectedInformations
                 );
             }
             
-            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
+            // 5. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             
@@ -253,18 +285,44 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            // 7. SÉPARATION DES ÉQUIPEMENTS
-            $equipementsSupplementaires = array_filter($equipmentsWithPictures, function($equipement) {
-                return $equipement['equipment']->isEnMaintenance() === false;
-            });
+            error_log("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
             
-            $equipementsNonPresents = array_filter($equipmentsWithPictures, function($equipement) {
-                $etat = $equipement['equipment']->getEtat();
-                return $etat === "Equipement non présent sur site" || $etat === "G";
-            });
+            // 6. SÉPARATION DES ÉQUIPEMENTS - VERSION SÉCURISÉE
+            $equipementsSupplementaires = [];
+            $equipementsNonPresents = [];
             
-            // 8. CALCUL DES STATISTIQUES
+            foreach ($equipmentsWithPictures as $equipmentData) {
+                try {
+                    // Vérifier si la méthode isEnMaintenance existe avant de l'appeler
+                    if (method_exists($equipmentData['equipment'], 'isEnMaintenance')) {
+                        if ($equipmentData['equipment']->isEnMaintenance() === false) {
+                            $equipementsSupplementaires[] = $equipmentData;
+                        }
+                    }
+                    
+                    // Équipements non présents
+                    $etat = $equipmentData['equipment']->getEtat();
+                    if ($etat === "Equipement non présent sur site" || $etat === "G") {
+                        $equipementsNonPresents[] = $equipmentData;
+                    }
+                } catch (\Exception $e) {
+                    error_log("Erreur séparation équipement: " . $e->getMessage());
+                }
+            }
+            
+            error_log("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
+            
+            // 7. CALCUL DES STATISTIQUES
             $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
+            
+            // 8. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
+            $statistiquesSupplementaires = null;
+            if (!empty($equipementsSupplementaires)) {
+                $equipmentsSupplementairesOnly = array_map(function($item) {
+                    return $item['equipment'];
+                }, $equipementsSupplementaires);
+                $statistiquesSupplementaires = $this->calculateEquipmentStatistics($equipmentsSupplementairesOnly);
+            }
             
             // 9. GÉNÉRATION DU PDF
             $filename = "equipements_client_{$id}_{$agence}";
@@ -275,15 +333,6 @@ class EquipementPdfController extends AbstractController
             }
             $filename .= '.pdf';
 
-            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
-
-            // Test direct
-            try {
-                $test = $this->getClientInformations($agence, $id, $entityManager);
-                error_log("Test direct fonction: " . json_encode($test));
-            } catch (\Exception $e) {
-                error_log("ERREUR dans getClientInformations: " . $e->getMessage());
-            }
             $templateVars = [
                 'equipmentsWithPictures' => $equipmentsWithPictures,
                 'equipementsSupplementaires' => $equipementsSupplementaires,
@@ -294,6 +343,7 @@ class EquipementPdfController extends AbstractController
                 'clientAnneeFilter' => $clientAnneeFilter ?: '',
                 'clientVisiteFilter' => $clientVisiteFilter ?: '',
                 'statistiques' => $statistiques,
+                'statistiquesSupplementaires' => $statistiquesSupplementaires,
                 'photoSourceStats' => $photoSourceStats,
                 'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
                 'dateDeDerniererVisite' => $dateDeDerniererVisite,
@@ -326,7 +376,7 @@ class EquipementPdfController extends AbstractController
             error_log("Stack trace: " . $e->getTraceAsString());
             
             // En cas d'erreur, générer un PDF d'erreur détaillé
-            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), $clientSelectedInformations);
+            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), [], $clientSelectedInformations);
         }
     }
 
