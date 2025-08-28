@@ -106,276 +106,6 @@ class EquipementPdfController extends AbstractController
      * VERSION MISE À JOUR - Utilise les photos stockées en local au lieu des appels API
      * Route: /client/equipements/pdf/{agence}/{id}
      */
-    // #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
-    // public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
-    // {
-    //     // Initialiser les métriques de performance
-    //     $startTime = microtime(true);
-    //     $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
-        
-    //     try {
-    //         // Récupérer les filtres depuis les paramètres de la requête
-    //         $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
-    //         $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
-            
-            
-    //         error_log("=== GÉNÉRATION PDF CLIENT ===");
-    //         error_log("Agence: {$agence}, Client: {$id}");
-    //         error_log("Filtres - Année: {$clientAnneeFilter}, Visite: {$clientVisiteFilter}");
-            
-    //         // Vérifier si c'est un envoi par email
-    //         $sendEmail = $request->query->getBoolean('send_email', false);
-    //         $clientEmail = $request->query->get('client_email');
-            
-    //         // Récupérer les informations client
-    //         $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
-    //         error_log("Client info récupérées: " . json_encode($clientInfo));
-            
-    //         // Récupérer les équipements selon l'agence
-    //         $equipments = $this->getEquipmentsByAgencyFixed($agence, $id, $entityManager, $clientAnneeFilter, $clientVisiteFilter);
-    //         error_log("Équipements trouvés: " . count($equipments));
-            
-    //         if (empty($equipments)) {
-    //             throw new \Exception("Impossible de générer le PDF client {$clientInfo['nom']}. Erreur principale: Aucun équipement trouvé pour ce client. Erreur fallback: Variable 'imageUrl' does not exist.");
-    //         }
-            
-    //         // Appliquer les filtres si définis
-    //         if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-    //             $equipments = array_filter($equipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
-    //                 $matches = true;
-                    
-    //                 // Filtre par année si défini
-    //                 if (!empty($clientAnneeFilter)) {
-    //                     $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
-    //                     $matches = $matches && ($annee_date_equipment === $clientAnneeFilter);
-    //                 }
-                    
-    //                 // Filtre par visite si défini  
-    //                 if (!empty($clientVisiteFilter)) {
-    //                     $matches = $matches && ($equipment->getVisite() === $clientVisiteFilter);
-    //                 }
-                    
-    //                 return $matches;
-    //             });
-    //         }
-
-    //         // Récupérer les informations client
-    //         $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
-
-    //         // ✅ SOLUTION : Filtrer uniquement les équipements au contrat
-    //         $equipmentsAuContrat = array_filter($equipments, function($equipment) {
-    //             return $equipment->isEnMaintenance() === true;
-    //         });
-    //         // Statistiques des équipements 
-    //         $statistiques = $this->calculateEquipmentStatistics($equipmentsAuContrat);
-
-    //         $equipmentsWithPictures = [];
-    //         $dateDeDerniererVisite = "";
-
-    //         // NOUVELLE LOGIQUE: Pour chaque équipement, récupérer ses photos via la méthode optimisée
-    //         foreach ($equipments as $equipment) {
-    //             $picturesData = [];
-    //             $photoSource = 'none';
-    //             $generalImageBase64 = null;
-                
-    //             try {
-    //                 // Extraire les informations pour construire le chemin
-    //                 $agence = $equipment->getCodeAgence();
-    //                 $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
-    //                 $anneeVisite = $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement()));
-    //                 $typeVisite = $clientVisiteFilter ?: $equipment->getVisite();
-                    
-    //                 // Récupérer l'image générale en base64
-    //                 $generalImageBase64 = $this->imageStorageService->getGeneralImageBase64(
-    //                     $agence,
-    //                     $raisonSociale,
-    //                     $anneeVisite,
-    //                     $typeVisite,
-    //                     $equipment->getNumeroEquipement()
-    //                 );
-                    
-    //                 if ($generalImageBase64) {
-    //                     $photoSource = 'local_general';
-    //                     // Créer un objet picture compatible avec le template
-    //                     $picturesdataObject = new \stdClass();
-    //                     $picturesdataObject->picture = $generalImageBase64;
-    //                     $picturesdataObject->photo_type = 'generale';
-    //                     $picturesdataObject->update_time = date('Y-m-d H:i:s');
-                        
-    //                     $picturesData[] = $picturesdataObject;
-    //                 }
-                    
-    //                 // Si pas d'image générale locale, fallback vers la méthode existante
-    //                 if (empty($picturesData)) {
-    //                     if ($equipment->isEnMaintenance()) {
-    //                         $picturesData = $entityManager->getRepository(Form::class)
-    //                             ->getPictureArrayByIdEquipmentOptimized($equipment, $entityManager);
-    //                     } else {
-    //                         $picturesData = $entityManager->getRepository(Form::class)
-    //                             ->getPictureArrayByIdSupplementaryEquipmentOptimized($equipment, $entityManager);
-    //                     }
-    //                     $photoSource = !empty($picturesData) ? 'fallback' : 'none';
-    //                 }
-                    
-    //             } catch (\Exception $e) {
-    //                 error_log("Erreur récupération photo générale pour équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-    //                 $photoSource = 'none';
-    //             }
-                
-    //             $equipmentsWithPictures[] = [
-    //                 'equipment' => $equipment,
-    //                 'pictures' => $picturesData,
-    //                 'photo_source' => $photoSource
-    //             ];
-                
-    //             // Récupérer la date de dernière visite
-    //             $dateDeDerniererVisite = $equipment->getDerniereVisite();
-    //         }
-
-    //         // Séparer les équipements supplémentaires
-    //         $equipementsSupplementaires = array_filter($equipmentsWithPictures, function($equipement) {
-    //             return $equipement['equipment']->isEnMaintenance() === false;
-    //         });
-
-    //         // Calculer statistiques supplémentaires
-    //         $statistiquesSupplementaires = $this->calculateSupplementaryStatistics($equipementsSupplementaires);
-
-    //         // Équipements non présents
-    //         $equipementsNonPresents = array_filter($equipmentsWithPictures, function($equipement) {
-    //             $etat = $equipement['equipment']->getEtat();
-    //             return $etat === "Equipement non présent sur site" || $etat === "G";
-    //         });
-
-    //         // URL de l'image d'agence
-    //         if ($this->getImageUrlForAgency($agence)) {
-    //             $imageUrl = $this->getImageUrlForAgency($agence);
-    //         }else{
-    //             $imageUrl = 'https://www.pdf.somafi-group.fr/background/group.jpg';
-    //         }
-            
-    //         // GÉNÉRATION DU PDF avec template équipements (multi-équipements)
-    //         $html = $this->renderView('pdf/equipements.html.twig', [
-    //             'equipmentsWithPictures' => $equipmentsWithPictures,
-    //             'equipementsSupplementaires' => $equipementsSupplementaires,
-    //             'equipementsNonPresents' => $equipementsNonPresents,
-    //             'clientId' => $id,
-    //             'agence' => $agence,
-    //             'imageUrl' => $imageUrl,
-    //             'clientAnneeFilter' => $clientAnneeFilter,
-    //             'clientVisiteFilter' => $clientVisiteFilter,
-    //             'statistiques' => $statistiques, // 🎯 Nouvelle variable ajoutée,
-    //             'statistiquesSupplementaires' => $statistiquesSupplementaires, // 🎯 Nouvelle variable
-    //             'statistiquesSupplementaires' => $statistiquesSupplementaires,
-    //             'dateDeDerniererVisite' => $dateDeDerniererVisite,
-    //             'clientSelectedInformations' => $clientSelectedInformations,
-    //             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
-    //             // NOUVELLES VARIABLES pour monitoring
-    //             'using_local_photos' => $photoSourceStats['local'] > 0,
-    //             'photo_source_stats' => $photoSourceStats,
-    //             'generation_time' => date('Y-m-d H:i:s'),
-    //             'performance_mode' => 'optimized'
-    //         ]);
-            
-    //         // Générer le nom de fichier avec filtres
-    //         $filename = "equipements_client_{$id}_{$agence}";
-    //         if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-    //             $filename .= '_filtered';
-    //             if (!empty($clientAnneeFilter)) {
-    //                 $filename .= '_' . $clientAnneeFilter;
-    //             }
-    //             if (!empty($clientVisiteFilter)) {
-    //                 $filename .= '_' . str_replace(' ', '_', $clientVisiteFilter);
-    //             }
-    //         }
-    //         $filename .= '.pdf';
-            
-    //         // 1. Génération du PDF existant
-    //         $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-
-    //         // 2. Stockage local du PDF
-    //         $storedPath = $this->pdfStorageService->storePdf(
-    //             $agence,
-    //             $id,
-    //             $clientAnneeFilter,
-    //             $clientVisiteFilter,
-    //             $pdfContent
-    //         );
-            
-    //         // Création du lien court SÉCURISÉ
-    //         $originalUrl = $this->generateUrl('pdf_secure_download', [
-    //             'agence' => $agence,
-    //             'clientId' => $id,
-    //             'annee' => $clientAnneeFilter,
-    //             'visite' => $clientVisiteFilter
-    //         ], true);
-            
-    //         $expiresAt = (new \DateTime())->modify('+30 days');
-            
-    //         $shortLink = $this->shortLinkService->createShortLink(
-    //             $originalUrl,
-    //             $agence,
-    //             $id,
-    //             $clientAnneeFilter,
-    //             $clientVisiteFilter,
-    //             $expiresAt
-    //         );
-            
-    //         // URL courte pour l'email (PAS l'URL de téléchargement direct)
-    //         $shortUrl = $this->shortLinkService->getShortUrl($shortLink->getShortCode());
-            
-    //         // 4. Retourner le PDF directement OU envoyer par email selon le paramètre
-    //         $sendEmail = $request->query->getBoolean('send_email', false);
-    //         $clientEmail = $request->query->get('client_email');
-            
-    //         if ($sendEmail && $clientEmail) {
-    //             // Récupérer les infos client pour l'email
-    //             $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
-                
-    //             $emailSent = $this->emailService->sendPdfLinkToClient(
-    //                 $agence,
-    //                 $clientEmail,
-    //                 $clientInfo['nom'] ?? 'Client',
-    //                 $shortUrl,
-    //                 $clientAnneeFilter,
-    //                 $clientVisiteFilter
-    //             );
-                
-    //             return new JsonResponse([
-    //                 'success' => true,
-    //                 'message' => 'PDF généré et ' . ($emailSent ? 'email envoyé' : 'erreur envoi email'),
-    //                 'pdf_stored' => true,
-    //                 'storage_path' => basename($storedPath),
-    //                 'short_url' => $shortUrl,
-    //                 'email_sent' => $emailSent
-    //             ]);
-    //         }
-            
-    //         // Log des métriques de performance
-    //         $totalTime = round(microtime(true) - $startTime, 2);
-    //         $this->logPdfGenerationMetrics($agence, $id, count($equipments), $photoSourceStats, $totalTime);
-            
-    //         // Headers avec informations de debug
-    //         $headers = [
-    //             'Content-Type' => 'application/pdf',
-    //             'Content-Disposition' => "inline; filename=\"client_{$id}_{$clientAnneeFilter}_{$clientVisiteFilter}.pdf\"",
-    //             'X-PDF-Stored' => 'true',
-    //             'X-Short-URL' => $shortUrl,
-    //             'X-Storage-Path' => basename($storedPath),
-    //             'X-Equipment-Count' => count($equipments),
-    //             'X-Local-Photos' => $photoSourceStats['local'],
-    //             'X-Fallback-Photos' => $photoSourceStats['api_fallback'],
-    //             'X-Missing-Photos' => $photoSourceStats['none'],
-    //             'X-Generation-Time' => $totalTime . 's',
-    //             'X-Performance-Mode' => 'optimized'
-    //         ];
-            
-    //         return new Response($pdfContent, Response::HTTP_OK, $headers);
-            
-    //     } catch (\Exception $e) {
-    //         // En cas d'erreur majeure, fallback vers l'ancienne méthode complète
-    //         return $this->generateClientEquipementsPdfFallback($request, $agence, $id, $entityManager, $e);
-    //     }
-    // }
 
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
 public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
@@ -667,6 +397,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 'imageUrl' => $imageUrl, // Toujours définie
                 'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini
                 'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini
+                'clientSelectedInformations' => $this->getClientInformations($agence, $id, $entityManager),
                 'statistiques' => $statistiques,
                 'performance_mode' => true,
                 'equipment_count' => count($equipments),
@@ -727,122 +458,122 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     /**
      * PDF simplifié en cas d'erreur
      */
-    private function generateSimplifiedPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager): Response
-    {
-        error_log("Génération PDF simplifiée pour {$agence}/{$id}");
+    // private function generateSimplifiedPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager): Response
+    // {
+    //     error_log("Génération PDF simplifiée pour {$agence}/{$id}");
         
-        $html = $this->renderView('pdf/equipements.html.twig', [
-            'equipmentsWithPictures' => [],
-            'equipementsSupplementaires' => [],
-            'equipementsNonPresents' => [],
-            'clientId' => $id,
-            'agence' => $agence,
-            'imageUrl' => $imageUrl, // TOUJOURS définie
-            'clientAnneeFilter' => '', // Défini même si vide
-            'clientVisiteFilter' => '', // Défini même si vide
-            'error_mode' => true,
-            'error_message' => 'Trop d\'équipements pour la génération complète. Veuillez utiliser les filtres.',
-            'isFiltered' => false,
-            'dateDeDerniererVisite' => null
-        ]);
+    //     $html = $this->renderView('pdf/equipements.html.twig', [
+    //         'equipmentsWithPictures' => [],
+    //         'equipementsSupplementaires' => [],
+    //         'equipementsNonPresents' => [],
+    //         'clientId' => $id,
+    //         'agence' => $agence,
+    //         'imageUrl' => $imageUrl, // TOUJOURS définie
+    //         'clientAnneeFilter' => '', // Défini même si vide
+    //         'clientVisiteFilter' => '', // Défini même si vide
+    //         'error_mode' => true,
+    //         'error_message' => 'Trop d\'équipements pour la génération complète. Veuillez utiliser les filtres.',
+    //         'isFiltered' => false,
+    //         'dateDeDerniererVisite' => null
+    //     ]);
         
-        $filename = "equipements_client_{$id}_{$agence}_error.pdf";
-        $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+    //     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
+    //     $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
         
-        return new Response($pdfContent, Response::HTTP_OK, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "inline; filename=\"$filename\"",
-            'X-Generation-Mode' => 'error-fallback'
-        ]);
-    }
+    //     return new Response($pdfContent, Response::HTTP_OK, [
+    //         'Content-Type' => 'application/pdf',
+    //         'Content-Disposition' => "inline; filename=\"$filename\"",
+    //         'X-Generation-Mode' => 'error-fallback'
+    //     ]);
+    // }
 
-    private function getEquipmentsByAgencyFixed(string $agence, string $clientId, EntityManagerInterface $entityManager, ?string $anneeFilter = null, ?string $visiteFilter = null): array
-    {
-        error_log("=== RÉCUPÉRATION ÉQUIPEMENTS ===");
-        error_log("Agence: {$agence}, Client: {$clientId}");
-        error_log("Filtres - Année: {$anneeFilter}, Visite: {$visiteFilter}");
+    // private function getEquipmentsByAgencyFixed(string $agence, string $clientId, EntityManagerInterface $entityManager, ?string $anneeFilter = null, ?string $visiteFilter = null): array
+    // {
+    //     error_log("=== RÉCUPÉRATION ÉQUIPEMENTS ===");
+    //     error_log("Agence: {$agence}, Client: {$clientId}");
+    //     error_log("Filtres - Année: {$anneeFilter}, Visite: {$visiteFilter}");
         
-        $equipmentEntity = "App\\Entity\\Equipement{$agence}";
+    //     $equipmentEntity = "App\\Entity\\Equipement{$agence}";
         
-        if (!class_exists($equipmentEntity)) {
-            error_log("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
-            throw new \Exception("Classe d'équipement {$equipmentEntity} introuvable");
-        }
+    //     if (!class_exists($equipmentEntity)) {
+    //         error_log("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
+    //         throw new \Exception("Classe d'équipement {$equipmentEntity} introuvable");
+    //     }
         
-        try {
-            $repository = $entityManager->getRepository($equipmentEntity);
+    //     try {
+    //         $repository = $entityManager->getRepository($equipmentEntity);
             
-            // D'abord, essayer de trouver des équipements sans filtres
-            $allEquipments = $repository->findBy(['id_contact' => $clientId]);
-            error_log("Total équipements pour client {$clientId}: " . count($allEquipments));
+    //         // D'abord, essayer de trouver des équipements sans filtres
+    //         $allEquipments = $repository->findBy(['id_contact' => $clientId]);
+    //         error_log("Total équipements pour client {$clientId}: " . count($allEquipments));
             
-            if (empty($allEquipments)) {
-                // Pas d'équipements du tout pour ce client
-                error_log("AUCUN équipement trouvé pour le client {$clientId}");
+    //         if (empty($allEquipments)) {
+    //             // Pas d'équipements du tout pour ce client
+    //             error_log("AUCUN équipement trouvé pour le client {$clientId}");
                 
-                // Essayer de voir s'il y a des équipements dans la table
-                $sampleEquipments = $repository->findBy([], [], 5);
-                error_log("Échantillon d'équipements dans la table: " . count($sampleEquipments));
+    //             // Essayer de voir s'il y a des équipements dans la table
+    //             $sampleEquipments = $repository->findBy([], [], 5);
+    //             error_log("Échantillon d'équipements dans la table: " . count($sampleEquipments));
                 
-                if (!empty($sampleEquipments)) {
-                    $sampleIds = array_map(function($eq) {
-                        return method_exists($eq, 'getIdContact') ? $eq->getIdContact() : 'N/A';
-                    }, $sampleEquipments);
-                    error_log("IDs clients échantillon: " . implode(', ', $sampleIds));
-                }
+    //             if (!empty($sampleEquipments)) {
+    //                 $sampleIds = array_map(function($eq) {
+    //                     return method_exists($eq, 'getIdContact') ? $eq->getIdContact() : 'N/A';
+    //                 }, $sampleEquipments);
+    //                 error_log("IDs clients échantillon: " . implode(', ', $sampleIds));
+    //             }
                 
-                return [];
-            }
+    //             return [];
+    //         }
             
-            // Si on a des équipements, appliquer les filtres
-            $criteria = ['id_contact' => $clientId];
+    //         // Si on a des équipements, appliquer les filtres
+    //         $criteria = ['id_contact' => $clientId];
             
-            // Pour les filtres, il faut connaître les noms exacts des propriétés
-            // Regardons un équipement pour voir les propriétés disponibles
-            $firstEquipment = $allEquipments[0];
-            $methods = get_class_methods($firstEquipment);
-            $getterMethods = array_filter($methods, function($method) {
-                return strpos($method, 'get') === 0;
-            });
+    //         // Pour les filtres, il faut connaître les noms exacts des propriétés
+    //         // Regardons un équipement pour voir les propriétés disponibles
+    //         $firstEquipment = $allEquipments[0];
+    //         $methods = get_class_methods($firstEquipment);
+    //         $getterMethods = array_filter($methods, function($method) {
+    //             return strpos($method, 'get') === 0;
+    //         });
             
-            error_log("Méthodes disponibles sur l'équipement: " . implode(', ', $getterMethods));
+    //         error_log("Méthodes disponibles sur l'équipement: " . implode(', ', $getterMethods));
             
-            // Essayer différents noms de propriétés pour l'année
-            if ($anneeFilter) {
-                $yearProperties = ['annee', 'year', 'dateVisite', 'date_visite', 'anneeVisite'];
-                foreach ($yearProperties as $prop) {
-                    $getter = 'get' . ucfirst($prop);
-                    if (method_exists($firstEquipment, $getter)) {
-                        error_log("Propriété année trouvée: {$prop}");
-                        // Pour l'instant, on n'applique pas le filtre année car on ne connaît pas la structure exacte
-                        break;
-                    }
-                }
-            }
+    //         // Essayer différents noms de propriétés pour l'année
+    //         if ($anneeFilter) {
+    //             $yearProperties = ['annee', 'year', 'dateVisite', 'date_visite', 'anneeVisite'];
+    //             foreach ($yearProperties as $prop) {
+    //                 $getter = 'get' . ucfirst($prop);
+    //                 if (method_exists($firstEquipment, $getter)) {
+    //                     error_log("Propriété année trouvée: {$prop}");
+    //                     // Pour l'instant, on n'applique pas le filtre année car on ne connaît pas la structure exacte
+    //                     break;
+    //                 }
+    //             }
+    //         }
             
-            // Essayer différents noms de propriétés pour la visite
-            if ($visiteFilter) {
-                $visiteProperties = ['visite', 'typeVisite', 'type_visite', 'maintenance'];
-                foreach ($visiteProperties as $prop) {
-                    $getter = 'get' . ucfirst($prop);
-                    if (method_exists($firstEquipment, $getter)) {
-                        error_log("Propriété visite trouvée: {$prop}");
-                        // Pour l'instant, on n'applique pas le filtre visite car on ne connaît pas la structure exacte
-                        break;
-                    }
-                }
-            }
+    //         // Essayer différents noms de propriétés pour la visite
+    //         if ($visiteFilter) {
+    //             $visiteProperties = ['visite', 'typeVisite', 'type_visite', 'maintenance'];
+    //             foreach ($visiteProperties as $prop) {
+    //                 $getter = 'get' . ucfirst($prop);
+    //                 if (method_exists($firstEquipment, $getter)) {
+    //                     error_log("Propriété visite trouvée: {$prop}");
+    //                     // Pour l'instant, on n'applique pas le filtre visite car on ne connaît pas la structure exacte
+    //                     break;
+    //                 }
+    //             }
+    //         }
             
-            // Pour le moment, retourner tous les équipements du client
-            // Vous pourrez affiner les filtres une fois que vous connaîtrez la structure exacte
-            error_log("Retour de " . count($allEquipments) . " équipements");
-            return $allEquipments;
+    //         // Pour le moment, retourner tous les équipements du client
+    //         // Vous pourrez affiner les filtres une fois que vous connaîtrez la structure exacte
+    //         error_log("Retour de " . count($allEquipments) . " équipements");
+    //         return $allEquipments;
             
-        } catch (\Exception $e) {
-            error_log("Erreur récupération équipements {$agence}: " . $e->getMessage());
-            throw new \Exception("Erreur lors de la récupération des équipements: " . $e->getMessage());
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         error_log("Erreur récupération équipements {$agence}: " . $e->getMessage());
+    //         throw new \Exception("Erreur lors de la récupération des équipements: " . $e->getMessage());
+    //     }
+    // }
 
     // ===== ROUTE DE DEBUG POUR ANALYSER LA STRUCTURE DES ÉQUIPEMENTS =====
     #[Route('/api/test-equipment/{agence}/{clientId}', name: 'api_test_equipment', methods: ['GET'])]
@@ -1493,99 +1224,6 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ], 500);
-        }
-    }
-    /**
-     * NOUVELLE MÉTHODE: Fallback complet vers l'ancienne méthode
-     */ 
-    private function generateClientEquipementsPdfFallback(
-        Request $request, 
-        string $agence, 
-        string $id, 
-        EntityManagerInterface $entityManager, 
-        \Exception $originalException
-    ): Response {
-        
-        error_log("Fallback complet pour PDF client {$id} agence {$agence}: " . $originalException->getMessage());
-        
-        try {
-            // Utiliser entièrement l'ancienne logique avec appels API
-            $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
-            $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
-            
-            $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
-            
-            // Application des filtres (identique)
-            if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-                $equipments = array_filter($equipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
-                    $matches = true;
-                    
-                    if (!empty($clientAnneeFilter)) {
-                        $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
-                        $matches = $matches && ($annee_date_equipment === $clientAnneeFilter);
-                    }
-                    
-                    if (!empty($clientVisiteFilter)) {
-                        $matches = $matches && ($equipment->getVisite() === $clientVisiteFilter);
-                    }
-                    
-                    return $matches;
-                });
-            }
-            
-            $equipmentsWithPictures = [];
-            
-            // ANCIENNE LOGIQUE: Appels API pour chaque équipement
-            foreach ($equipments as $equipment) {
-                if ($equipment->isEnMaintenance()) {
-                    // Ancienne méthode pour équipements au contrat
-                    $picturesArray = $entityManager->getRepository(Form::class)->findBy([
-                        'code_equipement' => $equipment->getNumeroEquipement(),
-                        'raison_sociale_visite' => $equipment->getRaisonSociale() . "\\" . $equipment->getVisite()
-                    ]);
-                    $picturesData = $entityManager->getRepository(Form::class)
-                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                } else {
-                    // Ancienne méthode pour équipements supplémentaires
-                    $picturesData = $entityManager->getRepository(Form::class)
-                        ->getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment);
-                }
-                
-                $equipmentsWithPictures[] = [
-                    'equipment' => $equipment,
-                    'pictures' => $picturesData
-                ];
-            }
-            
-            // Continuer avec le reste de la logique (identique à l'originale)
-            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
-            $statistiques = $this->calculateEquipmentStatistics($equipments);
-            // ... reste du code identique
-            
-            $filename = "equipements_client_{$id}_{$agence}_fallback.pdf";
-            
-            $html = $this->renderView('pdf/equipements.html.twig', [
-                'equipmentsWithPictures' => $equipmentsWithPictures,
-                // ... autres variables
-                'fallback_mode' => true,
-                'performance_mode' => 'legacy'
-            ]);
-            
-            $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-            
-            return new Response($pdfContent, Response::HTTP_OK, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => "inline; filename=\"$filename\"",
-                'X-Performance-Mode' => 'legacy-fallback',
-                'X-Fallback-Reason' => 'optimization-failed'
-            ]);
-            
-        } catch (\Exception $fallbackException) {
-            throw new \RuntimeException(
-                "Impossible de générer le PDF client {$id}. " .
-                "Erreur principale: {$originalException->getMessage()}. " .
-                "Erreur fallback: {$fallbackException->getMessage()}"
-            );
         }
     }
 
