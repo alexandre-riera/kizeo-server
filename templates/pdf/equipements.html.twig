@@ -117,21 +117,6 @@
 </head>
 <body {% if imageUrl is defined and imageUrl %}style="background-image: url('{{ imageUrl }}');" class="body-with-bg"{% endif %}>
     
-    {# DEBUG VISUAL - Informations directement dans le PDF #}
-    <div class="debug-info">
-        <strong>DEBUG INFO:</strong><br>
-        equipmentsWithPictures count: {{ equipmentsWithPictures|length }}<br>
-        equipementsSupplementaires count: {{ equipementsSupplementaires|length|default(0) }}<br>
-        total_equipements_bruts: {{ total_equipements_bruts|default('non défini') }}<br>
-        total_equipements_filtres: {{ total_equipements_filtres|default('non défini') }}<br>
-        Filtres - Année: "{{ clientAnneeFilter }}", Visite: "{{ clientVisiteFilter }}"<br>
-        isFiltered: {{ isFiltered ? 'OUI' : 'NON' }}<br>
-        {% if equipmentsWithPictures is not empty %}
-            Premier équipement: {{ equipmentsWithPictures[0].equipment.numeroEquipement|default('N/A') }}
-        {% endif %}
-        <br><strong>Photos du premier équipement:</strong> {{ equipmentsWithPictures[0].pictures|length|default(0) }} photo(s)
-    </div>
-    
     {# PREMIÈRE PAGE AVEC CARTOUCHE ET STATISTIQUES #}
     <div class="first-page">
         <div class="client-header">
