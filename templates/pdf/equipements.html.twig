@@ -124,13 +124,13 @@
     <div class="debug-info">
         <strong>DEBUG INFO:</strong><br>
         equipmentsWithPictures count: {{ equipmentsWithPictures|length }}<br>
-        equipementsSupplementaires count: {{ equipementsSupplementaires|length ?? 0 }}<br>
-        total_equipements_bruts: {{ total_equipements_bruts ?? 'non défini' }}<br>
-        total_equipements_filtres: {{ total_equipements_filtres ?? 'non défini' }}<br>
+        equipementsSupplementaires count: {{ equipementsSupplementaires|length|default(0) }}<br>
+        total_equipements_bruts: {{ total_equipements_bruts|default('non défini') }}<br>
+        total_equipements_filtres: {{ total_equipements_filtres|default('non défini') }}<br>
         Filtres - Année: "{{ clientAnneeFilter }}", Visite: "{{ clientVisiteFilter }}"<br>
         isFiltered: {{ isFiltered ? 'OUI' : 'NON' }}<br>
         {% if equipmentsWithPictures is not empty %}
-            Premier équipement: {{ equipmentsWithPictures[0].equipment.numeroEquipement ?? 'N/A' }}
+            Premier équipement: {{ equipmentsWithPictures[0].equipment.numeroEquipement|default('N/A') }}
         {% endif %}
     </div>
     
@@ -140,10 +140,10 @@
             <h1 class="client-title">Rapport des équipements - Client {{ clientId }}</h1>
             {% if clientSelectedInformations %}
                 <div class="client-info">
-                    <strong>{{ clientSelectedInformations.nom ?? 'Client non trouvé' }}</strong><br>
+                    <strong>{{ clientSelectedInformations.nom|default('Client non trouvé') }}</strong><br>
                     {% if clientSelectedInformations.adresse %}{{ clientSelectedInformations.adresse }}<br>{% endif %}
                     {% if clientSelectedInformations.codePostal or clientSelectedInformations.ville %}
-                        {{ clientSelectedInformations.codePostal ?? '' }} {{ clientSelectedInformations.ville ?? '' }}<br>
+                        {{ clientSelectedInformations.codePostal|default('') }} {{ clientSelectedInformations.ville|default('') }}<br>
                     {% endif %}
                     {% if clientSelectedInformations.telephone %}Tél: {{ clientSelectedInformations.telephone }}<br>{% endif %}
                     {% if clientSelectedInformations.email %}Email: {{ clientSelectedInformations.email }}<br>{% endif %}
@@ -170,8 +170,8 @@
         {% if equipmentsWithPictures|length == 0 %}
             <div style="background-color: #ffe6e6; padding: 20px; border: 1px solid #ff0000; margin: 20px 0;">
                 <h3 style="color: #cc0000;">DEBUG: Aucun équipement trouvé</h3>
-                <p><strong>Total brut:</strong> {{ total_equipements_bruts ?? 'non défini' }}</p>
-                <p><strong>Total filtré:</strong> {{ total_equipements_filtres ?? 'non défini' }}</p>
+                <p><strong>Total brut:</strong> {{ total_equipements_bruts|default('non défini') }}</p>
+                <p><strong>Total filtré:</strong> {{ total_equipements_filtres|default('non défini') }}</p>
                 <p><strong>Filtres actifs:</strong> {{ isFiltered ? 'OUI' : 'NON' }}</p>
                 <p><strong>Filtre année:</strong> '{{ clientAnneeFilter }}'</p>
                 <p><strong>Filtre visite:</strong> '{{ clientVisiteFilter }}'</p>
@@ -213,19 +213,19 @@
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">Type</th>
-                                        <td style="border: none;">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                                        <td style="border: none;">{{ equipment.libelleEquipement|default('Non renseigné') }}</td>
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">Marque</th>
-                                        <td style="border: none;">{{ equipment.marque ?? 'Non renseigné' }}</td>
+                                        <td style="border: none;">{{ equipment.marque|default('Non renseigné') }}</td>
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">Modèle</th>
-                                        <td style="border: none;">{{ equipment.modele ?? 'Non renseigné' }}</td>
+                                        <td style="border: none;">{{ equipment.modele|default('Non renseigné') }}</td>
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">État</th>
-                                        <td style="border: none;">{{ equipment.etat ?? 'Non défini' }}</td>
+                                        <td style="border: none;">{{ equipment.etat|default('Non défini') }}</td>
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">Mise en service</th>
@@ -233,7 +233,7 @@
                                     </tr>
                                     <tr>
                                         <th style="border: none; background: none;">Repère site client</th>
-                                        <td style="border: none;">{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
+                                        <td style="border: none;">{{ equipment.repereSiteClient|default('Non repèré') }}</td>
                                     </tr>
                                     {# ANOMALIES #}
                                     {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
