@@ -214,9 +214,6 @@ class EquipementPdfController extends AbstractController
                 );
             }
             
-            // 5. RÉCUPÉRATION DES INFORMATIONS CLIENT
-            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
-            
             // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
@@ -278,6 +275,15 @@ class EquipementPdfController extends AbstractController
             }
             $filename .= '.pdf';
 
+            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
+
+            // Test direct
+            try {
+                $test = $this->getClientInformations($agence, $id, $entityManager);
+                error_log("Test direct fonction: " . json_encode($test));
+            } catch (\Exception $e) {
+                error_log("ERREUR dans getClientInformations: " . $e->getMessage());
+            }
             $templateVars = [
                 'equipmentsWithPictures' => $equipmentsWithPictures,
                 'equipementsSupplementaires' => $equipementsSupplementaires,
