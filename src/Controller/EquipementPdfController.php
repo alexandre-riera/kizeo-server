@@ -317,8 +317,7 @@ class EquipementPdfController extends AbstractController
                 
                 // SÉCURITÉ MÉMOIRE : Arrêter si la mémoire devient critique
                 $memoryUsage = memory_get_usage(true);
-                $memoryLimit = ini_get('memory_limit');
-                $memoryLimitBytes = $this->formatBytes($memoryLimit);
+                $memoryLimitBytes = $this->formatBytes($memoryUsage);
                 
                 if ($memoryUsage > ($memoryLimitBytes * 0.8)) {
                     $this->customLog("ATTENTION: Mémoire critique atteinte ({$memoryUsage} / {$memoryLimitBytes}). Arrêt du traitement.");
