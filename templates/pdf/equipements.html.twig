@@ -205,21 +205,7 @@
     </style>
 </head>
 <body {% if imageUrl is defined and imageUrl %}style="background-image: url('{{ imageUrl }}');" class="body-with-bg"{% endif %}>
-<!--     
-    <script>
-        // DEBUG - Affichage des données dans la console du navigateur
-        console.log("=== DEBUG TEMPLATE PDF ===");
-        console.log("equipmentsWithPictures count:", "{{ equipmentsWithPictures|length }}");
-        console.log("equipmentsWithPictures:", JSON.parse('{{ equipmentsWithPictures|json_encode|e('js') }}'));
-        console.log("equipementsSupplementaires count:", "{{ equipementsSupplementaires|length ?? 0 }}");
-        console.log("clientAnneeFilter:", "{{ clientAnneeFilter }}");
-        console.log("clientVisiteFilter:", "{{ clientVisiteFilter }}");
-        console.log("isFiltered:", {{ isFiltered ? 'true' : 'false' }});
-        console.log("statistiques:", JSON.parse('{{ statistiques|json_encode|e('js') }}'));
-        console.log("total_equipements_bruts:", "{{ total_equipements_bruts ?? 0 }}");
-        console.log("total_equipements_filtres:", "{{ total_equipements_filtres ?? 0 }}");
-    </script>
-     -->
+
     {# PREMIÈRE PAGE AVEC CARTOUCHE ET STATISTIQUES #}
     <div class="first-page">
         <div class="client-header">
