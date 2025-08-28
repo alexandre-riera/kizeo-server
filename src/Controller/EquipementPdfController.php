@@ -443,7 +443,7 @@ class EquipementPdfController extends AbstractController
             <p><strong>Client:</strong> {$id}</p>
             <p><strong>Agence:</strong> {$agence}</p>
             <p><strong>Erreur:</strong> {$errorMessage}</p>
-            <p><strong>Mémoire pic:</strong> " . $this->formatBytes(memory_get_peak_usage(true)) . "</p>
+            <p><strong>Mémoire pic:</strong> " . memory_get_peak_usage(true) . "</p>
             <p>Veuillez contacter le support technique.</p>
         </body></html>
         ";
