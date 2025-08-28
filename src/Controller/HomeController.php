@@ -375,52 +375,174 @@ class HomeController extends AbstractController
     #[Route('/ajax/filter-equipment', name: 'app_ajax_filter_equipment')]
     public function ajaxFilterEquipment(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
-        $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
-        $agenceSelected = $request->query->get('agenceSelected', '');
-        $idClientSelected = $request->query->get('idClientSelected', '');
-        
-        $errors = [];
-        $clientSelectedEquipments = [];
-        $clientSelectedInformations = null;
-        
-        // Vérifier que l'utilisateur a accès à cette agence
-        $user = $this->getUser();
-        $userAgencies = $this->getUserAgencies($user);
-        
-        if (!in_array($agenceSelected, $userAgencies)) {
-            return $this->json(['error' => 'Accès non autorisé à cette agence'], 403);
+        try {
+            $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+            $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+            $agenceSelected = $request->query->get('agenceSelected', '');
+            $idClientSelected = $request->query->get('idClientSelected', '');
+            
+            error_log("=== FILTRAGE AJAX ===");
+            error_log("Agence: {$agenceSelected}, Client: {$idClientSelected}");
+            error_log("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
+            
+            $errors = [];
+            $clientSelectedEquipments = [];
+            $clientSelectedInformations = null;
+            
+            // Validation des paramètres
+            if (empty($agenceSelected)) {
+                $errors[] = 'Agence non sélectionnée.';
+            }
+            
+            if (empty($idClientSelected)) {
+                $errors[] = 'Client non sélectionné.';
+            }
+            
+            if (empty($clientAnneeFilter)) {
+                $errors[] = 'Sélectionnez l\'année.';
+            }
+            
+            if (empty($clientVisiteFilter)) {
+                $errors[] = 'Sélectionnez la visite.';
+            }
+            
+            if (!empty($errors)) {
+                error_log("Erreurs de validation: " . implode(', ', $errors));
+                return $this->json(['errors' => $errors], 400);
+            }
+            
+            // Vérifier l'accès utilisateur à l'agence
+            $user = $this->getUser();
+            $userAgencies = $this->getUserAgencies($user);
+            
+            if (!in_array($agenceSelected, $userAgencies)) {
+                error_log("Accès non autorisé à l'agence {$agenceSelected}");
+                return $this->json(['error' => 'Accès non autorisé à cette agence'], 403);
+            }
+            
+            // 1. RÉCUPÉRATION SÉCURISÉE DES ÉQUIPEMENTS
+            $clientSelectedEquipments = $this->getEquipmentsByAgence($agenceSelected, $idClientSelected, $entityManager);
+            error_log("Équipements bruts récupérés: " . count($clientSelectedEquipments));
+            
+            if (empty($clientSelectedEquipments)) {
+                error_log("Aucun équipement trouvé pour ce client");
+                return $this->json([
+                    'html' => '<div class="alert alert-warning">Aucun équipement trouvé pour ce client.</div>'
+                ]);
+            }
+            
+            // 2. FILTRAGE SÉCURISÉ
+            $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+                try {
+                    // Vérifier que l'équipement a une date de dernière visite
+                    if (!$equipment->getDerniereVisite()) {
+                        error_log("Équipement {$equipment->getNumeroEquipement()} sans date de dernière visite");
+                        return false;
+                    }
+                    
+                    // Filtrage par année
+                    $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+                    $matchesAnnee = ($annee_date_equipment == $clientAnneeFilter);
+                    
+                    // Filtrage par visite
+                    $matchesVisite = ($equipment->getVisite() == $clientVisiteFilter);
+                    
+                    $matches = $matchesAnnee && $matchesVisite;
+                    
+                    if ($matches) {
+                        error_log("Équipement {$equipment->getNumeroEquipement()} correspond aux filtres");
+                    } else {
+                        error_log("Équipement {$equipment->getNumeroEquipement()} ne correspond pas - Année: {$annee_date_equipment} vs {$clientAnneeFilter}, Visite: '{$equipment->getVisite()}' vs '{$clientVisiteFilter}'");
+                    }
+                    
+                    return $matches;
+                    
+                } catch (\Exception $e) {
+                    error_log("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                    return false;
+                }
+            });
+            
+            error_log("Équipements après filtrage: " . count($clientSelectedEquipmentsFiltered));
+            
+            // 3. GÉNÉRATION DU HTML DE RÉPONSE
+            if (empty($clientSelectedEquipmentsFiltered)) {
+                $html = $this->renderView('components/equipment_table_empty.html.twig', [
+                    'message' => 'Aucun équipement ne correspond aux filtres sélectionnés.',
+                    'filters' => [
+                        'annee' => $clientAnneeFilter,
+                        'visite' => $clientVisiteFilter
+                    ],
+                    'total_equipements' => count($clientSelectedEquipments)
+                ]);
+            } else {
+                $html = $this->renderView('components/equipment_table.html.twig', [
+                    'clientSelectedEquipmentsFiltered' => $clientSelectedEquipmentsFiltered,
+                    'filters' => [
+                        'annee' => $clientAnneeFilter,
+                        'visite' => $clientVisiteFilter
+                    ]
+                ]);
+            }
+            
+            return new Response($html);
+            
+        } catch (\Exception $e) {
+            error_log("Erreur AJAX filtrage: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            return $this->json([
+                'error' => 'Erreur lors du filtrage des équipements: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Récupérer les équipements selon l'agence
-        // CORRECTION: Passer null au lieu de $homeRepository inexistant
-        $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, null, '');
-        
-        // Validation des filtres
-        if (empty($clientAnneeFilter)) {
-            $errors[] = 'Sélectionnez l\'année.';
+    }
+
+    /**
+     * Méthode helper pour récupérer les équipements par agence
+     */
+    private function getEquipmentsByAgence(string $agence, string $clientId, EntityManagerInterface $entityManager): array
+    {
+        try {
+            error_log("Récupération équipements pour agence: {$agence}, client: {$clientId}");
+            
+            switch ($agence) {
+                case 'S10':
+                    return $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S40':
+                    return $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S50':
+                    return $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S60':
+                    return $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S70':
+                    return $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S80':
+                    return $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S100':
+                    return $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S120':
+                    return $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S130':
+                    return $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S140':
+                    return $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S150':
+                    return $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S160':
+                    return $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                case 'S170':
+                    return $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $clientId], ['numero_equipement' => 'ASC']);
+                default:
+                    return [];
+            }
+            
+            error_log("Trouvé " . count($equipments) . " équipements pour {$agence}/{$clientId}");
+            return $equipments;
+            
+        } catch (\Exception $e) {
+            error_log("Erreur récupération équipements {$agence}/{$clientId}: " . $e->getMessage());
+            return [];
         }
-        if (empty($clientVisiteFilter)) {
-            $errors[] = 'Sélectionnez la visite.';
-        }
-        
-        if (!empty($errors)) {
-            return $this->json(['errors' => $errors], 400);
-        }
-        
-        // Filtrer les équipements
-        $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
-            if ($equipment->getDerniereVisite() === null) return false;
-            $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
-            return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
-        });
-        
-        // Retourner le HTML du tableau filtré
-        $html = $this->renderView('components/equipment_table.html.twig', [
-            'clientSelectedEquipmentsFiltered' => $clientSelectedEquipmentsFiltered
-        ]);
-        
-        return new Response($html);
     }
     
     #[Route('/filter-equipments', name: 'app_filter_equipments')]

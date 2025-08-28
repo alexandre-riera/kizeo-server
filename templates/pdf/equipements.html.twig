@@ -117,10 +117,30 @@
     {% if error_mode is defined and error_mode %}
         <div class="error-mode">
             <h2>⚠️ Génération incomplète</h2>
-            <p>{{ error_message|default('Une erreur est survenue lors de la génération du PDF complet.') }}</p>
+            <p><strong>{{ error_message|default('Une erreur est survenue lors de la génération du PDF complet.') }}</strong></p>
+            
+            {% if debug_info is defined and debug_info %}
+                <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; margin: 10px 0;">
+                    <h6>Informations de debug :</h6>
+                    <ul style="margin: 0; text-align: left;">
+                        {% if debug_info.filtre_annee %}
+                            <li>Filtre année : {{ debug_info.filtre_annee }}</li>
+                        {% endif %}
+                        {% if debug_info.filtre_visite %}
+                            <li>Filtre visite : {{ debug_info.filtre_visite }}</li>
+                        {% endif %}
+                        {% if debug_info.total_equipements_bruts is defined %}
+                            <li>Équipements bruts trouvés : {{ debug_info.total_equipements_bruts }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endif %}
+            
             <p><strong>Solutions :</strong></p>
             <ul style="text-align: left; display: inline-block;">
-                <li>Utilisez les filtres par année ou par visite</li>
+                <li>Vérifiez que les filtres correspondent aux données disponibles</li>
+                <li>Utilisez les filtres par année ou par visite différents</li>
+                <li>Essayez de générer le PDF sans filtres</li>
                 <li>Contactez le support technique si le problème persiste</li>
             </ul>
         </div>
