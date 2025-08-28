@@ -126,20 +126,20 @@ class EquipementPdfController extends AbstractController
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
             
-            error_log("=== GÉNÉRATION PDF CLIENT ===");
-            error_log("Agence: {$agence}, Client: {$id}");
-            error_log("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
+            $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
+            $this->customLog("Agence: {$agence}, Client: {$id}");
+            $this->customLog("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
             
             // Récupérer les informations client TOUT DE SUITE
             $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
             
             // Récupérer les informations client (autre méthode)
             $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
-            error_log("Client info récupérées: " . json_encode($clientInfo));
+            $this->customLog("Client info récupérées: " . json_encode($clientInfo));
             
             // 2. RÉCUPÉRATION SIMPLIFIÉE ET SÉCURISÉE DES ÉQUIPEMENTS
             $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
-            error_log("Équipements bruts trouvés: " . count($equipments));
+            $this->customLog("Équipements bruts trouvés: " . count($equipments));
             
             if (empty($equipments)) {
                 throw new \Exception("Aucun équipement trouvé pour le client {$id}");
@@ -151,7 +151,7 @@ class EquipementPdfController extends AbstractController
             
             if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
                 // CAS AVEC FILTRES : équipements de la visite sélectionnée avec année de dernière visite
-                error_log("Application des filtres spécifiques...");
+                $this->customLog("Application des filtres spécifiques...");
                 
                 foreach ($equipments as $equipment) {
                     try {
@@ -163,7 +163,7 @@ class EquipementPdfController extends AbstractController
                             if ($visiteEquipment !== $clientVisiteFilter) {
                                 $matches = false;
                             }
-                            error_log("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matches ? 'OUI' : 'NON'));
+                            $this->customLog("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matches ? 'OUI' : 'NON'));
                         }
                         
                         // Filtre par année de dernière visite si défini
@@ -174,10 +174,10 @@ class EquipementPdfController extends AbstractController
                                 if ($anneeEquipment !== $clientAnneeFilter) {
                                     $matches = false;
                                 }
-                                error_log("Équipement {$equipment->getNumeroEquipement()}: année dernière visite {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matches ? 'OUI' : 'NON'));
+                                $this->customLog("Équipement {$equipment->getNumeroEquipement()}: année dernière visite {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matches ? 'OUI' : 'NON'));
                             } else {
                                 $matches = false;
-                                error_log("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
+                                $this->customLog("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
                             }
                         }
                         
@@ -187,15 +187,15 @@ class EquipementPdfController extends AbstractController
                         }
                         
                     } catch (\Exception $e) {
-                        error_log("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                        $this->customLog("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                     }
                 }
                 
-                error_log("Après filtrage: " . count($equipmentsFiltered) . " équipements");
+                $this->customLog("Après filtrage: " . count($equipmentsFiltered) . " équipements");
                 
             } else {
                 // CAS PAR DÉFAUT : équipements de la dernière visite uniquement
-                error_log("Pas de filtres - récupération équipements de la dernière visite");
+                $this->customLog("Pas de filtres - récupération équipements de la dernière visite");
                 
                 // Trouver la date de dernière visite la plus récente
                 $derniereVisiteMax = null;
@@ -208,7 +208,7 @@ class EquipementPdfController extends AbstractController
                 
                 if ($derniereVisiteMax) {
                     $anneeDerniereVisite = date("Y", strtotime($derniereVisiteMax));
-                    error_log("Dernière visite trouvée: {$derniereVisiteMax} (année: {$anneeDerniereVisite})");
+                    $this->customLog("Dernière visite trouvée: {$derniereVisiteMax} (année: {$anneeDerniereVisite})");
                     
                     // Filtrer les équipements de cette dernière visite (même année)
                     foreach ($equipments as $equipment) {
@@ -219,19 +219,19 @@ class EquipementPdfController extends AbstractController
                     }
                 } else {
                     // Fallback : tous les équipements si aucune date trouvée
-                    error_log("Aucune date de dernière visite trouvée - utilisation de tous les équipements");
+                    $this->customLog("Aucune date de dernière visite trouvée - utilisation de tous les équipements");
                     $equipmentsFiltered = $equipments;
                 }
             }
             
             // 4. VÉRIFICATION APRÈS FILTRAGE
             if (empty($equipmentsFiltered)) {
-                error_log("ATTENTION: Aucun équipement après filtrage!");
+                $this->customLog("ATTENTION: Aucun équipement après filtrage!");
                 
                 // Debug des équipements disponibles
                 $sampleEquipments = array_slice($equipments, 0, 5);
                 foreach ($sampleEquipments as $eq) {
-                    error_log("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
+                    $this->customLog("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
                 }
                 
                 // Générer un PDF d'erreur informatif
@@ -253,7 +253,7 @@ class EquipementPdfController extends AbstractController
             foreach ($equipmentsFiltered as $equipment) {
                 try {
                     // 🔍 DEBUG - Informations équipement
-                    error_log("🔍 Traitement équipement: " . $equipment->getNumeroEquipement());
+                    $this->customLog("🔍 Traitement équipement: " . $equipment->getNumeroEquipement());
                     
                     // NOUVEAU CODE - Utiliser les photos locales
                     // Méthode 1 : Récupérer la photo générale depuis le stockage local
@@ -265,19 +265,19 @@ class EquipementPdfController extends AbstractController
                     // Si photo locale trouvée
                     if (!empty($picturesData)) {
                         $photoSource = 'local';
-                        error_log("✅ Photo locale trouvée pour {$equipment->getNumeroEquipement()}");
+                        $this->customLog("✅ Photo locale trouvée pour {$equipment->getNumeroEquipement()}");
                     } else {
                         // Méthode 2 : Essayer le scan si pas de photo via la méthode normale
-                        error_log("🔄 Tentative scan pour {$equipment->getNumeroEquipement()}");
+                        $this->customLog("🔄 Tentative scan pour {$equipment->getNumeroEquipement()}");
                         $picturesData = $entityManager->getRepository(Form::class)
                             ->findGeneralPhotoByScanning($equipment);
                         
                         if (!empty($picturesData)) {
                             $photoSource = 'local_scan';
-                            error_log("✅ Photo trouvée par scan pour {$equipment->getNumeroEquipement()}");
+                            $this->customLog("✅ Photo trouvée par scan pour {$equipment->getNumeroEquipement()}");
                         } else {
                             // Méthode 3 : Fallback vers l'ancienne méthode API
-                            error_log("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
+                            $this->customLog("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
                             
                             $picturesArray = [
                                 "numeroEquipement" => $equipment->getNumeroEquipement(),
@@ -291,10 +291,10 @@ class EquipementPdfController extends AbstractController
                             
                             if (!empty($picturesData)) {
                                 $photoSource = 'api_fallback';
-                                error_log("✅ Photo API fallback pour {$equipment->getNumeroEquipement()}");
+                                $this->customLog("✅ Photo API fallback pour {$equipment->getNumeroEquipement()}");
                             } else {
                                 $photoSource = 'none';
-                                error_log("❌ Aucune photo trouvée pour {$equipment->getNumeroEquipement()}");
+                                $this->customLog("❌ Aucune photo trouvée pour {$equipment->getNumeroEquipement()}");
                             }
                         }
                     }
@@ -303,7 +303,7 @@ class EquipementPdfController extends AbstractController
                     $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
                     
                 } catch (\Exception $e) {
-                    error_log("❌ Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                    $this->customLog("❌ Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                     $picturesData = [];
                     $photoSource = 'error';
                     $photoSourceStats['error'] = ($photoSourceStats['error'] ?? 0) + 1;
@@ -322,14 +322,14 @@ class EquipementPdfController extends AbstractController
             }
 
             // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
-            error_log("📊 RÉSUMÉ PHOTOS:");
-            error_log("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
-            error_log("- Photos scan: " . ($photoSourceStats['local_scan'] ?? 0)); 
-            error_log("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
-            error_log("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
-            error_log("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
+            $this->customLog("📊 RÉSUMÉ PHOTOS:");
+            $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
+            $this->customLog("- Photos scan: " . ($photoSourceStats['local_scan'] ?? 0)); 
+            $this->customLog("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
+            $this->customLog("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
+            $this->customLog("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
             
-            error_log("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
+            $this->customLog("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
             
             // 6. SÉPARATION DES ÉQUIPEMENTS - VERSION SÉCURISÉE
             $equipementsSupplementaires = [];
@@ -350,11 +350,11 @@ class EquipementPdfController extends AbstractController
                         $equipementsNonPresents[] = $equipmentData;
                     }
                 } catch (\Exception $e) {
-                    error_log("Erreur séparation équipement: " . $e->getMessage());
+                    $this->customLog("Erreur séparation équipement: " . $e->getMessage());
                 }
             }
             
-            error_log("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
+            $this->customLog("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
             
             // 7. CALCUL DES STATISTIQUES
             $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
@@ -400,10 +400,10 @@ class EquipementPdfController extends AbstractController
             // Vérifier que imageUrl est bien définie
             if (empty($templateVars['imageUrl'])) {
                 $templateVars['imageUrl'] = 'https://www.pdf.somafi-group.fr/background/group.jpg';
-                error_log("WARNING: imageUrl était vide, fallback utilisé");
+                $this->customLog("WARNING: imageUrl était vide, fallback utilisé");
             }
             
-            error_log("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
+            $this->customLog("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
             
             $html = $this->renderView('pdf/equipements.html.twig', $templateVars);
             $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
@@ -416,12 +416,217 @@ class EquipementPdfController extends AbstractController
             ]);
             
         } catch (\Exception $e) {
-            error_log("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
-            error_log("Stack trace: " . $e->getTraceAsString());
+            $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
+            $this->customLog("Stack trace: " . $e->getTraceAsString());
             
             // En cas d'erreur, générer un PDF d'erreur détaillé
             return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), [], $clientSelectedInformations);
         }
+    }
+
+    /**
+     * Logger personnalisé pour hébergement mutualisé
+     */
+    private function customLog(string $message): void
+    {
+        $logFile = $_SERVER['DOCUMENT_ROOT'] . '/debug_photos.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $logMessage = "[{$timestamp}] {$message}" . PHP_EOL;
+        
+        // Créer/écrire dans le fichier de log
+        file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+    }
+
+    /**
+     * Afficher les logs via une route dédiée
+     */
+    #[Route('/debug/logs/photos', name: 'debug_photos_logs')]
+    public function showPhotosLogs(): Response
+    {
+        $logFile = $_SERVER['DOCUMENT_ROOT'] . '/debug_photos.log';
+        
+        if (!file_exists($logFile)) {
+            return new Response("Aucun fichier de log trouvé", 404);
+        }
+        
+        $logs = file_get_contents($logFile);
+        
+        // Récupérer seulement les 100 dernières lignes
+        $lines = explode("\n", $logs);
+        $lastLines = array_slice($lines, -100);
+        
+        $html = '<html><body>';
+        $html .= '<h2>Debug Photos - Dernières 100 lignes</h2>';
+        $html .= '<button onclick="location.reload()">Actualiser</button>';
+        $html .= '<button onclick="clearLogs()">Vider les logs</button>';
+        $html .= '<pre style="background: #f5f5f5; padding: 10px; border: 1px solid #ddd;">';
+        $html .= htmlspecialchars(implode("\n", $lastLines));
+        $html .= '</pre>';
+        $html .= '<script>
+            function clearLogs() {
+                if(confirm("Vider les logs ?")) {
+                    fetch("/debug/clear-logs", {method: "POST"})
+                        .then(() => location.reload());
+                }
+            }
+        </script>';
+        $html .= '</body></html>';
+        
+        return new Response($html);
+    }
+
+    #[Route('/debug/clear-logs', name: 'debug_clear_logs', methods: ['POST'])]
+    public function clearLogs(): Response
+    {
+        $logFile = $_SERVER['DOCUMENT_ROOT'] . '/debug_photos.log';
+        if (file_exists($logFile)) {
+            file_put_contents($logFile, '');
+        }
+        return new Response('OK');
+    }
+
+    /**
+     * Diagnostic complet accessible via URL
+     */
+    #[Route('/debug/diagnostic/{agence}/{clientId}', name: 'debug_diagnostic_complete')]
+    public function diagnosticComplet(string $agence, string $clientId, EntityManagerInterface $entityManager): Response
+    {
+        $results = [];
+        
+        try {
+            $this->customLog("=== DÉBUT DIAGNOSTIC COMPLET ===");
+            $this->customLog("Agence: {$agence}, Client: {$clientId}");
+            
+            // 1. Test des répertoires
+            $baseImagePath = $_SERVER['DOCUMENT_ROOT'] . '/public/img/' . $agence . '/';
+            $this->customLog("Chemin base images: {$baseImagePath}");
+            $this->customLog("Répertoire existe: " . (is_dir($baseImagePath) ? 'OUI' : 'NON'));
+            
+            if (is_dir($baseImagePath)) {
+                $items = scandir($baseImagePath);
+                $dirs = array_filter($items, function($item) use ($baseImagePath) {
+                    return is_dir($baseImagePath . $item) && !in_array($item, ['.', '..']);
+                });
+                $this->customLog("Répertoires clients: " . implode(', ', $dirs));
+                
+                // Test spécifique du client
+                $clientPath = $baseImagePath . $clientId . '/';
+                if (is_dir($clientPath)) {
+                    $this->customLog("Répertoire client {$clientId}: EXISTE");
+                    
+                    // Scanner les années
+                    $years = array_filter(scandir($clientPath), function($item) use ($clientPath) {
+                        return is_dir($clientPath . $item) && !in_array($item, ['.', '..']);
+                    });
+                    $this->customLog("Années disponibles: " . implode(', ', $years));
+                    
+                    // Test 2025
+                    $year2025Path = $clientPath . '2025/';
+                    if (is_dir($year2025Path)) {
+                        $visits = array_filter(scandir($year2025Path), function($item) use ($year2025Path) {
+                            return is_dir($year2025Path . $item) && !in_array($item, ['.', '..']);
+                        });
+                        $this->customLog("Types de visites 2025: " . implode(', ', $visits));
+                        
+                        // Test CEA et CE1
+                        foreach (['CEA', 'CE1'] as $visitType) {
+                            $visitPath = $year2025Path . $visitType . '/';
+                            if (is_dir($visitPath)) {
+                                $photos = array_filter(scandir($visitPath), function($item) {
+                                    return pathinfo($item, PATHINFO_EXTENSION) === 'jpg';
+                                });
+                                $this->customLog("Photos dans {$visitType}: " . count($photos) . " fichiers");
+                                if (count($photos) > 0) {
+                                    $generales = array_filter($photos, function($photo) {
+                                        return strpos($photo, 'generale') !== false;
+                                    });
+                                    $this->customLog("Photos générales dans {$visitType}: " . implode(', ', $generales));
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    $this->customLog("Répertoire client {$clientId}: N'EXISTE PAS");
+                }
+            }
+            
+            // 2. Test des équipements en base
+            $repository = $this->getRepositoryForAgency($agence, $entityManager);
+            $equipments = $repository->createQueryBuilder('e')
+                ->where('e.raisonSociale LIKE :client')
+                ->setParameter('client', "%{$clientId}%")
+                ->setMaxResults(3)
+                ->getQuery()
+                ->getResult();
+                
+            $this->customLog("Équipements trouvés en base: " . count($equipments));
+            
+            foreach ($equipments as $equipment) {
+                $this->customLog("--- Équipement: " . $equipment->getNumeroEquipement());
+                $this->customLog("    Raison sociale: " . $equipment->getRaisonSociale());
+                $this->customLog("    Visite: " . ($equipment->getVisite() ?? 'NULL'));
+                
+                // Test des 3 méthodes de récupération
+                try {
+                    $photos1 = $entityManager->getRepository(Form::class)
+                        ->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                    $this->customLog("    Méthode 1 (local): " . (empty($photos1) ? "AUCUNE PHOTO" : count($photos1) . " photos"));
+                } catch (\Exception $e) {
+                    $this->customLog("    Méthode 1 (local): ERREUR - " . $e->getMessage());
+                }
+                
+                try {
+                    $photos2 = $entityManager->getRepository(Form::class)
+                        ->findGeneralPhotoByScanning($equipment);
+                    $this->customLog("    Méthode 2 (scan): " . (empty($photos2) ? "AUCUNE PHOTO" : count($photos2) . " photos"));
+                } catch (\Exception $e) {
+                    $this->customLog("    Méthode 2 (scan): ERREUR - " . $e->getMessage());
+                }
+                
+                try {
+                    $picturesArray = [
+                        "numeroEquipement" => $equipment->getNumeroEquipement(),
+                        "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
+                        "annee" => '2025',
+                        "visite" => $equipment->getVisite() ?? 'CEA'
+                    ];
+                    
+                    $photos3 = $entityManager->getRepository(Form::class)
+                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                    $this->customLog("    Méthode 3 (API): " . (empty($photos3) ? "AUCUNE PHOTO" : count($photos3) . " photos"));
+                } catch (\Exception $e) {
+                    $this->customLog("    Méthode 3 (API): ERREUR - " . $e->getMessage());
+                }
+            }
+            
+            // 3. Test données Form
+            $formData = $entityManager->getRepository(Form::class)
+                ->createQueryBuilder('f')
+                ->where('f.raisonSocialeVisite LIKE :client')
+                ->setParameter('client', "%{$clientId}%")
+                ->setMaxResults(5)
+                ->getQuery()
+                ->getResult();
+                
+            $this->customLog("Entrées Form trouvées: " . count($formData));
+            foreach ($formData as $form) {
+                $this->customLog("--- Form ID: " . $form->getId());
+                $this->customLog("    Code équipement: " . $form->getCodeEquipement());
+                $this->customLog("    Photo plaque: " . ($form->getPhotoPlaque() ? 'OUI' : 'NON'));
+                $this->customLog("    Photo étiquette: " . ($form->getPhotoEtiquetteSomafi() ? 'OUI' : 'NON'));
+            }
+            
+            $this->customLog("=== FIN DIAGNOSTIC COMPLET ===");
+            
+            $results['success'] = true;
+            $results['message'] = 'Diagnostic terminé - consultez /debug/logs/photos pour voir les résultats';
+            
+        } catch (\Exception $e) {
+            $this->customLog("ERREUR DIAGNOSTIC: " . $e->getMessage());
+            $results['error'] = $e->getMessage();
+        }
+        
+        return $this->json($results);
     }
 
     #[Route('/diagnostic/photos/{agence}/{clientId}', name: 'diagnostic_photos')]
@@ -455,7 +660,7 @@ class EquipementPdfController extends AbstractController
  */
 private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = [], array $clientSelectedInformations = []): Response
 {
-    error_log("Génération PDF d'erreur pour {$agence}/{$id}");
+    $this->customLog("Génération PDF d'erreur pour {$agence}/{$id}");
     
     $html = $this->renderView('pdf/equipements.html.twig', [
         'equipmentsWithPictures' => [],
@@ -489,7 +694,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
      */
     // private function handleLargeVolumeGeneration(array $equipments, string $agence, string $id, EntityManagerInterface $entityManager, string $imageUrl, string $clientAnneeFilter, string $clientVisiteFilter): Response
     // {
-    //     error_log("Mode gros volume activé pour " . count($equipments) . " équipements");
+    //     $this->customLog("Mode gros volume activé pour " . count($equipments) . " équipements");
         
     //     try {
     //         // Configuration MySQL optimisée
@@ -542,7 +747,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     //         ]);
             
     //     } catch (\Exception $e) {
-    //         error_log("Erreur mode gros volume: " . $e->getMessage());
+    //         $this->customLog("Erreur mode gros volume: " . $e->getMessage());
     //         throw $e;
     //     }
     // }
@@ -576,7 +781,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 } 
 
             } catch (\Exception $e) {
-                error_log("Erreur récupération photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                $this->customLog("Erreur récupération photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                 $picturesData = [];
             }
             
@@ -595,7 +800,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
      */
     // private function generateSimplifiedPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager): Response
     // {
-    //     error_log("Génération PDF simplifiée pour {$agence}/{$id}");
+    //     $this->customLog("Génération PDF simplifiée pour {$agence}/{$id}");
         
     //     $html = $this->renderView('pdf/equipements.html.twig', [
     //         'equipmentsWithPictures' => [],
@@ -624,14 +829,14 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
 
     // private function getEquipmentsByAgencyFixed(string $agence, string $clientId, EntityManagerInterface $entityManager, ?string $anneeFilter = null, ?string $visiteFilter = null): array
     // {
-    //     error_log("=== RÉCUPÉRATION ÉQUIPEMENTS ===");
-    //     error_log("Agence: {$agence}, Client: {$clientId}");
-    //     error_log("Filtres - Année: {$anneeFilter}, Visite: {$visiteFilter}");
+    //     $this->customLog("=== RÉCUPÉRATION ÉQUIPEMENTS ===");
+    //     $this->customLog("Agence: {$agence}, Client: {$clientId}");
+    //     $this->customLog("Filtres - Année: {$anneeFilter}, Visite: {$visiteFilter}");
         
     //     $equipmentEntity = "App\\Entity\\Equipement{$agence}";
         
     //     if (!class_exists($equipmentEntity)) {
-    //         error_log("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
+    //         $this->customLog("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
     //         throw new \Exception("Classe d'équipement {$equipmentEntity} introuvable");
     //     }
         
@@ -640,21 +845,21 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             
     //         // D'abord, essayer de trouver des équipements sans filtres
     //         $allEquipments = $repository->findBy(['id_contact' => $clientId]);
-    //         error_log("Total équipements pour client {$clientId}: " . count($allEquipments));
+    //         $this->customLog("Total équipements pour client {$clientId}: " . count($allEquipments));
             
     //         if (empty($allEquipments)) {
     //             // Pas d'équipements du tout pour ce client
-    //             error_log("AUCUN équipement trouvé pour le client {$clientId}");
+    //             $this->customLog("AUCUN équipement trouvé pour le client {$clientId}");
                 
     //             // Essayer de voir s'il y a des équipements dans la table
     //             $sampleEquipments = $repository->findBy([], [], 5);
-    //             error_log("Échantillon d'équipements dans la table: " . count($sampleEquipments));
+    //             $this->customLog("Échantillon d'équipements dans la table: " . count($sampleEquipments));
                 
     //             if (!empty($sampleEquipments)) {
     //                 $sampleIds = array_map(function($eq) {
     //                     return method_exists($eq, 'getIdContact') ? $eq->getIdContact() : 'N/A';
     //                 }, $sampleEquipments);
-    //                 error_log("IDs clients échantillon: " . implode(', ', $sampleIds));
+    //                 $this->customLog("IDs clients échantillon: " . implode(', ', $sampleIds));
     //             }
                 
     //             return [];
@@ -671,7 +876,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     //             return strpos($method, 'get') === 0;
     //         });
             
-    //         error_log("Méthodes disponibles sur l'équipement: " . implode(', ', $getterMethods));
+    //         $this->customLog("Méthodes disponibles sur l'équipement: " . implode(', ', $getterMethods));
             
     //         // Essayer différents noms de propriétés pour l'année
     //         if ($anneeFilter) {
@@ -679,7 +884,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     //             foreach ($yearProperties as $prop) {
     //                 $getter = 'get' . ucfirst($prop);
     //                 if (method_exists($firstEquipment, $getter)) {
-    //                     error_log("Propriété année trouvée: {$prop}");
+    //                     $this->customLog("Propriété année trouvée: {$prop}");
     //                     // Pour l'instant, on n'applique pas le filtre année car on ne connaît pas la structure exacte
     //                     break;
     //                 }
@@ -692,7 +897,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     //             foreach ($visiteProperties as $prop) {
     //                 $getter = 'get' . ucfirst($prop);
     //                 if (method_exists($firstEquipment, $getter)) {
-    //                     error_log("Propriété visite trouvée: {$prop}");
+    //                     $this->customLog("Propriété visite trouvée: {$prop}");
     //                     // Pour l'instant, on n'applique pas le filtre visite car on ne connaît pas la structure exacte
     //                     break;
     //                 }
@@ -701,11 +906,11 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             
     //         // Pour le moment, retourner tous les équipements du client
     //         // Vous pourrez affiner les filtres une fois que vous connaîtrez la structure exacte
-    //         error_log("Retour de " . count($allEquipments) . " équipements");
+    //         $this->customLog("Retour de " . count($allEquipments) . " équipements");
     //         return $allEquipments;
             
     //     } catch (\Exception $e) {
-    //         error_log("Erreur récupération équipements {$agence}: " . $e->getMessage());
+    //         $this->customLog("Erreur récupération équipements {$agence}: " . $e->getMessage());
     //         throw new \Exception("Erreur lors de la récupération des équipements: " . $e->getMessage());
     //     }
     // }
@@ -1003,7 +1208,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             ]);
             
         } catch (\Exception $e) {
-            error_log("Erreur sendPdfByEmail: " . $e->getMessage());
+            $this->customLog("Erreur sendPdfByEmail: " . $e->getMessage());
             return new JsonResponse([
                 'success' => false,
                 'error' => $e->getMessage()
@@ -1028,14 +1233,14 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             $contactEntity = "App\\Entity\\Contact{$agence}";
             
             if (!class_exists($mailEntity)) {
-                error_log("Classe Mail{$agence} n'existe pas");
+                $this->customLog("Classe Mail{$agence} n'existe pas");
                 return;
             }
             
             $contact = $entityManager->getRepository($contactEntity)->findOneBy(['id_contact' => $clientId]);
             
             if (!$contact) {
-                error_log("Contact {$clientId} non trouvé pour enregistrement email");
+                $this->customLog("Contact {$clientId} non trouvé pour enregistrement email");
                 return;
             }
             
@@ -1055,10 +1260,10 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             $entityManager->persist($mail);
             $entityManager->flush();
             
-            error_log("Email enregistré avec succès pour client {$clientId}");
+            $this->customLog("Email enregistré avec succès pour client {$clientId}");
             
         } catch (\Exception $e) {
-            error_log("Erreur enregistrement email: " . $e->getMessage());
+            $this->customLog("Erreur enregistrement email: " . $e->getMessage());
         }
     }
 
@@ -1113,12 +1318,12 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 $trigramme .= 'SR'; // SR pour SeR (utilisateur)
             }
             
-            error_log("Trigramme généré: {$trigramme} (Prénom: {$firstName}, Nom: {$lastName})");
+            $this->customLog("Trigramme généré: {$trigramme} (Prénom: {$firstName}, Nom: {$lastName})");
             
             return $trigramme;
             
         } catch (\Exception $e) {
-            error_log("Erreur génération trigramme: " . $e->getMessage());
+            $this->customLog("Erreur génération trigramme: " . $e->getMessage());
             return 'USR'; // Fallback générique
         }
     }
@@ -1158,9 +1363,9 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     }
                     
                     // Debug pour voir les méthodes disponibles sur ContactS50
-                    error_log("DEBUG ContactS50 - Méthodes disponibles: " . implode(', ', get_class_methods($contact)));
-                    error_log("DEBUG ContactS50 - Nom trouvé: " . ($nom ?: 'VIDE'));
-                    error_log("DEBUG ContactS50 - Email trouvé: " . ($email ?: 'VIDE'));
+                    $this->customLog("DEBUG ContactS50 - Méthodes disponibles: " . implode(', ', get_class_methods($contact)));
+                    $this->customLog("DEBUG ContactS50 - Nom trouvé: " . ($nom ?: 'VIDE'));
+                    $this->customLog("DEBUG ContactS50 - Email trouvé: " . ($email ?: 'VIDE'));
                     
                     return [
                         'nom' => $nom ?: "Client {$id}",
@@ -1169,13 +1374,13 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                         'agence' => $agence
                     ];
                 } else {
-                    error_log("DEBUG: Contact non trouvé pour ID {$id} dans {$contactEntity}");
+                    $this->customLog("DEBUG: Contact non trouvé pour ID {$id} dans {$contactEntity}");
                 }
             } else {
-                error_log("DEBUG: Classe {$contactEntity} n'existe pas");
+                $this->customLog("DEBUG: Classe {$contactEntity} n'existe pas");
             }
         } catch (\Exception $e) {
-            error_log("Erreur récupération client info: " . $e->getMessage());
+            $this->customLog("Erreur récupération client info: " . $e->getMessage());
         }
         
         return [
@@ -1223,7 +1428,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         $equipmentEntity = "App\\Entity\\Equipement{$agence}";
         
         if (!class_exists($equipmentEntity)) {
-            error_log("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
+            $this->customLog("ERREUR: Classe d'équipement {$equipmentEntity} n'existe pas");
             return [];
         }
         
@@ -1243,7 +1448,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 ['numero_equipement' => 'ASC']
             );
             
-            error_log("DEBUG: Récupération équipements {$agence} pour client {$clientId} - Trouvés: " . count($equipments));
+            $this->customLog("DEBUG: Récupération équipements {$agence} pour client {$clientId} - Trouvés: " . count($equipments));
             
             if (empty($equipments)) {
                 // Essayer sans les filtres pour voir s'il y a des équipements
@@ -1252,7 +1457,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     ['numero_equipement' => 'ASC']
                 );
                 
-                error_log("DEBUG: Total équipements sans filtre pour client {$clientId}: " . count($allEquipments));
+                $this->customLog("DEBUG: Total équipements sans filtre pour client {$clientId}: " . count($allEquipments));
                 
                 // Si pas d'équipements du tout, l'erreur est légitime
                 if (empty($allEquipments)) {
@@ -1266,7 +1471,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             return $equipments;
             
         } catch (\Exception $e) {
-            error_log("Erreur récupération équipements {$agence}: " . $e->getMessage());
+            $this->customLog("Erreur récupération équipements {$agence}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -1381,7 +1586,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             return $entityManager->getRepository(Form::class)
                 ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
         } catch (\Exception $e) {
-            error_log("Fallback API failed for equipment {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+            $this->customLog("Fallback API failed for equipment {$equipment->getNumeroEquipement()}: " . $e->getMessage());
             return [];
         }
     }
@@ -1395,7 +1600,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             return $entityManager->getRepository(Form::class)
                 ->getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment);
         } catch (\Exception $e) {
-            error_log("Fallback API failed for supplementary equipment {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+            $this->customLog("Fallback API failed for supplementary equipment {$equipment->getNumeroEquipement()}: " . $e->getMessage());
             return [];
         }
     }
@@ -1561,7 +1766,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 'email' => $contact->getEmail() ?? ''
             ];
         } catch (\Exception $e) {
-            error_log("Erreur récupération informations client: " . $e->getMessage());
+            $this->customLog("Erreur récupération informations client: " . $e->getMessage());
             return null;
         }
     }
@@ -1583,7 +1788,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             'timestamp' => date('c')
         ];
         
-        error_log("PDF_GENERATION_METRICS: " . json_encode($logData));
+        $this->customLog("PDF_GENERATION_METRICS: " . json_encode($logData));
     }
     
     private function getEquipmentByAgence(string $agence, string $id, EntityManagerInterface $entityManager)
@@ -1661,7 +1866,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     private function getEquipmentsByClientAndAgence(string $agence, string $clientId, EntityManagerInterface $entityManager): array
     {
         try {
-            error_log("Récupération équipements pour agence: {$agence}, client: {$clientId}");
+            $this->customLog("Récupération équipements pour agence: {$agence}, client: {$clientId}");
             
             // Utiliser la méthode appropriée selon l'agence
             switch ($agence) {
@@ -1695,11 +1900,11 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     return [];
             }
             
-            error_log("Trouvé " . count($equipments) . " équipements pour {$agence}/{$clientId}");
+            $this->customLog("Trouvé " . count($equipments) . " équipements pour {$agence}/{$clientId}");
             return $equipments;
             
         } catch (\Exception $e) {
-            error_log("Erreur récupération équipements {$agence}/{$clientId}: " . $e->getMessage());
+            $this->customLog("Erreur récupération équipements {$agence}/{$clientId}: " . $e->getMessage());
             return [];
         }
     }
@@ -1752,13 +1957,13 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         
         // Méthode 2 : Si la première méthode ne fonctionne pas, essayer le scan
         if (empty($photos)) {
-            error_log("🔄 Tentative de scan pour {$equipment->getNumeroEquipement()}");
+            $this->customLog("🔄 Tentative de scan pour {$equipment->getNumeroEquipement()}");
             $photos = $formRepository->findGeneralPhotoByScanning($equipment);
         }
         
         // Méthode 3 : Fallback vers l'API si aucune photo locale trouvée
         if (empty($photos)) {
-            error_log("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
+            $this->customLog("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
             $photos = $this->fallbackToApiForGeneralPhoto($equipment, $formRepository, $entityManager);
         }
         
@@ -1787,7 +1992,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             return $generalPhotos;
             
         } catch (\Exception $e) {
-            error_log("Erreur fallback API pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+            $this->customLog("Erreur fallback API pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
             return [];
         }
     }
