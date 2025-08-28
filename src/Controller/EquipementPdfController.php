@@ -326,14 +326,14 @@ class EquipementPdfController extends AbstractController
             error_log("Stack trace: " . $e->getTraceAsString());
             
             // En cas d'erreur, générer un PDF d'erreur détaillé
-            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage());
+            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), $clientSelectedInformations);
         }
     }
 
 /**
  * Génère un PDF d'erreur informatif
  */
-private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = []): Response
+private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = [], array $clientSelectedInformations = []): Response
 {
     error_log("Génération PDF d'erreur pour {$agence}/{$id}");
     
@@ -350,7 +350,8 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         'error_message' => $errorMessage,
         'debug_info' => $debugInfo,
         'isFiltered' => false,
-        'dateDeDerniererVisite' => null
+        'dateDeDerniererVisite' => null,
+        'clientSelectedInformations' => $clientSelectedInformations,
     ]);
     
     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
