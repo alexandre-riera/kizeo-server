@@ -108,222 +108,221 @@ class EquipementPdfController extends AbstractController
      */
 
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
-public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
-{
-    // 1. TOUJOURS initialiser imageUrl dès le début
-    $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
-    
-    // Initialiser les métriques de performance
-    $startTime = microtime(true);
-    $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
-    
-    try {
-        // Configuration MySQL optimisée pour les gros volumes
-        $entityManager->getConnection()->executeStatement('SET SESSION wait_timeout = 300');
-        $entityManager->getConnection()->executeStatement('SET SESSION interactive_timeout = 300');
+    public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
+    {
+        // 1. TOUJOURS initialiser imageUrl dès le début
+        $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
         
-        // Récupérer les filtres depuis les paramètres de la requête
-        $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
-        $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+        // Initialiser les métriques de performance
+        $startTime = microtime(true);
+        $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
         
-        error_log("=== GÉNÉRATION PDF CLIENT ===");
-        error_log("Agence: {$agence}, Client: {$id}");
-        error_log("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
-        
-        // Récupérer les informations client
-        $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
-        error_log("Client info récupérées: " . json_encode($clientInfo));
-        
-        // 2. RÉCUPÉRATION SIMPLIFIÉE ET SÉCURISÉE DES ÉQUIPEMENTS
-        // Ne pas passer les filtres à la méthode de récupération pour éviter les erreurs
-        $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
-        error_log("Équipements bruts trouvés: " . count($equipments));
-        
-        if (empty($equipments)) {
-            throw new \Exception("Aucun équipement trouvé pour le client {$id}");
-        }
-        
-        // 3. FILTRAGE SÉCURISÉ ET LOGGING DÉTAILLÉ
-        $equipmentsFiltered = $equipments; // Par défaut, tous les équipements
-        $filtreApplique = false;
-        
-        if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-            error_log("Application des filtres...");
+        try {
+            // Configuration MySQL optimisée pour les gros volumes
+            $entityManager->getConnection()->executeStatement('SET SESSION wait_timeout = 300');
+            $entityManager->getConnection()->executeStatement('SET SESSION interactive_timeout = 300');
             
-            $equipmentsFiltered = array_filter($equipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter, &$filtreApplique) {
-                $matches = true;
+            // Récupérer les filtres depuis les paramètres de la requête
+            $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+            $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+            
+            error_log("=== GÉNÉRATION PDF CLIENT ===");
+            error_log("Agence: {$agence}, Client: {$id}");
+            error_log("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
+            
+            // Récupérer les informations client
+            $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
+            error_log("Client info récupérées: " . json_encode($clientInfo));
+            
+            // 2. RÉCUPÉRATION SIMPLIFIÉE ET SÉCURISÉE DES ÉQUIPEMENTS
+            // Ne pas passer les filtres à la méthode de récupération pour éviter les erreurs
+            $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
+            error_log("Équipements bruts trouvés: " . count($equipments));
+            
+            if (empty($equipments)) {
+                throw new \Exception("Aucun équipement trouvé pour le client {$id}");
+            }
+            
+            // 3. FILTRAGE SÉCURISÉ ET LOGGING DÉTAILLÉ
+            $equipmentsFiltered = $equipments; // Par défaut, tous les équipements
+            $filtreApplique = false;
+            
+            if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
+                error_log("Application des filtres...");
                 
-                try {
-                    // Filtre par année si défini
-                    if (!empty($clientAnneeFilter)) {
-                        $derniereVisite = $equipment->getDerniereVisite();
-                        if ($derniereVisite) {
-                            $anneeEquipment = date("Y", strtotime($derniereVisite));
-                            $matchesAnnee = ($anneeEquipment === $clientAnneeFilter);
-                            $matches = $matches && $matchesAnnee;
-                            
-                            error_log("Équipement {$equipment->getNumeroEquipement()}: année {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matchesAnnee ? 'OUI' : 'NON'));
-                        } else {
-                            $matches = false;
-                            error_log("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
+                $equipmentsFiltered = array_filter($equipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter, &$filtreApplique) {
+                    $matches = true;
+                    
+                    try {
+                        // Filtre par année si défini
+                        if (!empty($clientAnneeFilter)) {
+                            $derniereVisite = $equipment->getDerniereVisite();
+                            if ($derniereVisite) {
+                                $anneeEquipment = date("Y", strtotime($derniereVisite));
+                                $matchesAnnee = ($anneeEquipment === $clientAnneeFilter);
+                                $matches = $matches && $matchesAnnee;
+                                
+                                error_log("Équipement {$equipment->getNumeroEquipement()}: année {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matchesAnnee ? 'OUI' : 'NON'));
+                            } else {
+                                $matches = false;
+                                error_log("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
+                            }
                         }
-                    }
-                    
-                    // Filtre par visite si défini  
-                    if (!empty($clientVisiteFilter) && $matches) {
-                        $visiteEquipment = $equipment->getVisite();
-                        $matchesVisite = ($visiteEquipment === $clientVisiteFilter);
-                        $matches = $matches && $matchesVisite;
                         
-                        error_log("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matchesVisite ? 'OUI' : 'NON'));
+                        // Filtre par visite si défini  
+                        if (!empty($clientVisiteFilter) && $matches) {
+                            $visiteEquipment = $equipment->getVisite();
+                            $matchesVisite = ($visiteEquipment === $clientVisiteFilter);
+                            $matches = $matches && $matchesVisite;
+                            
+                            error_log("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matchesVisite ? 'OUI' : 'NON'));
+                        }
+                        
+                        if ($matches) {
+                            $filtreApplique = true;
+                        }
+                        
+                        return $matches;
+                        
+                    } catch (\Exception $e) {
+                        error_log("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                        return false; // En cas d'erreur, exclure l'équipement
                     }
+                });
+                
+                error_log("Après filtrage: " . count($equipmentsFiltered) . " équipements");
+            }
+            
+            // 4. VÉRIFICATION APRÈS FILTRAGE
+            if (empty($equipmentsFiltered)) {
+                error_log("ATTENTION: Aucun équipement après filtrage!");
+                
+                // Essayer de récupérer au moins quelques équipements pour debug
+                $sampleEquipments = array_slice($equipments, 0, 3);
+                foreach ($sampleEquipments as $eq) {
+                    error_log("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
+                }
+                
+                // Générer un PDF d'erreur informatif
+                return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, 
+                    "Aucun équipement ne correspond aux filtres sélectionnés.", 
+                    [
+                        'filtre_annee' => $clientAnneeFilter,
+                        'filtre_visite' => $clientVisiteFilter,
+                        'total_equipements_bruts' => count($equipments)
+                    ]
+                );
+            }
+            
+            // 5. RÉCUPÉRATION DES INFORMATIONS CLIENT
+            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
+            
+            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
+            $equipmentsWithPictures = [];
+            $dateDeDerniererVisite = null;
+            
+            foreach ($equipmentsFiltered as $equipment) {
+                try {
+                    // Récupération optimisée des photos
+                    $picturesArray = [
+                        "numeroEquipement" => $equipment->getNumeroEquipement(),
+                        "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
+                        "annee" => $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement() ?: 'now')),
+                        "visite" => $clientVisiteFilter ?: ($equipment->getVisite() ?? 'CEA')
+                    ];
                     
-                    if ($matches) {
-                        $filtreApplique = true;
-                    }
+                    $picturesData = $entityManager->getRepository(Form::class)
+                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
                     
-                    return $matches;
+                    $photoSource = !empty($picturesData) ? 'local' : 'none';
+                    $photoSourceStats[$photoSource]++;
                     
                 } catch (\Exception $e) {
-                    error_log("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                    return false; // En cas d'erreur, exclure l'équipement
+                    error_log("Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                    $picturesData = [];
+                    $photoSource = 'none';
+                    $photoSourceStats['none']++;
                 }
-            });
-            
-            error_log("Après filtrage: " . count($equipmentsFiltered) . " équipements");
-        }
-        
-        // 4. VÉRIFICATION APRÈS FILTRAGE
-        if (empty($equipmentsFiltered)) {
-            error_log("ATTENTION: Aucun équipement après filtrage!");
-            
-            // Essayer de récupérer au moins quelques équipements pour debug
-            $sampleEquipments = array_slice($equipments, 0, 3);
-            foreach ($sampleEquipments as $eq) {
-                error_log("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
-            }
-            
-            // Générer un PDF d'erreur informatif
-            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, 
-                "Aucun équipement ne correspond aux filtres sélectionnés.", 
-                [
-                    'filtre_annee' => $clientAnneeFilter,
-                    'filtre_visite' => $clientVisiteFilter,
-                    'total_equipements_bruts' => count($equipments)
-                ]
-            );
-        }
-        
-        // 5. RÉCUPÉRATION DES INFORMATIONS CLIENT
-        $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
-        
-        // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
-        $equipmentsWithPictures = [];
-        $dateDeDerniererVisite = null;
-        
-        foreach ($equipmentsFiltered as $equipment) {
-            try {
-                // Récupération optimisée des photos
-                $picturesArray = [
-                    "numeroEquipement" => $equipment->getNumeroEquipement(),
-                    "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
-                    "annee" => $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement() ?: 'now')),
-                    "visite" => $clientVisiteFilter ?: ($equipment->getVisite() ?? 'CEA')
+                
+                $equipmentsWithPictures[] = [
+                    'equipment' => $equipment,
+                    'pictures' => $picturesData,
+                    'photo_source' => $photoSource
                 ];
                 
-                $picturesData = $entityManager->getRepository(Form::class)
-                    ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                
-                $photoSource = !empty($picturesData) ? 'local' : 'none';
-                $photoSourceStats[$photoSource]++;
-                
-            } catch (\Exception $e) {
-                error_log("Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                $picturesData = [];
-                $photoSource = 'none';
-                $photoSourceStats['none']++;
+                // Récupérer la date de dernière visite
+                if (!$dateDeDerniererVisite && $equipment->getDerniereVisite()) {
+                    $dateDeDerniererVisite = $equipment->getDerniereVisite();
+                }
             }
             
-            $equipmentsWithPictures[] = [
-                'equipment' => $equipment,
-                'pictures' => $picturesData,
-                'photo_source' => $photoSource
+            // 7. SÉPARATION DES ÉQUIPEMENTS
+            $equipementsSupplementaires = array_filter($equipmentsWithPictures, function($equipement) {
+                return $equipement['equipment']->isEnMaintenance() === false;
+            });
+            
+            $equipementsNonPresents = array_filter($equipmentsWithPictures, function($equipement) {
+                $etat = $equipement['equipment']->getEtat();
+                return $etat === "Equipement non présent sur site" || $etat === "G";
+            });
+            
+            // 8. CALCUL DES STATISTIQUES
+            $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
+            
+            // 9. GÉNÉRATION DU PDF
+            $filename = "equipements_client_{$id}_{$agence}";
+            if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
+                $filename .= '_filtered';
+                if (!empty($clientAnneeFilter)) $filename .= "_{$clientAnneeFilter}";
+                if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
+            }
+            $filename .= '.pdf';
+
+            $templateVars = [
+                'equipmentsWithPictures' => $equipmentsWithPictures,
+                'equipementsSupplementaires' => $equipementsSupplementaires,
+                'equipementsNonPresents' => $equipementsNonPresents,
+                'clientId' => $id,
+                'agence' => $agence,
+                'imageUrl' => $imageUrl,
+                'clientAnneeFilter' => $clientAnneeFilter ?: '',
+                'clientVisiteFilter' => $clientVisiteFilter ?: '',
+                'statistiques' => $statistiques,
+                'photoSourceStats' => $photoSourceStats,
+                'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
+                'dateDeDerniererVisite' => $dateDeDerniererVisite,
+                'filtrage_success' => true,
+                'total_equipements_bruts' => count($equipments),
+                'total_equipements_filtres' => count($equipmentsFiltered),
+                'clientSelectedInformations' => $clientSelectedInformations,
             ];
             
-            // Récupérer la date de dernière visite
-            if (!$dateDeDerniererVisite && $equipment->getDerniereVisite()) {
-                $dateDeDerniererVisite = $equipment->getDerniereVisite();
+            // Vérifier que imageUrl est bien définie
+            if (empty($templateVars['imageUrl'])) {
+                $templateVars['imageUrl'] = 'https://www.pdf.somafi-group.fr/background/group.jpg';
+                error_log("WARNING: imageUrl était vide, fallback utilisé");
             }
+            
+            error_log("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
+            
+            $html = $this->renderView('pdf/equipements.html.twig', $templateVars);
+            $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+            
+            return new Response($pdfContent, Response::HTTP_OK, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "inline; filename=\"$filename\"",
+                'X-Equipment-Count' => count($equipmentsFiltered),
+                'X-Filter-Applied' => $filtreApplique ? 'yes' : 'no'
+            ]);
+            
+        } catch (\Exception $e) {
+            error_log("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            
+            // En cas d'erreur, générer un PDF d'erreur détaillé
+            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage());
         }
-        
-        // 7. SÉPARATION DES ÉQUIPEMENTS
-        $equipementsSupplementaires = array_filter($equipmentsWithPictures, function($equipement) {
-            return $equipement['equipment']->isEnMaintenance() === false;
-        });
-        
-        $equipementsNonPresents = array_filter($equipmentsWithPictures, function($equipement) {
-            $etat = $equipement['equipment']->getEtat();
-            return $etat === "Equipement non présent sur site" || $etat === "G";
-        });
-        
-        // 8. CALCUL DES STATISTIQUES
-        $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
-        
-        // 9. GÉNÉRATION DU PDF
-        $filename = "equipements_client_{$id}_{$agence}";
-        if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-            $filename .= '_filtered';
-            if (!empty($clientAnneeFilter)) $filename .= "_{$clientAnneeFilter}";
-            if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
-        }
-        $filename .= '.pdf';
-        $clientInformations = $this->getClientInformations($agence, $id, $entityManager);
-
-        $templateVars = [
-            'equipmentsWithPictures' => $equipmentsWithPictures,
-            'equipementsSupplementaires' => $equipementsSupplementaires,
-            'equipementsNonPresents' => $equipementsNonPresents,
-            'clientId' => $id,
-            'agence' => $agence,
-            'imageUrl' => $imageUrl,
-            'clientAnneeFilter' => $clientAnneeFilter ?: '',
-            'clientVisiteFilter' => $clientVisiteFilter ?: '',
-            'statistiques' => $statistiques,
-            'photoSourceStats' => $photoSourceStats,
-            'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
-            'dateDeDerniererVisite' => $dateDeDerniererVisite,
-            'filtrage_success' => true,
-            'total_equipements_bruts' => count($equipments),
-            'total_equipements_filtres' => count($equipmentsFiltered),
-            'clientSelectedInformations' => $clientInformations,
-        ];
-        
-        // Vérifier que imageUrl est bien définie
-        if (empty($templateVars['imageUrl'])) {
-            $templateVars['imageUrl'] = 'https://www.pdf.somafi-group.fr/background/group.jpg';
-            error_log("WARNING: imageUrl était vide, fallback utilisé");
-        }
-        
-        error_log("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
-        
-        $html = $this->renderView('pdf/equipements.html.twig', $templateVars);
-        $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-        
-        return new Response($pdfContent, Response::HTTP_OK, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => "inline; filename=\"$filename\"",
-            'X-Equipment-Count' => count($equipmentsFiltered),
-            'X-Filter-Applied' => $filtreApplique ? 'yes' : 'no'
-        ]);
-        
-    } catch (\Exception $e) {
-        error_log("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        
-        // En cas d'erreur, générer un PDF d'erreur détaillé
-        return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage());
     }
-}
 
 /**
  * Génère un PDF d'erreur informatif
