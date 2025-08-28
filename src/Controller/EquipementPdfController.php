@@ -1001,22 +1001,13 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             $lastName = '';
             
             // Tester les getters possibles pour le prénom
-            if (method_exists($user, 'getFirstName')) {
-                $firstName = $user->getFirstName();
-            } elseif (method_exists($user, 'getPrenom')) {
+            if (method_exists($user, 'getPrenom')) {
                 $firstName = $user->getPrenom();
-            } elseif (method_exists($user, 'getName')) {
-                $firstName = explode(' ', $user->getName())[0] ?? '';
             }
-            
+
             // Tester les getters possibles pour le nom
-            if (method_exists($user, 'getLastName')) {
-                $lastName = $user->getLastName();
-            } elseif (method_exists($user, 'getNom')) {
+            if (method_exists($user, 'getNom')) {
                 $lastName = $user->getNom();
-            } elseif (method_exists($user, 'getName')) {
-                $parts = explode(' ', $user->getName());
-                $lastName = $parts[1] ?? $parts[0] ?? '';
             }
             
             // Nettoyer et normaliser les chaînes
