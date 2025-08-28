@@ -8,14 +8,14 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
-            {% if imageUrl is defined and imageUrl %}
-                background-image: url('{{ imageUrl }}');
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-            {% endif %}
-            padding-top: 120px; {# Réduit pour laisser place au cartouche #}
+            padding-top: 120px;
             margin: 0 !important;
+        }
+        
+        .body-with-bg {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
         
         /* STYLES POUR LA PREMIÈRE PAGE */
@@ -204,11 +204,23 @@
         }
     </style>
 </head>
-<body>
+<body {% if imageUrl is defined and imageUrl %}style="background-image: url('{{ imageUrl }}');" class="body-with-bg"{% endif %}>
     {# PREMIÈRE PAGE AVEC CARTOUCHE ET STATISTIQUES #}
     <div class="first-page">
         <div class="client-header">
             <h1 class="client-title">Rapport des équipements - Client {{ clientId }}</h1>
+            {% if clientSelectedInformations %}
+                <div class="client-info">
+                    <strong>{{ clientSelectedInformations.nom ?? 'Client non trouvé' }}</strong><br>
+                    {% if clientSelectedInformations.adresse %}{{ clientSelectedInformations.adresse }}<br>{% endif %}
+                    {% if clientSelectedInformations.codePostal or clientSelectedInformations.ville %}
+                        {{ clientSelectedInformations.codePostal ?? '' }} {{ clientSelectedInformations.ville ?? '' }}<br>
+                    {% endif %}
+                    {% if clientSelectedInformations.telephone %}Tél: {{ clientSelectedInformations.telephone }}<br>{% endif %}
+                    {% if clientSelectedInformations.email %}Email: {{ clientSelectedInformations.email }}<br>{% endif %}
+                </div>
+                <hr style="margin: 10px 0;">
+            {% endif %}
             <div class="client-info">
                 Agence: {{ agence }} | Généré le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }}
                 {% if dateDeDerniererVisite is defined and dateDeDerniererVisite %}

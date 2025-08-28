@@ -277,7 +277,8 @@ public function generateClientEquipementsPdf(Request $request, string $agence, s
             if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
         }
         $filename .= '.pdf';
-        
+        $clientInformations = $this->getClientInformations($agence, $id, $entityManager);
+
         $templateVars = [
             'equipmentsWithPictures' => $equipmentsWithPictures,
             'equipementsSupplementaires' => $equipementsSupplementaires,
@@ -295,7 +296,8 @@ public function generateClientEquipementsPdf(Request $request, string $agence, s
             'dateDeDerniererVisite' => $dateDeDerniererVisite,
             'filtrage_success' => true,
             'total_equipements_bruts' => count($equipments),
-            'total_equipements_filtres' => count($equipmentsFiltered)
+            'total_equipements_filtres' => count($equipmentsFiltered),
+            'clientSelectedInformations' => $clientInformations,
         ];
         
         // Vérifier que imageUrl est bien définie
@@ -361,64 +363,65 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     /**
      * Gestion spécialisée pour les gros volumes
      */
-    private function handleLargeVolumeGeneration(array $equipments, string $agence, string $id, EntityManagerInterface $entityManager, string $imageUrl, string $clientAnneeFilter, string $clientVisiteFilter): Response
-    {
-        error_log("Mode gros volume activé pour " . count($equipments) . " équipements");
+    // private function handleLargeVolumeGeneration(array $equipments, string $agence, string $id, EntityManagerInterface $entityManager, string $imageUrl, string $clientAnneeFilter, string $clientVisiteFilter): Response
+    // {
+    //     error_log("Mode gros volume activé pour " . count($equipments) . " équipements");
         
-        try {
-            // Configuration MySQL optimisée
-            $entityManager->getConnection()->executeStatement('SET SESSION sql_mode = ""');
-            $entityManager->getConnection()->executeStatement('SET SESSION max_execution_time = 0');
+    //     try {
+    //         // Configuration MySQL optimisée
+    //         $entityManager->getConnection()->executeStatement('SET SESSION sql_mode = ""');
+    //         $entityManager->getConnection()->executeStatement('SET SESSION max_execution_time = 0');
             
-            // Augmenter les limites PHP
-            ini_set('memory_limit', '1G');
-            ini_set('max_execution_time', 300);
+    //         // Augmenter les limites PHP
+    //         ini_set('memory_limit', '1G');
+    //         ini_set('max_execution_time', 300);
             
-            // Traitement ultra-optimisé sans photos pour éviter le timeout
-            $equipmentsWithPictures = [];
-            foreach ($equipments as $equipment) {
-                $equipmentsWithPictures[] = [
-                    'equipment' => $equipment,
-                    'pictures' => [], // Pas de photos pour éviter les timeouts
-                    'photo_source' => 'disabled_for_performance'
-                ];
-            }
+    //         // Traitement ultra-optimisé sans photos pour éviter le timeout
+    //         $equipmentsWithPictures = [];
+    //         foreach ($equipments as $equipment) {
+    //             $equipmentsWithPictures[] = [
+    //                 'equipment' => $equipment,
+    //                 'pictures' => [], // Pas de photos pour éviter les timeouts
+    //                 'photo_source' => 'disabled_for_performance'
+    //             ];
+    //         }
             
-            $statistiques = $this->calculateEquipmentStatistics($equipments);
+    //         $statistiques = $this->calculateEquipmentStatistics($equipments);
             
-            $filename = "equipements_client_{$id}_{$agence}_performance.pdf";
+    //         $filename = "equipements_client_{$id}_{$agence}_performance.pdf";
+    //         $clientInformations = $this->getClientInformations($agence, $id, $this->entityManager);
+    //         $html = $this->renderView('pdf/equipements.html.twig', [
+    //             'equipmentsWithPictures' => $equipmentsWithPictures,
+    //             'equipementsSupplementaires' => [],
+    //             'equipementsNonPresents' => [],
+    //             'clientId' => $id,
+    //             'agence' => $agence,
+    //             'imageUrl' => $imageUrl, // Toujours définie
+    //             'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini
+    //             'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini
+    //             'clientSelectedInformations' => $this->getClientInformations($agence, $id, $entityManager),
+    //             'statistiques' => $statistiques,
+    //             'performance_mode' => true,
+    //             'equipment_count' => count($equipments),
+    //             'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
+    //             'dateDeDerniererVisite' => null,
+    //             'clientSelectedInformations' => $clientInformations,
+    //         ]);
             
-            $html = $this->renderView('pdf/equipements.html.twig', [
-                'equipmentsWithPictures' => $equipmentsWithPictures,
-                'equipementsSupplementaires' => [],
-                'equipementsNonPresents' => [],
-                'clientId' => $id,
-                'agence' => $agence,
-                'imageUrl' => $imageUrl, // Toujours définie
-                'clientAnneeFilter' => $clientAnneeFilter ?: '', // Toujours défini
-                'clientVisiteFilter' => $clientVisiteFilter ?: '', // Toujours défini
-                'clientSelectedInformations' => $this->getClientInformations($agence, $id, $entityManager),
-                'statistiques' => $statistiques,
-                'performance_mode' => true,
-                'equipment_count' => count($equipments),
-                'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
-                'dateDeDerniererVisite' => null
-            ]);
+    //         $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
             
-            $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+    //         return new Response($pdfContent, Response::HTTP_OK, [
+    //             'Content-Type' => 'application/pdf',
+    //             'Content-Disposition' => "inline; filename=\"$filename\"",
+    //             'X-Performance-Mode' => 'large-volume',
+    //             'X-Equipment-Count' => count($equipments)
+    //         ]);
             
-            return new Response($pdfContent, Response::HTTP_OK, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => "inline; filename=\"$filename\"",
-                'X-Performance-Mode' => 'large-volume',
-                'X-Equipment-Count' => count($equipments)
-            ]);
-            
-        } catch (\Exception $e) {
-            error_log("Erreur mode gros volume: " . $e->getMessage());
-            throw $e;
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         error_log("Erreur mode gros volume: " . $e->getMessage());
+    //         throw $e;
+    //     }
+    // }
 
     /**
      * Traitement par batch des équipements
@@ -1375,35 +1378,68 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
      */
     private function getClientInformations(string $agence, string $id, EntityManagerInterface $entityManager)
     {
-        switch ($agence) {
-            case 'S10':
-                return $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $id]);
-            case 'S40':
-                return $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $id]);
-            case 'S50':
-                return $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $id]);
-            case 'S60':
-                return $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $id]);
-            case 'S70':
-                return $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $id]);
-            case 'S80':
-                return $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $id]);
-            case 'S100':
-                return $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $id]);
-            case 'S120':
-                return $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $id]);
-            case 'S130':
-                return $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $id]);
-            case 'S140':
-                return $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $id]);
-            case 'S150':
-                return $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $id]);
-            case 'S160':
-                return $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $id]);
-            case 'S170':
-                return $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $id]);
-            default:
+        try {
+            $contact = null;
+            
+            switch ($agence) {
+                case 'S10':
+                    $contact = $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S40':
+                    $contact = $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S50':
+                    $contact = $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S60':
+                    $contact = $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S70':
+                    $contact = $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S80':
+                    $contact = $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S100':
+                    $contact = $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S120':
+                    $contact = $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S130':
+                    $contact = $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S140':
+                    $contact = $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S150':
+                    $contact = $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S160':
+                    $contact = $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                case 'S170':
+                    $contact = $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $id]);
+                    break;
+                default:
+                    return null;
+            }
+            
+            if (!$contact) {
                 return null;
+            }
+            
+            return [
+                'nom' => $contact->getNom() ?? 'Client non trouvé',
+                'adresse' => $contact->getAdresse() ?? '',
+                'codePostal' => $contact->getCodePostal() ?? '',
+                'ville' => $contact->getVille() ?? '',
+                'telephone' => $contact->getTelephone() ?? '',
+                'email' => $contact->getEmail() ?? ''
+            ];
+        } catch (\Exception $e) {
+            error_log("Erreur récupération informations client: " . $e->getMessage());
+            return null;
         }
     }
 
