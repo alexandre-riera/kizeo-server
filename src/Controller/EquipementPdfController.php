@@ -412,54 +412,97 @@ class EquipementPdfController extends AbstractController
         }
         
         $photos = [];
+        $photosIndexed = []; // AJOUT: Array avec index numériques pour compatibilité template
+        
         foreach ($equipmentPhotos as $photoFile) {
             $fullPath = $basePath . $photoFile;
             $photoType = $this->extractPhotoType($photoFile);
             
             // URL publique pour affichage dans le PDF
             $publicUrl = "/img/{$agence}/{$client}/{$annee}/{$typeVisite}/{$photoFile}";
+            $base64Data = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fullPath));
             
-            // Format compatible avec le template PDF existant
+            // Format avec clés nommées (pour la logique métier)
             $photos[$photoType] = [
                 'url' => $publicUrl,
-                'base64' => 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fullPath)),
+                'base64' => $base64Data,
                 'filename' => $photoFile,
-                'path' => $fullPath
+                'type' => $photoType
+            ];
+            
+            // CORRECTION: Format avec index numériques pour le template existant
+            $photosIndexed[] = [
+                'picture' => base64_encode(file_get_contents($fullPath)), // Format attendu par le template
+                'url' => $publicUrl,
+                'filename' => $photoFile,
+                'type' => $photoType
             ];
         }
         
-        $this->customLog("Scan direct: {$numeroEquipement} = " . count($photos) . " photos trouvées");
+        $this->customLog("Scan direct: {$equipment->getNumeroEquipement()} = " . count($photosIndexed) . " photos trouvées");
         
-        return ['photos' => $photos, 'source' => 'direct_scan'];
+        return [
+            'photos' => $photos,           // Format avec clés nommées
+            'photos_indexed' => $photosIndexed, // Format pour le template (index numériques)
+            'source' => 'direct_scan',
+            'count' => count($photosIndexed)
+        ];
+    }
+
+    // AJOUT: Méthode pour extraire le type de photo depuis le nom de fichier
+    private function extractPhotoType(string $filename): string 
+    {
+        // Supposons que les noms de fichiers suivent le pattern: NUMERO_TYPE.jpg
+        // Exemple: RID28_etiquette.jpg, RID28_generale.jpg, RID28_plaque.jpg
+        
+        $parts = explode('_', pathinfo($filename, PATHINFO_FILENAME));
+        if (count($parts) >= 2) {
+            $type = strtolower(end($parts));
+            
+            // Mapping des types pour cohérence
+            $typeMapping = [
+                'etiquette' => 'photo_etiquette',
+                'generale' => 'photo_generale', 
+                'plaque' => 'photo_plaque',
+                'environnement' => 'photo_environnement',
+                'moteur' => 'photo_moteur',
+                'carte' => 'photo_carte',
+                'compte_rendu' => 'photo_compte_rendu'
+            ];
+            
+            return $typeMapping[$type] ?? 'photo_generale';
+        }
+        
+        return 'photo_generale'; // Par défaut
     }
 
     /**
      * Extrait le type de photo depuis le nom de fichier
      */
-    private function extractPhotoType(string $filename): string
-    {
-        if (strpos($filename, '_generale') !== false) {
-            return 'photo_generale';
-        }
-        if (strpos($filename, '_plaque') !== false) {
-            return 'photo_plaque';
-        }
-        if (strpos($filename, '_etiquette') !== false) {
-            return 'photo_etiquette';
-        }
-        if (strpos($filename, '_choc') !== false) {
-            return 'photo_choc';
-        }
+    // private function extractPhotoType(string $filename): string
+    // {
+    //     if (strpos($filename, '_generale') !== false) {
+    //         return 'photo_generale';
+    //     }
+    //     if (strpos($filename, '_plaque') !== false) {
+    //         return 'photo_plaque';
+    //     }
+    //     if (strpos($filename, '_etiquette') !== false) {
+    //         return 'photo_etiquette';
+    //     }
+    //     if (strpos($filename, '_choc') !== false) {
+    //         return 'photo_choc';
+    //     }
         
-        // Extraire le type après le numéro d'équipement
-        $parts = explode('_', $filename, 2);
-        if (isset($parts[1])) {
-            $type = str_replace('.jpg', '', $parts[1]);
-            return 'photo_' . $type;
-        }
+    //     // Extraire le type après le numéro d'équipement
+    //     $parts = explode('_', $filename, 2);
+    //     if (isset($parts[1])) {
+    //         $type = str_replace('.jpg', '', $parts[1]);
+    //         return 'photo_' . $type;
+    //     }
         
-        return 'photo_inconnue';
-    }
+    //     return 'photo_inconnue';
+    // }
 
     /**
      * Logger personnalisé pour hébergement mutualisé

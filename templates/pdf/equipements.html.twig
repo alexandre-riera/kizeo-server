@@ -168,10 +168,28 @@
                     <div class="equipement-pair">
                         <div class="equipment-image">
                             {% if pictures|length > 0 %}
-                                <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
+                                {# Essayer d'abord avec l'index 0 (format array indexé) #}
+                                {% if pictures[0] is defined %}
+                                    <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement">
+                                {# Sinon chercher une photo avec clé nommée #}
+                                {% elseif pictures.photo_generale is defined %}
+                                    <img src="{{ pictures.photo_generale.base64 }}" class="main-photo" alt="Photo équipement">
+                                {% elseif pictures.photo_etiquette is defined %}
+                                    <img src="{{ pictures.photo_etiquette.base64 }}" class="main-photo" alt="Photo équipement">
+                                {% elseif pictures.photo_plaque is defined %}
+                                    <img src="{{ pictures.photo_plaque.base64 }}" class="main-photo" alt="Photo équipement">
+                                {% else %}
+                                    {# Prendre la première photo disponible (structure associative) #}
+                                    {% for photoType, photoData in pictures %}
+                                        {% if photoData.base64 is defined %}
+                                            <img src="{{ photoData.base64 }}" class="main-photo" alt="Photo équipement">
+                                            {% break %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                             {% else %}
                                 <div class="no-image">
-                                    Aucune photo disponible
+                                    <em>Aucune photo disponible</em>
                                 </div>
                             {% endif %}
                         </div>
