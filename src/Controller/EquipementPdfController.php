@@ -386,7 +386,8 @@ class EquipementPdfController extends AbstractController
         // Initialiser les métriques de performance
         $startTime = microtime(true);
         $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
-        
+        $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+        $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
         try {
             // 2. Optimiser la configuration MySQL pour les gros volumes
             $entityManager->getConnection()->executeStatement('SET SESSION wait_timeout = 300');
