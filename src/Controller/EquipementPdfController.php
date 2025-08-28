@@ -603,7 +603,7 @@ class EquipementPdfController extends AbstractController
             $formData = $entityManager->getRepository(Form::class)
                 ->createQueryBuilder('f')
                 ->where('f.raison_sociale_visite LIKE :client')
-                ->setParameter('client', "%{$raisonSociale}%")
+                ->setParameter('client', "%{$raisonSociale}\\CE1%")
                 ->setMaxResults(5)
                 ->getQuery()
                 ->getResult();
