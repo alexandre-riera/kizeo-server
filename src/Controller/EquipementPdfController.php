@@ -292,7 +292,7 @@ class EquipementPdfController extends AbstractController
                         $photoSource = 'none';
                     }
                     
-                    $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
+                    // $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
                     
                     $equipmentsWithPictures[] = [
                         'equipment' => $equipment,
