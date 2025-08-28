@@ -270,7 +270,7 @@ class EquipementPdfController extends AbstractController
                     if ($index > 0 && $index % 25 === 0) {
                         gc_collect_cycles();
                         $currentMemory = memory_get_usage(true);
-                        $this->customLog("GC forcé #{$index} - Mémoire: " . $this->convertToBytes($currentMemory));
+                        $this->customLog("GC forcé #{$index} - Mémoire: " . $currentMemory);
                         
                         // Vérification mémoire critique
                         if ($currentMemory > (1024 * 1024 * 1024 * 0.8)) { // 80% de 1GB
