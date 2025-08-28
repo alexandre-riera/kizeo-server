@@ -1431,9 +1431,9 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             
             return [
                 'nom' => $contact->getNom() ?? 'Client non trouvé',
-                'adresse' => $contact->getAdresse() ?? '',
-                'codePostal' => $contact->getCodePostal() ?? '',
-                'ville' => $contact->getVille() ?? '',
+                'adresse' => $contact->getAdressep1() ?? $contact->getAdressep2(),
+                'codePostal' => $contact->getCpostalp() ?? '',
+                'ville' => $contact->getVillep() ?? '',
                 'telephone' => $contact->getTelephone() ?? '',
                 'email' => $contact->getEmail() ?? ''
             ];
