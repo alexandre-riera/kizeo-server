@@ -109,6 +109,17 @@ class EquipementPdfController extends AbstractController
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
+        // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION
+        ini_set('memory_limit', '1G'); // Augmenter temporairement
+        ini_set('max_execution_time', 300); // 5 minutes
+        set_time_limit(300);
+        
+        // Activer le garbage collector agressif
+        gc_enable();
+        
+        $startMemory = memory_get_usage(true);
+        $this->customLog("Mémoire initiale: " . $this->formatBytes($startMemory));
+
         // 1. TOUJOURS initialiser imageUrl dès le début
         $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
         
@@ -249,31 +260,34 @@ class EquipementPdfController extends AbstractController
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             
-            foreach ($equipmentsFiltered as $equipment) {
+            /**
+             * TRAITEMENT OPTIMISÉ PAR BATCH pour éviter l'OutOfMemory
+             */
+            $processedCount = 0;
+            foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
-                    // UTILISATION DE LA MÉTHODE DIRECTE AVEC FORMAT CORRIGÉ
+                    // OPTIMISATION MÉMOIRE : Garbage collection régulier
+                    if ($index > 0 && $index % 25 === 0) {
+                        gc_collect_cycles();
+                        $currentMemory = memory_get_usage(true);
+                        $this->customLog("GC forcé #{$index} - Mémoire: " . $this->convertToBytes($currentMemory));
+                        
+                        // Vérification mémoire critique
+                        if ($currentMemory > (1024 * 1024 * 1024 * 0.8)) { // 80% de 1GB
+                            $this->customLog("ALERTE MÉMOIRE: Arrêt préventif à {$index} équipements");
+                            break;
+                        }
+                    }
+                    
                     $photoResult = $this->getPhotosForEquipmentWithDirectScan($equipment);
                     
                     // CORRECTION : Adapter le format de retour pour le template
                     $picturesData = [];
                     
                     if (!empty($photoResult['photos_indexed'])) {
-                        // Format indexé disponible - utiliser directement
                         $picturesData = $photoResult['photos_indexed'];
                         $photoSource = 'direct_scan';
-                    } elseif (!empty($photoResult['photos'])) {
-                        // Format associatif - convertir en format indexé pour le template
-                        foreach ($photoResult['photos'] as $photoType => $photoData) {
-                            $picturesData[] = [
-                                'picture' => str_replace('data:image/jpeg;base64,', '', $photoData['base64']),
-                                'url' => $photoData['url'],
-                                'filename' => $photoData['filename'],
-                                'type' => $photoData['type']
-                            ];
-                        }
-                        $photoSource = 'direct_scan';
                     } else {
-                        // Aucune photo trouvée
                         $picturesData = [];
                         $photoSource = 'none';
                     }
@@ -285,6 +299,9 @@ class EquipementPdfController extends AbstractController
                         'pictures' => $picturesData,
                         'photo_source' => $photoSource
                     ];
+                    $processedCount++;
+                    // Libérer la variable temporaire
+                    unset($photoResult, $picturesData);
                     
                 } catch (\Exception $e) {
                     $this->customLog("Erreur équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
@@ -295,8 +312,22 @@ class EquipementPdfController extends AbstractController
                         'pictures' => [],
                         'photo_source' => 'error'
                     ];
+                    $processedCount++;
+                }
+                
+                // SÉCURITÉ MÉMOIRE : Arrêter si la mémoire devient critique
+                $memoryUsage = memory_get_usage(true);
+                $memoryLimit = ini_get('memory_limit');
+                $memoryLimitBytes = $this->formatBytes($memoryLimit);
+                
+                if ($memoryUsage > ($memoryLimitBytes * 0.8)) {
+                    $this->customLog("ATTENTION: Mémoire critique atteinte ({$memoryUsage} / {$memoryLimitBytes}). Arrêt du traitement.");
+                    break;
                 }
             }
+            // LOG MÉMOIRE AVANT GÉNÉRATION PDF
+            $beforePdfMemory = memory_get_usage(true);
+            $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory));
 
             // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
@@ -394,11 +425,53 @@ class EquipementPdfController extends AbstractController
             
         } catch (\Exception $e) {
             $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
-            $this->customLog("Stack trace: " . $e->getTraceAsString());
-            
-            // En cas d'erreur, générer un PDF d'erreur détaillé
-            return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, $e->getMessage(), [], $clientSelectedInformations);
+            return $this->generateLightErrorPdf($agence, $id, $e->getMessage());
+        } finally {
+            // Remettre les limites par défaut
+            ini_restore('memory_limit');
+            ini_restore('max_execution_time');
         }
+    }
+
+    /**
+     * Version allégée du PDF d'erreur
+     */
+    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage): Response
+    {
+        $html = "
+        <html><body style='font-family: Arial; padding: 20px;'>
+            <h1>Erreur de génération PDF</h1>
+            <p><strong>Client:</strong> {$id}</p>
+            <p><strong>Agence:</strong> {$agence}</p>
+            <p><strong>Erreur:</strong> {$errorMessage}</p>
+            <p><strong>Mémoire pic:</strong> " . $this->formatBytes(memory_get_peak_usage(true)) . "</p>
+            <p>Veuillez contacter le support technique.</p>
+        </body></html>
+        ";
+        
+        try {
+            $pdfContent = $this->pdfGenerator->generatePdf($html, "erreur_{$agence}_{$id}.pdf");
+            return new Response($pdfContent, Response::HTTP_OK, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "inline; filename=\"erreur_{$agence}_{$id}.pdf\""
+            ]);
+        } catch (\Exception $e) {
+            return new Response("Erreur critique de génération PDF", Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Formatage des tailles mémoire
+     */
+    private function formatBytes(int $size, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
+            $size /= 1024;
+        }
+        
+        return round($size, $precision) . ' ' . $units[$i];
     }
 
     /**
@@ -425,13 +498,11 @@ class EquipementPdfController extends AbstractController
             ];
         }
         
-        // Chercher les photos de cet équipement
-        $photoFiles = scandir($basePath);
-        $equipmentPhotos = array_filter($photoFiles, function($file) use ($numeroEquipement) {
-            return strpos($file, $numeroEquipement . '_') === 0 && pathinfo($file, PATHINFO_EXTENSION) === 'jpg';
-        });
+        // OPTIMISATION MÉMOIRE : Chercher UNIQUEMENT la photo générale
+        $photoGeneraleName = $numeroEquipement . '_generale.jpg';
+        $photoGeneralePath = $basePath . $photoGeneraleName;
         
-        if (empty($equipmentPhotos)) {
+        if (!file_exists($photoGeneralePath) || !is_readable($photoGeneralePath)) {
             return [
                 'photos' => [], 
                 'photos_indexed' => [], 
@@ -440,42 +511,67 @@ class EquipementPdfController extends AbstractController
             ];
         }
         
-        $photos = [];
-        $photosIndexed = []; // CORRECTION: Format pour le template existant
-        
-        foreach ($equipmentPhotos as $photoFile) {
-            $fullPath = $basePath . $photoFile;
-            $photoType = $this->extractPhotoType($photoFile);
-            
-            // URL publique pour affichage dans le PDF
-            $publicUrl = "/img/{$agence}/{$client}/{$annee}/{$typeVisite}/{$photoFile}";
-            $base64Data = 'data:image/jpeg;base64,' . base64_encode(file_get_contents($fullPath));
-            
-            // Format avec clés nommées (pour la logique métier)
-            $photos[$photoType] = [
-                'url' => $publicUrl,
-                'base64' => $base64Data,
-                'filename' => $photoFile,
-                'type' => $photoType
-            ];
-            
-            // CORRECTION: Format avec index numériques pour le template existant
-            $photosIndexed[] = [
-                'picture' => base64_encode(file_get_contents($fullPath)), // Format attendu par le template
-                'url' => $publicUrl,
-                'filename' => $photoFile,
-                'type' => $photoType
+        // Vérifier la taille du fichier avant de le charger
+        $fileSize = filesize($photoGeneralePath);
+        if ($fileSize > 2 * 1024 * 1024) { // 2MB max
+            $this->customLog("Photo trop volumineuse ignorée: {$photoGeneraleName} ({$fileSize} bytes)");
+            return [
+                'photos' => [], 
+                'photos_indexed' => [], 
+                'source' => 'file_too_large', 
+                'count' => 0
             ];
         }
         
-        $this->customLog("Scan direct: {$equipment->getNumeroEquipement()} = " . count($photosIndexed) . " photos trouvées");
-        
-        return [
-            'photos' => $photos,           // Format avec clés nommées
-            'photos_indexed' => $photosIndexed, // Format pour le template (index numériques)
-            'source' => 'direct_scan',
-            'count' => count($photosIndexed)
-        ];
+        try {
+            // Lire et encoder une seule photo
+            $photoContent = file_get_contents($photoGeneralePath);
+            $base64Encoded = base64_encode($photoContent);
+            
+            // URL publique
+            $publicUrl = "/img/{$agence}/{$client}/{$annee}/{$typeVisite}/{$photoGeneraleName}";
+            
+            // Format indexé pour le template (une seule photo)
+            $photosIndexed = [
+                [
+                    'picture' => $base64Encoded,
+                    'url' => $publicUrl,
+                    'filename' => $photoGeneraleName,
+                    'type' => 'photo_generale'
+                ]
+            ];
+            
+            // Format associatif
+            $photos = [
+                'photo_generale' => [
+                    'url' => $publicUrl,
+                    'base64' => 'data:image/jpeg;base64,' . $base64Encoded,
+                    'filename' => $photoGeneraleName,
+                    'type' => 'photo_generale'
+                ]
+            ];
+            
+            // Libérer immédiatement les variables temporaires
+            unset($photoContent, $base64Encoded);
+            
+            $this->customLog("Photo générale: {$equipment->getNumeroEquipement()} = 1 photo trouvée");
+            
+            return [
+                'photos' => $photos,
+                'photos_indexed' => $photosIndexed,
+                'source' => 'direct_scan',
+                'count' => 1
+            ];
+            
+        } catch (\Exception $e) {
+            $this->customLog("Erreur lecture photo {$photoGeneraleName}: " . $e->getMessage());
+            return [
+                'photos' => [], 
+                'photos_indexed' => [], 
+                'source' => 'read_error', 
+                'count' => 0
+            ];
+        }
     }
 
     /**
