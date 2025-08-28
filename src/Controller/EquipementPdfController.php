@@ -252,25 +252,61 @@ class EquipementPdfController extends AbstractController
             
             foreach ($equipmentsFiltered as $equipment) {
                 try {
-                    // Récupération optimisée des photos
-                    $picturesArray = [
-                        "numeroEquipement" => $equipment->getNumeroEquipement(),
-                        "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
-                        "annee" => $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement() ?: 'now')),
-                        "visite" => $clientVisiteFilter ?: ($equipment->getVisite() ?? 'CEA')
-                    ];
+                    // 🔍 DEBUG - Informations équipement
+                    error_log("🔍 Traitement équipement: " . $equipment->getNumeroEquipement());
                     
+                    // NOUVEAU CODE - Utiliser les photos locales
+                    // Méthode 1 : Récupérer la photo générale depuis le stockage local
                     $picturesData = $entityManager->getRepository(Form::class)
-                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                        ->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
                     
-                    $photoSource = !empty($picturesData) ? 'local' : 'none';
-                    $photoSourceStats[$photoSource]++;
+                    $photoSource = 'none';
+                    
+                    // Si photo locale trouvée
+                    if (!empty($picturesData)) {
+                        $photoSource = 'local';
+                        error_log("✅ Photo locale trouvée pour {$equipment->getNumeroEquipement()}");
+                    } else {
+                        // Méthode 2 : Essayer le scan si pas de photo via la méthode normale
+                        error_log("🔄 Tentative scan pour {$equipment->getNumeroEquipement()}");
+                        $picturesData = $entityManager->getRepository(Form::class)
+                            ->findGeneralPhotoByScanning($equipment);
+                        
+                        if (!empty($picturesData)) {
+                            $photoSource = 'local_scan';
+                            error_log("✅ Photo trouvée par scan pour {$equipment->getNumeroEquipement()}");
+                        } else {
+                            // Méthode 3 : Fallback vers l'ancienne méthode API
+                            error_log("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
+                            
+                            $picturesArray = [
+                                "numeroEquipement" => $equipment->getNumeroEquipement(),
+                                "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
+                                "annee" => $clientAnneeFilter ?: date('Y', strtotime($equipment->getDateEnregistrement() ?: 'now')),
+                                "visite" => $clientVisiteFilter ?: ($equipment->getVisite() ?? 'CEA')
+                            ];
+                            
+                            $picturesData = $entityManager->getRepository(Form::class)
+                                ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                            
+                            if (!empty($picturesData)) {
+                                $photoSource = 'api_fallback';
+                                error_log("✅ Photo API fallback pour {$equipment->getNumeroEquipement()}");
+                            } else {
+                                $photoSource = 'none';
+                                error_log("❌ Aucune photo trouvée pour {$equipment->getNumeroEquipement()}");
+                            }
+                        }
+                    }
+                    
+                    // Mettre à jour les statistiques
+                    $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
                     
                 } catch (\Exception $e) {
-                    error_log("Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                    error_log("❌ Erreur photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                     $picturesData = [];
-                    $photoSource = 'none';
-                    $photoSourceStats['none']++;
+                    $photoSource = 'error';
+                    $photoSourceStats['error'] = ($photoSourceStats['error'] ?? 0) + 1;
                 }
                 
                 $equipmentsWithPictures[] = [
@@ -284,6 +320,14 @@ class EquipementPdfController extends AbstractController
                     $dateDeDerniererVisite = $equipment->getDerniereVisite();
                 }
             }
+
+            // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
+            error_log("📊 RÉSUMÉ PHOTOS:");
+            error_log("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
+            error_log("- Photos scan: " . ($photoSourceStats['local_scan'] ?? 0)); 
+            error_log("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
+            error_log("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
+            error_log("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
             
             error_log("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
             
