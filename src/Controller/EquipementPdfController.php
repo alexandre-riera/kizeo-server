@@ -629,6 +629,31 @@ class EquipementPdfController extends AbstractController
         return $this->json($results);
     }
 
+    /**
+     * Récupère le repository approprié selon le code agence
+     */
+    private function getRepositoryForAgency(string $agencyCode, EntityManagerInterface $entityManager)
+    {
+        $entityClass = match ($agencyCode) {
+            'S10' => EquipementS10::class,
+            'S40' => EquipementS40::class,
+            'S50' => EquipementS50::class,
+            'S60' => EquipementS60::class,
+            'S70' => EquipementS70::class,
+            'S80' => EquipementS80::class,
+            'S100' => EquipementS100::class,
+            'S120' => EquipementS120::class,
+            'S130' => EquipementS130::class,
+            'S140' => EquipementS140::class,
+            'S150' => EquipementS150::class,
+            'S160' => EquipementS160::class,
+            'S170' => EquipementS170::class,
+            default => throw new \InvalidArgumentException("Code agence non supporté : {$agencyCode}")
+        };
+
+        return $entityManager->getRepository($entityClass);
+    }
+
     #[Route('/diagnostic/photos/{agence}/{clientId}', name: 'diagnostic_photos')]
     public function diagnosticPhotos(string $agence, string $clientId, EntityManagerInterface $entityManager): Response
     {
