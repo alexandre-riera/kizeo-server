@@ -106,7 +106,6 @@ class EquipementPdfController extends AbstractController
      * VERSION MISE À JOUR - Utilise les photos stockées en local au lieu des appels API
      * Route: /client/equipements/pdf/{agence}/{id}
      */
-
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
@@ -115,7 +114,7 @@ class EquipementPdfController extends AbstractController
         
         // Initialiser les métriques de performance
         $startTime = microtime(true);
-        $photoSourceStats = ['local' => 0, 'api_fallback' => 0, 'none' => 0];
+        $photoSourceStats = ['direct_scan' => 0, 'local' => 0, 'api_fallback' => 0, 'none' => 0, 'error' => 0];
         
         try {
             // Configuration MySQL optimisée pour les gros volumes
@@ -246,19 +245,38 @@ class EquipementPdfController extends AbstractController
                 );
             }
             
-            // 5. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS
+            // 5. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - CORRIGÉ
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             
             foreach ($equipmentsFiltered as $equipment) {
                 try {
-                    // ANCIEN CODE - À REMPLACER
-                    // Les 3 méthodes qui échouent actuellement
-                    
-                    // NOUVEAU CODE - Utilisez directement le scan direct
+                    // UTILISATION DE LA MÉTHODE DIRECTE AVEC FORMAT CORRIGÉ
                     $photoResult = $this->getPhotosForEquipmentWithDirectScan($equipment);
-                    $picturesData = $photoResult['photos'];
-                    $photoSource = $photoResult['source'];
+                    
+                    // CORRECTION : Adapter le format de retour pour le template
+                    $picturesData = [];
+                    
+                    if (!empty($photoResult['photos_indexed'])) {
+                        // Format indexé disponible - utiliser directement
+                        $picturesData = $photoResult['photos_indexed'];
+                        $photoSource = 'direct_scan';
+                    } elseif (!empty($photoResult['photos'])) {
+                        // Format associatif - convertir en format indexé pour le template
+                        foreach ($photoResult['photos'] as $photoType => $photoData) {
+                            $picturesData[] = [
+                                'picture' => str_replace('data:image/jpeg;base64,', '', $photoData['base64']),
+                                'url' => $photoData['url'],
+                                'filename' => $photoData['filename'],
+                                'type' => $photoData['type']
+                            ];
+                        }
+                        $photoSource = 'direct_scan';
+                    } else {
+                        // Aucune photo trouvée
+                        $picturesData = [];
+                        $photoSource = 'none';
+                    }
                     
                     $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
                     
@@ -267,6 +285,7 @@ class EquipementPdfController extends AbstractController
                         'pictures' => $picturesData,
                         'photo_source' => $photoSource
                     ];
+                    
                 } catch (\Exception $e) {
                     $this->customLog("Erreur équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                     $photoSourceStats['error'] = ($photoSourceStats['error'] ?? 0) + 1;
@@ -282,7 +301,7 @@ class EquipementPdfController extends AbstractController
             // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
             $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
-            $this->customLog("- Photos scan: " . ($photoSourceStats['local_scan'] ?? 0)); 
+            $this->customLog("- Photos scan: " . ($photoSourceStats['direct_scan'] ?? 0)); 
             $this->customLog("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
             $this->customLog("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
             $this->customLog("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
@@ -383,7 +402,7 @@ class EquipementPdfController extends AbstractController
     }
 
     /**
-     * Méthode de récupération photos avec scan direct en priorité
+     * MÉTHODE CORRIGÉE - Retour des photos avec format compatible template
      */
     private function getPhotosForEquipmentWithDirectScan($equipment): array
     {
@@ -398,7 +417,12 @@ class EquipementPdfController extends AbstractController
         
         if (!is_dir($basePath)) {
             $this->customLog("Répertoire photos n'existe pas: {$basePath}");
-            return ['photos' => [], 'source' => 'no_directory'];
+            return [
+                'photos' => [], 
+                'photos_indexed' => [], 
+                'source' => 'no_directory', 
+                'count' => 0
+            ];
         }
         
         // Chercher les photos de cet équipement
@@ -408,11 +432,16 @@ class EquipementPdfController extends AbstractController
         });
         
         if (empty($equipmentPhotos)) {
-            return ['photos' => [], 'source' => 'no_photos_found'];
+            return [
+                'photos' => [], 
+                'photos_indexed' => [], 
+                'source' => 'no_photos_found', 
+                'count' => 0
+            ];
         }
         
         $photos = [];
-        $photosIndexed = []; // AJOUT: Array avec index numériques pour compatibilité template
+        $photosIndexed = []; // CORRECTION: Format pour le template existant
         
         foreach ($equipmentPhotos as $photoFile) {
             $fullPath = $basePath . $photoFile;
@@ -449,7 +478,9 @@ class EquipementPdfController extends AbstractController
         ];
     }
 
-    // AJOUT: Méthode pour extraire le type de photo depuis le nom de fichier
+    /**
+     * AJOUT: Méthode pour extraire le type de photo depuis le nom de fichier
+     */
     private function extractPhotoType(string $filename): string 
     {
         // Supposons que les noms de fichiers suivent le pattern: NUMERO_TYPE.jpg
