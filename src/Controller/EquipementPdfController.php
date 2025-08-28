@@ -531,9 +531,6 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                         ->findGeneralPhotoByScanning($equipment);
                 } 
 
-                error_log("🔍 Recherche photo pour: " . $equipment->getNumeroEquipement());
-                error_log("📁 Chemin attendu: " . $photoPath);
-                error_log($photoExists ? "✅ Photo trouvée" : "❌ Photo manquante");
             } catch (\Exception $e) {
                 error_log("Erreur récupération photos équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
                 $picturesData = [];
