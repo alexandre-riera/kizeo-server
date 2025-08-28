@@ -209,7 +209,7 @@
     <div class="first-page">
         <div class="client-header">
             <h1 class="client-title">Rapport des équipements - Client {{ clientId }}</h1>
-            {#{% if clientSelectedInformations %}#}
+            {% if clientSelectedInformations %}
                 <div class="client-info">
                     <strong>{{ clientSelectedInformations.nom ?? 'Client non trouvé' }}</strong><br>
                     {% if clientSelectedInformations.adresse %}{{ clientSelectedInformations.adresse }}<br>{% endif %}
@@ -220,7 +220,7 @@
                     {% if clientSelectedInformations.email %}Email: {{ clientSelectedInformations.email }}<br>{% endif %}
                 </div>
                 <hr style="margin: 10px 0;">
-            {#{% endif %}#}
+            {% endif %}
             <div class="client-info">
                 Agence: {{ agence }} | Généré le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }}
                 {% if dateDeDerniererVisite is defined and dateDeDerniererVisite %}
