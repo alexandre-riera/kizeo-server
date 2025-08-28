@@ -553,7 +553,7 @@ class EquipementPdfController extends AbstractController
             // 2. Test des équipements en base
             $repository = $this->getRepositoryForAgency($agence, $entityManager);
             $equipments = $repository->createQueryBuilder('e')
-                ->where('e.raisonSociale LIKE :client')
+                ->where('e.raison_sociale LIKE :client')
                 ->setParameter('client', "%{$raisonSociale}%")
                 ->setMaxResults(3)
                 ->getQuery()
