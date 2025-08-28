@@ -43,81 +43,14 @@
             color: #666;
         }
         
-        /* Filtres appliqués */
-        .filter-info {
-            background-color: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 4px;
-            padding: 10px;
-            margin: 20px 0;
-            font-size: 11px;
-        }
-        
-        .filter-badge {
-            background-color: #007bff;
-            color: white;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 10px;
-            margin-right: 5px;
-        }
-        
-        /* Tableau de statistiques */
-        .stats-section {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
+        /* DEBUG */
+        .debug-info {
+            background-color: #f0f8ff;
+            border: 2px solid #0066cc;
             padding: 15px;
-            margin: 20px 0;
+            margin: 10px 0;
+            font-size: 10px;
         }
-        
-        .stats-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #495057;
-        }
-        
-        .stats-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 11px;
-        }
-        
-        .stats-table th {
-            background-color: #ffff00;
-            color: black;
-            font-weight: bold;
-            text-align: center;
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-        
-        .stats-table td {
-            text-align: center;
-            padding: 6px;
-            border: 1px solid #ddd;
-        }
-        
-        .stats-table .statut-cell {
-            text-align: left;
-            padding-left: 15px;
-        }
-        
-        /* Logos de statut */
-        .logo-statut {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        .logo-vert { background-color: #4CAF50; }
-        .logo-orange { background-color: #FF9800; }
-        .logo-rouge { background-color: #F44336; }
-        .logo-noir { background-color: #424242; }
         
         /* STYLES POUR LES ÉQUIPEMENTS */
         .page-break {
@@ -129,14 +62,6 @@
             border: 1px solid #ddd;
             padding: 10px;
             background-color: rgba(255, 255, 255, 0.95);
-        }
-        
-        .equipement-header {
-            background-color: #f5f5f5;
-            padding: 5px;
-            margin-bottom: 10px;
-            font-weight: bold;
-            border-left: 5px solid #007bff;
         }
         
         .info-table {
@@ -183,17 +108,6 @@
             font-style: italic;
         }
         
-        /* Anomalies */
-        .anomalie-row {
-            background-color: #fff3cd !important;
-        }
-        
-        .anomalie-text {
-            color: #856404;
-            font-weight: bold;
-        }
-        
-        /* Section des équipements supplémentaires */
         .section-title {
             background-color: #f5f5f5;
             padding: 10px;
@@ -206,6 +120,19 @@
 </head>
 <body {% if imageUrl is defined and imageUrl %}style="background-image: url('{{ imageUrl }}');" class="body-with-bg"{% endif %}>
     
+    {# DEBUG VISUAL - Informations directement dans le PDF #}
+    <div class="debug-info">
+        <strong>DEBUG INFO:</strong><br>
+        equipmentsWithPictures count: {{ equipmentsWithPictures|length }}<br>
+        equipementsSupplementaires count: {{ equipementsSupplementaires|length ?? 0 }}<br>
+        total_equipements_bruts: {{ total_equipements_bruts ?? 'non défini' }}<br>
+        total_equipements_filtres: {{ total_equipements_filtres ?? 'non défini' }}<br>
+        Filtres - Année: "{{ clientAnneeFilter }}", Visite: "{{ clientVisiteFilter }}"<br>
+        isFiltered: {{ isFiltered ? 'OUI' : 'NON' }}<br>
+        {% if equipmentsWithPictures is not empty %}
+            Premier équipement: {{ equipmentsWithPictures[0].equipment.numeroEquipement ?? 'N/A' }}
+        {% endif %}
+    </div>
     
     {# PREMIÈRE PAGE AVEC CARTOUCHE ET STATISTIQUES #}
     <div class="first-page">
@@ -230,92 +157,6 @@
                 {% endif %}
             </div>
         </div>
-
-        {# Informations sur les filtres appliqués #}
-        {% if isFiltered is defined and isFiltered %}
-            <div class="filter-info">
-                <strong>Filtres appliqués:</strong>
-                {% if clientAnneeFilter is defined and clientAnneeFilter %}
-                    <span class="filter-badge">Année: {{ clientAnneeFilter }}</span>
-                {% endif %}
-                {% if clientVisiteFilter is defined and clientVisiteFilter %}
-                    <span class="filter-badge">Visite: {{ clientVisiteFilter }}</span>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {# Statistiques des équipements #}
-        {% if statistiques is defined and statistiques %}
-            <div class="stats-section">
-                <div class="stats-title">Statistiques des équipements</div>
-                <table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>Statut</th>
-                            <th>État</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for statut, count in statistiques.etatCount %}
-                            <tr>
-                                <td class="statut-cell">
-                                    {% if statut == "A" %}
-                                        <span class="logo-statut logo-vert"></span>Bon état
-                                    {% elseif statut == "B" %}
-                                        <span class="logo-statut logo-orange"></span>Prévoir le jour de la visite. Fonctionnement ok
-                                    {% elseif statut == "C" %}
-                                        <span class="logo-statut logo-rouge"></span>Coulisses à remplacer
-                                    {% elseif statut == "Équipement mis à l'arrêt lors de l'intervention" %}
-                                        <span class="logo-statut logo-noir"></span>Équipement à l'arrêt
-                                    {% elseif statut == "F" %}
-                                        <span class="logo-statut logo-rouge"></span>F
-                                    {% else %}
-                                        <span class="logo-statut logo-noir"></span>{{ statut }}
-                                    {% endif %}
-                                </td>
-                                <td>{{ statut }}</td>
-                                <td>{{ count }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                
-                <p><strong>Total équipements:</strong> {{ statistiques.totalEquipements ?? 0 }}</p>
-                
-                {% if statistiquesSupplementaires is defined and statistiquesSupplementaires %}
-                    <div class="stats-title">Équipements supplémentaires</div>
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>Statut</th>
-                                <th>État</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for statut, count in statistiquesSupplementaires.etatCount %}
-                                <tr>
-                                    <td class="statut-cell">
-                                        {% if statut == "A" %}
-                                            <span class="logo-statut logo-vert"></span>Bon état
-                                        {% elseif statut == "B" %}
-                                            <span class="logo-statut logo-orange"></span>Prévoir le jour de la visite. Fonctionnement ok
-                                        {% elseif statut == "C" %}
-                                            <span class="logo-statut logo-rouge"></span>Coulisses à remplacer
-                                        {% else %}
-                                            <span class="logo-statut logo-noir"></span>{{ statut }}
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ statut }}</td>
-                                    <td>{{ count }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% endif %}
-            </div>
-        {% endif %}
     </div>
 
     {# SAUT DE PAGE APRÈS LA PREMIÈRE PAGE #}
@@ -336,184 +177,93 @@
                 <p><strong>Filtre visite:</strong> '{{ clientVisiteFilter }}'</p>
             </div>
         {% else %}
-        
-        {% for equipmentData in equipmentsWithPictures %}
-            {% set equipment = equipmentData.equipment %}
-            {% set pictures = equipmentData.pictures %}
-            
+            {% for equipmentData in equipmentsWithPictures %}
+                {% set equipment = equipmentData.equipment %}
+                {% set pictures = equipmentData.pictures %}
+                
+                <div class="equipement">
+                    <table class="info-table">
+                        <tr>
+                            <td rowspan="8" class="equipment-image">
+                                {% if pictures|length > 0 %}
+                                    <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
+                                {% else %}
+                                    <div class="no-image">
+                                        Aucune photo disponible
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td style="width: 70%;">
+                                <table style="width: 100%; border: none;">
+                                    <tr>
+                                        <th colspan="2" style="border: none; background: #f5f5f5; text-align: center; padding: 8px; font-size: 14px;">
+                                            Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
+                                            {% if equipment.etat == "A" %}
+                                                <span style="color: green; float: right;">✓</span>
+                                            {% elseif equipment.etat == "C" %}
+                                                <span style="color: red; float: right;">✗</span>
+                                            {% elseif equipment.etat == "Travaux urgent ou à l'arrêt" %}
+                                                <span style="color: red; float: right;">⚠</span>
+                                            {% endif %}
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Numéro</th>
+                                        <td style="border: none;">{{ equipment.numeroEquipement }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Type</th>
+                                        <td style="border: none;">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Marque</th>
+                                        <td style="border: none;">{{ equipment.marque ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Modèle</th>
+                                        <td style="border: none;">{{ equipment.modele ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">État</th>
+                                        <td style="border: none;">{{ equipment.etat ?? 'Non défini' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Mise en service</th>
+                                        <td style="border: none;">{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="border: none; background: none;">Repère site client</th>
+                                        <td style="border: none;">{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
+                                    </tr>
+                                    {# ANOMALIES #}
+                                    {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
+                                    <tr style="background-color: #fff3cd;">
+                                        <th style="border: none; background: #fff3cd;">Anomalies</th>
+                                        <td style="border: none; background: #fff3cd; color: #856404; font-weight: bold;">{{ equipment.anomalies }}</td>
+                                    </tr>
+                                    {% endif %}
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                {# Saut de page tous les 2 équipements #}
+                {% if loop.index is divisible by(2) and not loop.last %}
+                    <div class="page-break"></div>
+                {% endif %}
+            {% endfor %}
         {% endif %}
-        
-        {% for equipmentData in equipmentsWithPictures %}
-            {% set equipment = equipmentData.equipment %}
-            {% set pictures = equipmentData.pictures %}
-            
-            {# AFFICHER TOUS LES ÉQUIPEMENTS SANS FILTRER PAR isEnMaintenance pour le debug #}
-            <div class="equipement">
-                <table class="info-table">
-                    <tr>
-                        <td rowspan="8" class="equipment-image">
-                            {% if pictures|length > 0 %}
-                                <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
-                            {% else %}
-                                <div class="no-image">
-                                    Aucune photo disponible
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td style="width: 70%;">
-                            <table style="width: 100%; border: none;">
-                                <tr>
-                                    <th colspan="2" style="border: none; background: #f5f5f5; text-align: center; padding: 8px; font-size: 14px;">
-                                        Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
-                                        {% if equipment.etat == "A" %}
-                                            <span style="color: green; float: right;">✓</span>
-                                        {% elseif equipment.etat == "C" %}
-                                            <span style="color: red; float: right;">✗</span>
-                                        {% elseif equipment.etat == "Travaux urgent ou à l'arrêt" %}
-                                            <span style="color: red; float: right;">⚠</span>
-                                        {% endif %}
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Numéro</th>
-                                    <td style="border: none;">{{ equipment.numeroEquipement }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Type</th>
-                                    <td style="border: none;">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Marque</th>
-                                    <td style="border: none;">{{ equipment.marque ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Modèle</th>
-                                    <td style="border: none;">{{ equipment.modele ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">État</th>
-                                    <td style="border: none;">{{ equipment.etat ?? 'Non défini' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Mise en service</th>
-                                    <td style="border: none;">{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Repère site client</th>
-                                    <td style="border: none;">{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
-                                </tr>
-                                {# ANOMALIES - LIGNE CRITIQUE #}
-                                {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
-                                <tr class="anomalie-row">
-                                    <th style="border: none; background: #fff3cd;">Anomalies</th>
-                                    <td style="border: none; background: #fff3cd;" class="anomalie-text">{{ equipment.anomalies }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            {# Saut de page tous les 2 équipements #}
-            {% if loop.index is divisible by(2) and not loop.last %}
-                <div class="page-break"></div>
-            {% endif %}
-        {% endfor %}
-
-    {# SECTION DES ÉQUIPEMENTS SUPPLÉMENTAIRES #}
-    {% if equipementsSupplementaires is defined and equipementsSupplementaires|length > 0 %}
-        <div class="page-break"></div>
-        <h2 class="section-title">Équipements supplémentaires ({{ equipementsSupplementaires|length }})</h2>
-        
-        {% for equipmentData in equipementsSupplementaires %}
-            {% set equipment = equipmentData.equipment %}
-            {% set pictures = equipmentData.pictures %}
-            
-            <div class="equipement">
-                <table class="info-table">
-                    <tr>
-                        <td rowspan="8" class="equipment-image">
-                            {% if pictures|length > 0 %}
-                                <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement {{ equipment.numeroEquipement }}">
-                            {% else %}
-                                <div class="no-image">
-                                    Aucune photo disponible
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td style="width: 70%;">
-                            <table style="width: 100%; border: none;">
-                                <tr>
-                                    <th colspan="2" style="border: none; background: #f5f5f5; text-align: center; padding: 8px; font-size: 14px;">
-                                        Équipement {{ equipment.numeroEquipement }} - {{ equipment.raisonSociale }}
-                                        {% if equipment.etat == "A" %}
-                                            <span style="color: green; float: right;">✓</span>
-                                        {% elseif equipment.etat == "C" %}
-                                            <span style="color: red; float: right;">✗</span>
-                                        {% elseif equipment.etat == "Travaux urgent ou à l'arrêt" %}
-                                            <span style="color: red; float: right;">⚠</span>
-                                        {% endif %}
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Numéro</th>
-                                    <td style="border: none;">{{ equipment.numeroEquipement }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Type</th>
-                                    <td style="border: none;">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Marque</th>
-                                    <td style="border: none;">{{ equipment.marque ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Modèle</th>
-                                    <td style="border: none;">{{ equipment.modele ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">État</th>
-                                    <td style="border: none;">{{ equipment.etat ?? 'Non défini' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Mise en service</th>
-                                    <td style="border: none;">{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
-                                </tr>
-                                <tr>
-                                    <th style="border: none; background: none;">Repère site client</th>
-                                    <td style="border: none;">{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
-                                </tr>
-                                {# ANOMALIES - LIGNE CRITIQUE POUR LES SUPPLÉMENTAIRES AUSSI #}
-                                {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
-                                <tr class="anomalie-row">
-                                    <th style="border: none; background: #fff3cd;">Anomalies</th>
-                                    <td style="border: none; background: #fff3cd;" class="anomalie-text">{{ equipment.anomalies }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            {# Saut de page tous les 2 équipements supplémentaires #}
-            {% if loop.index is divisible by(2) and not loop.last %}
-                <div class="page-break"></div>
-            {% endif %}
-        {% endfor %}
+    {% else %}
+        <div style="background-color: #ffe6e6; padding: 20px; border: 1px solid #ff0000;">
+            <h3 style="color: #cc0000;">ERREUR: La variable equipmentsWithPictures n'est pas définie</h3>
+        </div>
     {% endif %}
 
     {# PIED DE PAGE #}
     <div style="margin-top: 30px; font-size: 9px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px;">
         Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} - 
         {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
-        {% if equipementsSupplementaires is defined and equipementsSupplementaires|length > 0 %}
-            + {{ equipementsSupplementaires|length }} équipement{{ equipementsSupplementaires|length > 1 ? 's' : '' }} supplémentaire{{ equipementsSupplementaires|length > 1 ? 's' : '' }}
-        {% endif %}
-        {% if isFiltered is defined and isFiltered %}
-            <br><em>Filtres appliqués lors de la génération</em>
-        {% endif %}
     </div>
 </body>
 </html>
