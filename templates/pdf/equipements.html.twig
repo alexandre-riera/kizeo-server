@@ -361,10 +361,7 @@
                 <div class="info-group">
                     <h3>Client</h3>
                     {% if clientSelectedInformations %}
-                    {{ clientSelectedInformations.raisonSociale ? '<p><strong>' ~ clientSelectedInformations.raisonSociale ~ '</strong></p>'|raw : '' }}
-                        {#<p><strong>{{ clientSelectedInformations.getRaisonSociale() }}</strong></p>
-                        <p>{{ clientSelectedInformations.getAdressep1() }}</p>
-                        <p>{{ clientSelectedInformations.getCpostalp() }} {{ clientSelectedInformations.getVillep() }}</p>#}
+                        {{ clientSelectedInformations }}
                     {% endif %}
                 </div>
             </div>
