@@ -479,7 +479,7 @@ class EquipementPdfController extends AbstractController
                 'filtrage_success' => true,
                 'total_equipements_bruts' => count($equipments),
                 'total_equipements_filtres' => count($equipmentsFiltered),
-                'clientSelectedInformations' => $clientSelectedInformations,
+                'clientSelectedInformations' => $this->getClientInformationsByAgence($agence, $id, $entityManager) ?: null,
                 // 🆕 NOUVELLES VARIABLES POUR L'OPTIMISATION
                 'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
                 'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
@@ -917,34 +917,6 @@ class EquipementPdfController extends AbstractController
     }
 
     /**
-     * Extrait le type de photo depuis le nom de fichier
-     */
-    // private function extractPhotoType(string $filename): string
-    // {
-    //     if (strpos($filename, '_generale') !== false) {
-    //         return 'photo_generale';
-    //     }
-    //     if (strpos($filename, '_plaque') !== false) {
-    //         return 'photo_plaque';
-    //     }
-    //     if (strpos($filename, '_etiquette') !== false) {
-    //         return 'photo_etiquette';
-    //     }
-    //     if (strpos($filename, '_choc') !== false) {
-    //         return 'photo_choc';
-    //     }
-        
-    //     // Extraire le type après le numéro d'équipement
-    //     $parts = explode('_', $filename, 2);
-    //     if (isset($parts[1])) {
-    //         $type = str_replace('.jpg', '', $parts[1]);
-    //         return 'photo_' . $type;
-    //     }
-        
-    //     return 'photo_inconnue';
-    // }
-
-    /**
      * Logger personnalisé pour hébergement mutualisé
      */
     private function customLog(string $message): void
@@ -1221,7 +1193,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         'debug_info' => $debugInfo,
         'isFiltered' => false,
         'dateDeDerniererVisite' => null,
-        'clientSelectedInformations' => $clientSelectedInformations,
+        'clientSelectedInformations' => $this->getClientInformationsByAgence($agence, $id, $entityManager) ?: null,
     ]);
     
     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
