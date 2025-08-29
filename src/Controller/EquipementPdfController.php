@@ -477,6 +477,40 @@ class EquipementPdfController extends AbstractController
         $memoryUsage = memory_get_peak_usage(true);
         $memoryFormatted = $this->formatBytes($memoryUsage > 0 ? $memoryUsage : 0);
         
+        // juste avant la génération du HTML/PDF
+
+        // Activer le rapport détaillé des erreurs PHP
+        set_error_handler(function($severity, $message, $file, $line) {
+            $this->customLog("PHP Warning/Error: $message in $file at line $line");
+            // Retourner false pour que PHP continue avec son gestionnaire normal
+            return false;
+        });
+
+        // Vérifier toutes les variables numériques avant utilisation
+        $this->customLog("=== VÉRIFICATION VARIABLES NUMÉRIQUES ===");
+        $this->customLog("Memory usage: " . var_export(memory_get_usage(true), true));
+        $this->customLog("Peak memory: " . var_export(memory_get_peak_usage(true), true));
+        $this->customLog("Equipments count: " . var_export(count($equipmentsFiltered), true));
+
+        // Vérifier les équipements pour des valeurs non-numériques
+        foreach ($equipmentsFiltered as $index => $equipment) {
+            if ($index < 3) { // Tester seulement les 3 premiers
+                $this->customLog("Equipment $index methods check:");
+                
+                // Tester les getters qui pourraient retourner des valeurs numériques
+                $numericMethods = ['getId', 'getNumeroEquipement'];
+                foreach ($numericMethods as $method) {
+                    if (method_exists($equipment, $method)) {
+                        $value = $equipment->$method();
+                        $this->customLog("  $method(): " . var_export($value, true) . " (type: " . gettype($value) . ")");
+                    }
+                }
+            }
+        }
+
+        // Restaurer le gestionnaire d'erreurs par défaut après les tests
+        restore_error_handler();
+
         $html = "
         <html><body style='font-family: Arial; padding: 20px;'>
             <h1>Erreur de génération PDF</h1>
