@@ -779,13 +779,12 @@ class EquipementPdfController extends AbstractController
                 $photoContent = file_get_contents($photoPath);
                 $photoEncoded = base64_encode($photoContent);
                 
-                $photoObject = new \stdClass();
-                $photoObject->picture = $photoEncoded;
-                $photoObject->update_time = date('Y-m-d H:i:s', filemtime($photoPath));
-                $photoObject->photo_type = 'generale_locale';
-                
                 $this->customLog("Photo locale trouvée et encodée");
-                return [$photoObject];
+                return [[
+                    'picture' => $photoEncoded,
+                    'update_time' => date('Y-m-d H:i:s', filemtime($photoPath)),
+                    'photo_type' => 'generale_locale'
+                ]];
             }
             
             $this->customLog("Aucune photo locale trouvée");
