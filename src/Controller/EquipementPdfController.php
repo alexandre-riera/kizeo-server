@@ -146,7 +146,8 @@ class EquipementPdfController extends AbstractController
             $this->customLog("Limite d'équipements: {$maxEquipments}");
             
             // Récupérer les informations client TOUT DE SUITE
-            $clientSelectedInformations = $this->getClientInformationsByAgence($agence, $id, $entityManager);
+            // $clientSelectedInformations = $this->getClientInformationsByAgence($agence, $id, $entityManager);
+            $clientSelectedInformations = $entityManager->getRepository("App\\Entity\\Contact{$agence}")->findOneBy(['id_contact' => $id]);
             
             // Récupérer les informations client (autre méthode)
             $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
