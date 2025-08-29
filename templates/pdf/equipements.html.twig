@@ -361,25 +361,20 @@
                 <div class="info-group">
                     <h3>Client</h3>
                     {% if clientSelectedInformations %}
-                        {% if clientSelectedInformations.getRaisonSociale is defined %}
-                            <p><strong>{{ clientSelectedInformations.getRaisonSociale() }}</strong></p>
-                            {% if clientSelectedInformations.getAdressep1 is defined %}
-                                <p>{{ clientSelectedInformations.getAdressep1() }}</p>
+                        {% if clientSelectedInformations.raison_sociale is defined %}
+                            <p><strong>{{ clientSelectedInformations.raison_sociale }}</strong></p>
+                            {% if clientSelectedInformations.adressep_1 is defined %}
+                                <p>{{ clientSelectedInformations.adressep_1 }}</p>
                             {% endif %}
-                            {% if clientSelectedInformations.getCpostalp is defined and clientSelectedInformations.getVillep is defined %}
-                                <p>{{ clientSelectedInformations.getCpostalp() }} {{ clientSelectedInformations.getVillep() }}</p>
+                            {% if clientSelectedInformations.adressep_2 is defined %}
+                                <p>{{ clientSelectedInformations.adressep_2 }}</p>
                             {% endif %}
-                        {% else %}
-                            <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
-                            <p>Parc d'activité des Grands Chêne</p>
-                            <p>5 chemin de Chapoly</p>
-                            <p>69230 ST GENIS LES OLLIERES</p>
+                            {% if clientSelectedInformations.cpostalp is defined and clientSelectedInformations.villep is defined %}
+                                <p>{{ clientSelectedInformations.cpostalp }} {{ clientSelectedInformations.villep }}</p>
+                            {% endif %}
                         {% endif %}
                     {% else %}
-                        <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
-                        <p>Parc d'activité des Grands Chêne</p>
-                        <p>5 chemin de Chapoly</p>
-                        <p>69230 ST GENIS LES OLLIERES</p>
+                        <p><strong>Client non reconnu</strong></p>
                     {% endif %}
                 </div>
             </div>
@@ -390,16 +385,16 @@
             
             <div class="summary-stats">
                 <div class="stat-item">
-                    <span class="stat-number">{{ statistiques.total ?? 0 }}</span>
+                    <span class="stat-number">{{ statistiques.total | default(0) }}</span>
                     <div class="stat-label">Équipements au contrat</div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-number">{{ statistiques.visitedCount ?? 0 }}</span>
+                    <span class="stat-number">{{ statistiques.visitedCount | default(0) }}</span>
                     <div class="stat-label">Équipements visités</div>
                 </div>
                 {% if statistiquesSupplementaires and statistiquesSupplementaires.total > 0 %}
                 <div class="stat-item">
-                    <span class="stat-number">{{ statistiquesSupplementaires.total }}</span>
+                    <span class="stat-number">{{ statistiquesSupplementaires.total | default(0) }}</span>
                     <div class="stat-label">Équipements supplémentaires</div>
                 </div>
                 {% endif %}
@@ -422,22 +417,22 @@
                     <tr>
                         <td class="status-red">⊗</td>
                         <td>Travaux curatifs urgents</td>
-                        <td><strong>{{ statistiques.status_counts.urgent ?? statistiques.status_counts.red ?? 0 }}</strong></td>
+                        <td><strong>{{ statistiques.status_counts.urgent or statistiques.status_counts.red | default(0) }}</strong></td>
                     </tr>
                     <tr>
                         <td class="status-orange">⚠</td>
                         <td>Travaux à prévoir</td>
-                        <td><strong>{{ statistiques.status_counts.orange ?? 0 }}</strong></td>
+                        <td><strong>{{ statistiques.status_counts.orange | default(0) }}</strong></td>
                     </tr>
                     <tr>
                         <td class="status-green">✓</td>
                         <td>Bon état</td>
-                        <td><strong>{{ statistiques.status_counts.green ?? 0 }}</strong></td>
+                        <td><strong>{{ statistiques.status_counts.green | default(0) }}</strong></td>
                     </tr>
                     <tr>
                         <td class="status-gray">?</td>
                         <td>Inaccessible/Inexistant</td>
-                        <td><strong>{{ statistiques.status_counts.gray ?? 0 }}</strong></td>
+                        <td><strong>{{ statistiques.status_counts.gray | default(0) }}</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -463,7 +458,7 @@
         </div>
         
         <div class="footer-info">
-            Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }} - {{ statistiques.visitedCount ?? 0 }} équipements traités
+            Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }} - {{ statistiques.visitedCount | default(0) }} équipements traités
             {% if isFiltered %}
                 <br>Filtres appliqués lors de la génération
             {% endif %}
