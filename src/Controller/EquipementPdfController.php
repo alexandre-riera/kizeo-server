@@ -103,16 +103,16 @@ class EquipementPdfController extends AbstractController
     
     /**
      * Génère un PDF complet pour tous les équipements d'un client
-     * VERSION MISE À JOUR - Utilise les photos stockées en local au lieu des appels API
+     * VERSION OPTIMISÉE - Avec limitation et compression des photos
      * Route: /client/equipements/pdf/{agence}/{id}
      */
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
-        // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION
-        ini_set('memory_limit', '1G'); // Augmenter temporairement
-        ini_set('max_execution_time', 300); // 5 minutes
-        set_time_limit(300);
+        // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION OPTIMISÉE
+        ini_set('memory_limit', '512M'); // Réduire à 512M au lieu de 1G
+        ini_set('max_execution_time', 180); // 3 minutes au lieu de 5
+        set_time_limit(180);
         
         // Activer le garbage collector agressif
         gc_enable();
@@ -136,9 +136,13 @@ class EquipementPdfController extends AbstractController
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
             
+            // 📊 NOUVEAU : Paramètre de limitation d'équipements
+            $maxEquipments = (int) $request->query->get('maxEquipments', 100); // Limite par défaut : 100
+            
             $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
             $this->customLog("Agence: {$agence}, Client: {$id}");
             $this->customLog("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
+            $this->customLog("Limite d'équipements: {$maxEquipments}");
             
             // Récupérer les informations client TOUT DE SUITE
             $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
@@ -234,7 +238,13 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            // 4. VÉRIFICATION APRÈS FILTRAGE
+            // 4. 🚨 LIMITATION CRITIQUE : Ne traiter que les X premiers équipements
+            if (count($equipmentsFiltered) > $maxEquipments) {
+                $this->customLog("LIMITATION: Réduction de " . count($equipmentsFiltered) . " à {$maxEquipments} équipements");
+                $equipmentsFiltered = array_slice($equipmentsFiltered, 0, $maxEquipments);
+            }
+            
+            // 5. VÉRIFICATION APRÈS FILTRAGE
             if (empty($equipmentsFiltered)) {
                 $this->customLog("ATTENTION: Aucun équipement après filtrage!");
                 
@@ -256,26 +266,21 @@ class EquipementPdfController extends AbstractController
                 );
             }
             
-            // 5. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - CORRIGÉ
+            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - VERSION OPTIMISÉE
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
-            
-            /**
-             * TRAITEMENT OPTIMISÉ PAR BATCH pour éviter l'OutOfMemory
-             */
             $processedCount = 0;
+            
             foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
                     $this->customLog("=== DÉBUT TRAITEMENT ÉQUIPEMENT {$index} ===");
                     
-                    // ✅ PROTECTION avant l'appel à formatBytes
-                    if ($index > 0 && $index % 25 === 0) {
+                    // 🗑️ Garbage collection plus fréquent
+                    if ($index > 0 && $index % 20 === 0) {
                         gc_collect_cycles();
                         $currentMemory = memory_get_usage(true);
                         if ($currentMemory > 0) {
                             $this->customLog("GC forcé #{$index} - Mémoire: " . $this->formatBytes($currentMemory));
-                        } else {
-                            $this->customLog("GC forcé #{$index} - Mémoire: N/A");
                         }
                     }
 
@@ -288,8 +293,7 @@ class EquipementPdfController extends AbstractController
                     
                     $this->customLog("Traitement équipement: {$numeroEquipement}");
 
-                    // ✅ LOGS DÉTAILLÉS pour chaque étape
-                    $this->customLog("Étape 1: Vérification isEnMaintenance");
+                    // Vérification isEnMaintenance
                     $isInMaintenance = false;
                     if (method_exists($equipment, 'isEnMaintenance')) {
                         try {
@@ -298,11 +302,9 @@ class EquipementPdfController extends AbstractController
                         } catch (\Exception $e) {
                             $this->customLog("Erreur isEnMaintenance: " . $e->getMessage());
                         }
-                    } else {
-                        $this->customLog("Méthode isEnMaintenance non disponible");
                     }
                     
-                    $this->customLog("Étape 2: Récupération raison sociale et visite");
+                    // Récupération raison sociale et visite
                     try {
                         $raisonSociale = $equipment->getRaisonSociale();
                         $visite = $equipment->getVisite();
@@ -313,7 +315,7 @@ class EquipementPdfController extends AbstractController
                         continue;
                     }
 
-                    $this->customLog("Étape 3: Récupération des photos");
+                    // 📸 RÉCUPÉRATION DES PHOTOS OPTIMISÉE
                     $picturesData = [];
                     try {
                         if ($isInMaintenance) {
@@ -331,24 +333,37 @@ class EquipementPdfController extends AbstractController
                                 $picturesData = $entityManager->getRepository(Form::class)
                                     ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
                                 $this->customLog("Photos récupérées: " . count($picturesData));
+                                if (!empty($picturesData)) {
+                                    $photoSourceStats['api_fallback']++;
+                                }
                             } else {
                                 $this->customLog("Aucune entrée Form trouvée, tentative photo locale...");
-                                $picturesData = $this->getLocalPhotosForEquipment($equipment);
+                                $picturesData = $this->getOptimizedLocalPhotosForEquipment($equipment);
                                 $this->customLog("Photos locales trouvées: " . count($picturesData));
+                                if (!empty($picturesData)) {
+                                    $photoSourceStats['local']++;
+                                } else {
+                                    $photoSourceStats['none']++;
+                                }
                             }
                         } else {
                             // Équipements hors contrat
                             $this->customLog("Récupération photos équipement hors contrat");
-                            $picturesData = $entityManager->getRepository(Form::class)
-                                ->getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment);
+                            $picturesData = $this->getOptimizedLocalPhotosForEquipment($equipment);
                             $this->customLog("Photos supplémentaires récupérées: " . count($picturesData));
+                            if (!empty($picturesData)) {
+                                $photoSourceStats['local']++;
+                            } else {
+                                $photoSourceStats['none']++;
+                            }
                         }
                     } catch (\Exception $e) {
                         $this->customLog("ERREUR lors de la récupération des photos: " . $e->getMessage());
                         $picturesData = [];
+                        $photoSourceStats['error']++;
                     }
 
-                    $this->customLog("Étape 4: Construction des données d'équipement");
+                    // Construction des données d'équipement
                     try {
                         $equipmentData = [
                             'equipment' => $equipment,
@@ -368,29 +383,30 @@ class EquipementPdfController extends AbstractController
 
                     $this->customLog("=== FIN TRAITEMENT ÉQUIPEMENT {$index} ===");
 
-                    // Vérifier la mémoire après chaque équipement
+                    // ⚠️ CONTRÔLE MÉMOIRE CRITIQUE
                     $currentMemoryAfter = memory_get_usage(true);
-                    if ($currentMemoryAfter > 800 * 1024 * 1024) { // 800 MB
-                        $this->customLog("ATTENTION: Mémoire élevée après équipement {$numeroEquipement}: " . 
+                    if ($currentMemoryAfter > 400 * 1024 * 1024) { // 400 MB
+                        $this->customLog("ATTENTION: Mémoire critique après équipement {$numeroEquipement}: " . 
                                         $this->formatBytes($currentMemoryAfter));
                         
-                        if ($processedCount >= 50) {
-                            $this->customLog("Arrêt du traitement pour éviter OutOfMemory.");
-                            break;
-                        }
+                        $this->customLog("Arrêt anticipé pour éviter OutOfMemory.");
+                        break;
                     }
                     
                 } catch (\Exception $e) {
                     $this->customLog("EXCEPTION dans boucle équipement {$index}: " . $e->getMessage());
-                    $this->customLog("Stack trace: " . $e->getTraceAsString());
+                    $photoSourceStats['error']++;
                     continue; // Continuer avec l'équipement suivant
                 }
             }
+            
             // LOG MÉMOIRE AVANT GÉNÉRATION PDF
             $beforePdfMemory = memory_get_usage(true);
-            $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory > 0 ? $beforePdfMemory : 0));
+            if ($beforePdfMemory > 0) {
+                $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory));
+            }
 
-            // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
+            // 📊 RÉSUMÉ PHOTOS
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
             $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
             $this->customLog("- Photos scan: " . ($photoSourceStats['direct_scan'] ?? 0)); 
@@ -400,7 +416,7 @@ class EquipementPdfController extends AbstractController
             
             $this->customLog("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
             
-            // 6. SÉPARATION DES ÉQUIPEMENTS - VERSION SÉCURISÉE
+            // 7. SÉPARATION DES ÉQUIPEMENTS - VERSION SÉCURISÉE
             $equipementsSupplementaires = [];
             $equipementsNonPresents = [];
             
@@ -425,10 +441,10 @@ class EquipementPdfController extends AbstractController
             
             $this->customLog("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
             
-            // 7. CALCUL DES STATISTIQUES
+            // 8. CALCUL DES STATISTIQUES
             $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
             
-            // 8. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
+            // 9. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
             $statistiquesSupplementaires = null;
             if (!empty($equipementsSupplementaires)) {
                 $equipmentsSupplementairesOnly = array_map(function($item) {
@@ -436,44 +452,8 @@ class EquipementPdfController extends AbstractController
                 }, $equipementsSupplementaires);
                 $statistiquesSupplementaires = $this->calculateEquipmentStatistics($equipmentsSupplementairesOnly);
             }
-
-            // ✅ Ajouter ce code temporairement dans generateClientEquipementsPdf()
-            // juste avant la génération du HTML/PDF
-
-            // Activer le rapport détaillé des erreurs PHP
-            set_error_handler(function($severity, $message, $file, $line) {
-                $this->customLog("PHP Warning/Error: $message in $file at line $line");
-                // Retourner false pour que PHP continue avec son gestionnaire normal
-                return false;
-            });
-
-            // Vérifier toutes les variables numériques avant utilisation
-            $this->customLog("=== VÉRIFICATION VARIABLES NUMÉRIQUES ===");
-            $this->customLog("Memory usage: " . var_export(memory_get_usage(true), true));
-            $this->customLog("Peak memory: " . var_export(memory_get_peak_usage(true), true));
-            $this->customLog("Equipments count: " . var_export(count($equipmentsFiltered), true));
-
-            // Vérifier les équipements pour des valeurs non-numériques
-            foreach ($equipmentsFiltered as $index => $equipment) {
-                if ($index < 3) { // Tester seulement les 3 premiers
-                    $this->customLog("Equipment $index methods check:");
-                    
-                    // Tester les getters qui pourraient retourner des valeurs numériques
-                    $numericMethods = ['getId', 'getNumeroEquipement'];
-                    foreach ($numericMethods as $method) {
-                        if (method_exists($equipment, $method)) {
-                            $value = $equipment->$method();
-                            $this->customLog("  $method(): " . var_export($value, true) . " (type: " . gettype($value) . ")");
-                        }
-                    }
-                }
-            }
-
-            // Restaurer le gestionnaire d'erreurs par défaut après les tests
-            restore_error_handler();
-
             
-            // 9. GÉNÉRATION DU PDF
+            // 10. GÉNÉRATION DU PDF AVEC MESSAGE D'AVERTISSEMENT
             $filename = "equipements_client_{$id}_{$agence}";
             if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
                 $filename .= '_filtered';
@@ -500,6 +480,13 @@ class EquipementPdfController extends AbstractController
                 'total_equipements_bruts' => count($equipments),
                 'total_equipements_filtres' => count($equipmentsFiltered),
                 'clientSelectedInformations' => $clientSelectedInformations,
+                // 🆕 NOUVELLES VARIABLES POUR L'OPTIMISATION
+                'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
+                'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
+                'totalEquipmentsFound' => count($equipmentsFiltered),
+                'optimizationMessage' => count($equipmentsFiltered) > $maxEquipments 
+                    ? "Mode optimisé : Affichage des photos générales uniquement - " . count($equipmentsWithPictures) . " équipement(s) traité(s) sur " . count($equipmentsFiltered) . " total(aux)"
+                    : null
             ];
             
             // Vérifier que imageUrl est bien définie
@@ -517,7 +504,9 @@ class EquipementPdfController extends AbstractController
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => "inline; filename=\"$filename\"",
                 'X-Equipment-Count' => count($equipmentsFiltered),
-                'X-Filter-Applied' => $filtreApplique ? 'yes' : 'no'
+                'X-Equipment-Processed' => count($equipmentsWithPictures),
+                'X-Filter-Applied' => $filtreApplique ? 'yes' : 'no',
+                'X-Optimization-Applied' => count($equipmentsFiltered) > $maxEquipments ? 'yes' : 'no'
             ]);
             
         } catch (\Exception $e) {
@@ -528,6 +517,115 @@ class EquipementPdfController extends AbstractController
             ini_restore('memory_limit');
             ini_restore('max_execution_time');
         }
+    }
+
+    /**
+     * 📸 NOUVELLE MÉTHODE : Récupération optimisée des photos locales
+     */
+    private function getOptimizedLocalPhotosForEquipment($equipment): array
+    {
+        try {
+            // Construction du chemin selon ta structure
+            $agence = $equipment->getCodeAgence() ?? 'S60';
+            
+            // ✅ CORRECTION : Remplacer les espaces par des underscores pour le nom du dossier
+            $raisonSociale = $this->normalizeFolderName($equipment->getRaisonSociale());
+            
+            $annee = '2025';
+            $visite = 'CE1';
+            $numeroEquipement = $equipment->getNumeroEquipement();
+            
+            $photoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$raisonSociale}/{$annee}/{$visite}/{$numeroEquipement}_generale.jpg";
+            
+            $this->customLog("Recherche photo locale: {$photoPath}");
+            
+            if (file_exists($photoPath) && is_readable($photoPath)) {
+                // 🗜️ COMPRESSION DE LA PHOTO
+                $optimizedContent = $this->getOptimizedPhotoContent($photoPath);
+                if ($optimizedContent) {
+                    $photoEncoded = base64_encode($optimizedContent);
+                    
+                    $photoObject = new \stdClass();
+                    $photoObject->picture = $photoEncoded;
+                    $photoObject->update_time = date('Y-m-d H:i:s', filemtime($photoPath));
+                    $photoObject->photo_type = 'generale_locale_optimized';
+                    
+                    $this->customLog("Photo locale trouvée et encodée pour {$numeroEquipement}");
+                    return [$photoObject];
+                }
+            }
+            
+            $this->customLog("Aucune photo locale trouvée pour {$numeroEquipement}");
+            return [];
+            
+        } catch (\Exception $e) {
+            $this->customLog("Erreur récupération photo locale: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * 🔧 MÉTHODE UTILITAIRE : Normalisation des noms de dossiers
+     */
+    private function normalizeFolderName(string $name): string
+    {
+        // Prendre seulement la première partie avant le backslash
+        $baseName = explode('\\', $name)[0] ?? $name;
+        
+        // Remplacer les espaces par des underscores
+        $normalized = str_replace(' ', '_', $baseName);
+        
+        // Optionnel : Supprimer d'autres caractères problématiques
+        $normalized = preg_replace('/[^a-zA-Z0-9_\-]/', '', $normalized);
+        
+        return $normalized;
+    }
+
+    /**
+     * 🗜️ NOUVELLE MÉTHODE : Optimisation et compression des photos
+     */
+    private function getOptimizedPhotoContent(string $photoPath): ?string
+    {
+        if (!file_exists($photoPath)) {
+            return null;
+        }
+        
+        // Vérifier la taille du fichier
+        $fileSize = filesize($photoPath);
+        if ($fileSize > 500 * 1024) { // 500 KB max
+            $this->customLog("Photo volumineuse ({$fileSize} bytes) - compression appliquée");
+            
+            // Redimensionner l'image
+            $image = imagecreatefromjpeg($photoPath);
+            if ($image) {
+                $width = imagesx($image);
+                $height = imagesy($image);
+                
+                // Redimensionner si trop grand (max 800x600)
+                if ($width > 800 || $height > 600) {
+                    $ratio = min(800 / $width, 600 / $height);
+                    $newWidth = (int)($width * $ratio);
+                    $newHeight = (int)($height * $ratio);
+                    
+                    $resized = imagecreatetruecolor($newWidth, $newHeight);
+                    imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    
+                    ob_start();
+                    imagejpeg($resized, null, 75); // Qualité 75%
+                    $compressed = ob_get_contents();
+                    ob_end_clean();
+                    
+                    imagedestroy($image);
+                    imagedestroy($resized);
+                    
+                    return $compressed;
+                }
+                
+                imagedestroy($image);
+            }
+        }
+        
+        return file_get_contents($photoPath);
     }
 
     /**
