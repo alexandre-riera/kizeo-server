@@ -361,7 +361,25 @@
                 <div class="info-group">
                     <h3>Client</h3>
                     {% if clientSelectedInformations %}
-                        {{ dump(clientSelectedInformations) }}
+                        {% if clientSelectedInformations.getRaisonSociale is defined %}
+                            <p><strong>{{ clientSelectedInformations.getRaisonSociale() }}</strong></p>
+                            {% if clientSelectedInformations.getAdressep1 is defined %}
+                                <p>{{ clientSelectedInformations.getAdressep1() }}</p>
+                            {% endif %}
+                            {% if clientSelectedInformations.getCpostalp is defined and clientSelectedInformations.getVillep is defined %}
+                                <p>{{ clientSelectedInformations.getCpostalp() }} {{ clientSelectedInformations.getVillep() }}</p>
+                            {% endif %}
+                        {% else %}
+                            <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
+                            <p>Parc d'activité des Grands Chêne</p>
+                            <p>5 chemin de Chapoly</p>
+                            <p>69230 ST GENIS LES OLLIERES</p>
+                        {% endif %}
+                    {% else %}
+                        <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
+                        <p>Parc d'activité des Grands Chêne</p>
+                        <p>5 chemin de Chapoly</p>
+                        <p>69230 ST GENIS LES OLLIERES</p>
                     {% endif %}
                 </div>
             </div>
