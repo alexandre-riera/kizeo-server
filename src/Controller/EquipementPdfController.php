@@ -460,7 +460,7 @@ class EquipementPdfController extends AbstractController
             
         } catch (\Exception $e) {
             $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
-            return $this->generateLightErrorPdf($agence, $id, $e->getMessage());
+            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipmentsFiltered);
         } finally {
             // Remettre les limites par défaut
             ini_restore('memory_limit');
@@ -471,7 +471,7 @@ class EquipementPdfController extends AbstractController
     /**
      * Version allégée du PDF d'erreur
      */
-    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage): Response
+    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, $equipmentsFiltered): Response
     {
         // ✅ SÉCURISER l'appel à memory_get_peak_usage
         $memoryUsage = memory_get_peak_usage(true);
