@@ -477,11 +477,11 @@
                         
                         <div class="equipment-card">
                             <div class="equipment-photo">
-                                {% if pictures and pictures|length > 0 %}
-                                    <img src="data:image/jpeg;base64,{{ pictures[0] }}" alt="Photo {{ equipment.numeroEquipement }}">
+                                {% if pictures and pictures|length > 0 and pictures[0].picture is defined %}
+                                    <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" alt="Photo {{ equipment.numeroEquipement }}">
                                 {% else %}
-                                    <div class="no-photo">
-                                        Aucune photo<br>disponible
+                                    <div class="no-image">
+                                        <em>Aucune photo disponible</em>
                                     </div>
                                 {% endif %}
                             </div>
@@ -591,11 +591,11 @@
                             
                             <div class="equipment-card" style="border-left-color: #3498db;">
                                 <div class="equipment-photo">
-                                    {% if pictures and pictures|length > 0 %}
-                                        <img src="data:image/jpeg;base64,{{ pictures[0] }}" alt="Photo {{ equipment.numeroEquipement }}">
+                                    {% if pictures and pictures|length > 0 and pictures[0].picture is defined %}
+                                        <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="main-photo" alt="Photo équipement">
                                     {% else %}
-                                        <div class="no-photo">
-                                            Aucune photo<br>disponible
+                                        <div class="no-image">
+                                            <em>Aucune photo disponible</em>
                                         </div>
                                     {% endif %}
                                 </div>
