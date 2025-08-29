@@ -462,7 +462,7 @@ class EquipementPdfController extends AbstractController
                 if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
             }
             $filename .= '.pdf';
-
+            dd($clientSelectedInformations);
             $templateVars = [
                 'equipmentsWithPictures' => $equipmentsWithPictures,
                 'equipementsSupplementaires' => $equipementsSupplementaires,
