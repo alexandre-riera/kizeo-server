@@ -137,7 +137,8 @@ class EquipementPdfController extends AbstractController
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
             
             // 📊 NOUVEAU : Paramètre de limitation d'équipements
-            $maxEquipments = (int) $request->query->get('maxEquipments', 100); // Limite par défaut : 100
+            // $maxEquipments = (int) $request->query->get('maxEquipments', 100); // Limite par défaut : 100
+            $maxEquipments = (int) $request->query->get('maxEquipments', 500); // Limite par défaut : 500
             
             $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
             $this->customLog("Agence: {$agence}, Client: {$id}");
