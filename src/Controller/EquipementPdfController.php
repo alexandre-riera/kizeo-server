@@ -326,7 +326,7 @@ class EquipementPdfController extends AbstractController
             }
             // LOG MÉMOIRE AVANT GÉNÉRATION PDF
             $beforePdfMemory = memory_get_usage(true);
-            $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory));
+            $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory > 0 ? $beforePdfMemory : 0));
 
             // 📊 AJOUT D'UN LOG DE RÉSUMÉ après la boucle foreach
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
@@ -437,13 +437,17 @@ class EquipementPdfController extends AbstractController
      */
     private function generateLightErrorPdf(string $agence, string $id, string $errorMessage): Response
     {
+        // ✅ SÉCURISER l'appel à memory_get_peak_usage
+        $memoryUsage = memory_get_peak_usage(true);
+        $memoryFormatted = $this->formatBytes($memoryUsage > 0 ? $memoryUsage : 0);
+        
         $html = "
         <html><body style='font-family: Arial; padding: 20px;'>
             <h1>Erreur de génération PDF</h1>
             <p><strong>Client:</strong> {$id}</p>
             <p><strong>Agence:</strong> {$agence}</p>
             <p><strong>Erreur:</strong> {$errorMessage}</p>
-            <p><strong>Mémoire pic:</strong> " . $this->formatBytes(memory_get_peak_usage(true)) . "</p>
+            <p><strong>Mémoire pic:</strong> {$memoryFormatted}</p>
             <p>Veuillez contacter le support technique.</p>
         </body></html>
         ";
@@ -459,19 +463,29 @@ class EquipementPdfController extends AbstractController
         }
     }
 
+    
     /**
-     * Formatage des tailles mémoire
+     * Formatage des tailles mémoire - VERSION CORRIGÉE
      */
     private function formatBytes(int $size, int $precision = 2): string
     {
+        // ✅ PROTECTION contre les valeurs nulles, négatives ou zéro
+        if ($size <= 0) {
+            return '0 B';
+        }
+        
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         
-        for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
+        // ✅ Utilisation de la division progressive au lieu de log()
+        $i = 0;
+        while ($size > 1024 && $i < count($units) - 1) {
             $size /= 1024;
+            $i++;
         }
         
         return round($size, $precision) . ' ' . $units[$i];
     }
+
 
     /**
      * MÉTHODE CORRIGÉE - Retour des photos avec format compatible template
