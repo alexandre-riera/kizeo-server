@@ -356,13 +356,13 @@
                 
                 <div class="info-group">
                     <h3>Client</h3>
-                    {% if nomClient %}
+                    {% if nomClient is defined %}
                         <p><strong>{{ nomClient }}</strong></p>
                     {% endif %}
-                    {% if adressep1 %}
+                    {% if adressep1 is defined %}
                         <p>{{ adressep1 }}</p>
                     {% endif %}
-                    {% if adressep2 %}
+                    {% if adressep2 is defined %}
                         <p>{{ adressep2 }}</p>
                     {% endif %}
                     {% if cpostalp is defined and villep is defined %}
