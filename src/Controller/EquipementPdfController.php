@@ -624,7 +624,11 @@ class EquipementPdfController extends AbstractController
         try {
             // Construction du chemin selon ta structure
             $agence = $equipment->getCodeAgence() ?? 'S50';
+            
+            // ✅ CORRECTION : Remplacer les espaces par des underscores pour le nom du dossier
             $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? 'UNKNOWN';
+            $raisonSociale = str_replace(' ', '_', $raisonSociale); // ← AJOUT DE CETTE LIGNE
+            
             $annee = '2025';
             $visite = 'CE1';
             $numeroEquipement = $equipment->getNumeroEquipement();
