@@ -470,9 +470,9 @@ class EquipementPdfController extends AbstractController
             $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
 
             $templateVars = [
-                'equipmentsWithPictures' => $equipmentsWithPictures,
-                'equipementsSupplementaires' => $equipementsSupplementaires,
-                'equipementsNonPresents' => $equipementsNonPresents,
+                'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
+                'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
+                'equipementsNonPresents' => $this->convertStdClassToArray($equipementsNonPresents ?? []),
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl,
@@ -508,6 +508,16 @@ class EquipementPdfController extends AbstractController
             
             $this->customLog("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
             
+            // Débugger ce qui est passé au template
+            $this->customLog("=== TEMPLATE VARS DEBUG ===");
+            foreach ($templateVars as $key => $value) {
+                if (is_object($value)) {
+                    $this->customLog("WARNING: $key est toujours un objet: " . get_class($value));
+                } else {
+                    $this->customLog("OK: $key est de type: " . gettype($value));
+                }
+            }
+
             $html = $this->renderView('pdf/equipements.html.twig', $templateVars);
             $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
             
@@ -530,6 +540,16 @@ class EquipementPdfController extends AbstractController
         }
     }
 
+    // 🔧 SOLUTION 1: Convertir tous les objets stdClass en tableaux
+    private function convertStdClassToArray($data)
+    {
+        if (is_object($data) && get_class($data) === 'stdClass') {
+            return (array) $data;
+        } elseif (is_array($data)) {
+            return array_map([$this, 'convertStdClassToArray'], $data);
+        }
+        return $data;
+    }
     /**
      * Récupère les informations client selon l'agence
      */
