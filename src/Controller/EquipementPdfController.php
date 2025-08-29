@@ -146,7 +146,7 @@ class EquipementPdfController extends AbstractController
             $this->customLog("Limite d'équipements: {$maxEquipments}");
             
             // Récupérer les informations client TOUT DE SUITE
-            $clientSelectedInformations = $this->getClientInformations($agence, $id, $entityManager);
+            $clientSelectedInformations = $this->getClientInformationsByAgence($agence, $id, $entityManager);
             
             // Récupérer les informations client (autre méthode)
             $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
@@ -443,7 +443,7 @@ class EquipementPdfController extends AbstractController
             $this->customLog("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
             
             // 8. CALCUL DES STATISTIQUES
-            $statistiques = $this->calculateEquipmentStatistics($equipmentsFiltered);
+            $statistiques = $this->calculateEquipmentStatisticsImproved($equipmentsFiltered);
             
             // 9. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
             $statistiquesSupplementaires = null;
@@ -451,7 +451,7 @@ class EquipementPdfController extends AbstractController
                 $equipmentsSupplementairesOnly = array_map(function($item) {
                     return $item['equipment'];
                 }, $equipementsSupplementaires);
-                $statistiquesSupplementaires = $this->calculateEquipmentStatistics($equipmentsSupplementairesOnly);
+                $statistiquesSupplementaires = $this->calculateEquipmentStatisticsImproved($equipmentsSupplementairesOnly);
             }
             
             // 10. GÉNÉRATION DU PDF AVEC MESSAGE D'AVERTISSEMENT
@@ -519,6 +519,36 @@ class EquipementPdfController extends AbstractController
             ini_restore('max_execution_time');
         }
     }
+
+    /**
+     * Récupère les informations client selon l'agence
+     */
+    private function getClientInformationsByAgence(string $agence, string $id, EntityManagerInterface $entityManager)
+    {
+        try {
+            $contactEntity = "App\\Entity\\Contact{$agence}";
+            
+            if (!class_exists($contactEntity)) {
+                $this->customLog("ERREUR: Classe Contact{$agence} n'existe pas");
+                return null;
+            }
+            
+            $contact = $entityManager->getRepository($contactEntity)->findOneBy(['id_contact' => $id]);
+            
+            if ($contact) {
+                $this->customLog("Contact trouvé pour {$agence}/{$id}");
+                return $contact;
+            } else {
+                $this->customLog("ERREUR: Aucun contact trouvé pour {$agence}/{$id}");
+                return null;
+            }
+            
+        } catch (\Exception $e) {
+            $this->customLog("Erreur récupération contact {$agence}/{$id}: " . $e->getMessage());
+            return null;
+        }
+    }
+
 
     /**
      * 📸 NOUVELLE MÉTHODE : Récupération optimisée des photos locales
@@ -2157,40 +2187,6 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                 return null;
         }
     }
-    
-    // private function getEquipmentsByClientAndAgence(string $agence, string $id, EntityManagerInterface $entityManager)
-    // {
-    //     switch ($agence) {
-    //         case 'S10':
-    //             return $entityManager->getRepository(EquipementS10::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S40':
-    //             return $entityManager->getRepository(EquipementS40::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S50':
-    //             return $entityManager->getRepository(EquipementS50::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S60':
-    //             return $entityManager->getRepository(EquipementS60::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S70':
-    //             return $entityManager->getRepository(EquipementS70::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S80':
-    //             return $entityManager->getRepository(EquipementS80::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S100':
-    //             return $entityManager->getRepository(EquipementS100::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S120':
-    //             return $entityManager->getRepository(EquipementS120::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S130':
-    //             return $entityManager->getRepository(EquipementS130::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S140':
-    //             return $entityManager->getRepository(EquipementS140::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S150':
-    //             return $entityManager->getRepository(EquipementS150::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S160':
-    //             return $entityManager->getRepository(EquipementS160::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         case 'S170':
-    //             return $entityManager->getRepository(EquipementS170::class)->findBy(['id_contact' => $id], ['numero_equipement' => 'ASC']);
-    //         default:
-    //             return [];
-    //     }
-    // }
 
     /**
      * Méthode simplifiée pour récupérer les équipements sans filtrage
@@ -2328,5 +2324,67 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             $this->customLog("Erreur fallback API pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Méthode améliorée pour calculer les statistiques avec gestion d'erreurs
+     */
+    private function calculateEquipmentStatisticsImproved(array $equipments): array
+    {
+        $total = count($equipments);
+        $statusCounts = [
+            'green' => 0,
+            'orange' => 0, 
+            'red' => 0,
+            'urgent' => 0, // Alias pour red
+            'gray' => 0,
+            'unknown' => 0
+        ];
+        
+        $visitedCount = 0;
+        
+        foreach ($equipments as $equipment) {
+            // Compter les équipements visités (avec photos ou état)
+            if ($equipment->getEtat() || $equipment->getDerniereVisite()) {
+                $visitedCount++;
+            }
+            
+            // Compter par état
+            $etat = $equipment->getEtat();
+            switch ($etat) {
+                case 'Bon état':
+                case 'A':
+                    $statusCounts['green']++;
+                    break;
+                case 'Travaux à prévoir':
+                case 'B':
+                    $statusCounts['orange']++;
+                    break;
+                case 'Travaux curatifs urgents':
+                case 'Travaux urgent ou à l\'arrêt':
+                case 'C':
+                    $statusCounts['red']++;
+                    $statusCounts['urgent']++; // Alias
+                    break;
+                case 'Equipement inaccessible':
+                case 'Equipement à l\'arrêt':
+                case 'Equipement non présent sur site':
+                case 'D':
+                case 'E':
+                case 'F':
+                case 'G':
+                    $statusCounts['gray']++;
+                    break;
+                default:
+                    $statusCounts['unknown']++;
+                    break;
+            }
+        }
+        
+        return [
+            'total' => $total,
+            'visitedCount' => $visitedCount,
+            'status_counts' => $statusCounts
+        ];
     }
 }

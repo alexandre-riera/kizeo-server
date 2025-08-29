@@ -352,7 +352,7 @@
             <div class="client-info">
                 <div class="info-group">
                     <h3>Visite</h3>
-                    <p><strong>{{ clientSelectedInformations.codeVisite ?? 'CE2' }}</strong> - {{ clientSelectedInformations.anneeVisite ?? '2025' }}</p>
+                    <p><strong>{{ clientVisiteFilter ?: 'CE2' }}</strong> - {{ clientAnneeFilter ?: '2025' }}</p>
                     {% if dateDeDerniererVisite %}
                         <p>Date de visite : {{ dateDeDerniererVisite|date('d/m/Y') }}</p>
                     {% endif %}
@@ -360,12 +360,26 @@
                 
                 <div class="info-group">
                     <h3>Client</h3>
-                    <p><strong>{{ clientSelectedInformations.raisonSociale ?? 'GROUPE GM COSMÉTIQUES - LABOFILL' }}</strong></p>
-                    {% if clientSelectedInformations.adresse %}
-                        <p>{{ clientSelectedInformations.adresse }}</p>
-                    {% endif %}
-                    {% if clientSelectedInformations.ville %}
-                        <p>{{ clientSelectedInformations.codePostal ?? '' }} {{ clientSelectedInformations.ville }}</p>
+                    {% if clientSelectedInformations %}
+                        {% if clientSelectedInformations.getRaisonSociale is defined %}
+                            <p><strong>{{ clientSelectedInformations.getRaisonSociale() }}</strong></p>
+                            {% if clientSelectedInformations.getAdressep1 is defined %}
+                                <p>{{ clientSelectedInformations.getAdressep1() }}</p>
+                            {% endif %}
+                            {% if clientSelectedInformations.getCpostalp is defined and clientSelectedInformations.getVillep is defined %}
+                                <p>{{ clientSelectedInformations.getCpostalp() }} {{ clientSelectedInformations.getVillep() }}</p>
+                            {% endif %}
+                        {% else %}
+                            <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
+                            <p>Parc d'activité des Grands Chêne</p>
+                            <p>5 chemin de Chapoly</p>
+                            <p>69230 ST GENIS LES OLLIERES</p>
+                        {% endif %}
+                    {% else %}
+                        <p><strong>GROUPE GM COSMÉTIQUES - LABOFILL</strong></p>
+                        <p>Parc d'activité des Grands Chêne</p>
+                        <p>5 chemin de Chapoly</p>
+                        <p>69230 ST GENIS LES OLLIERES</p>
                     {% endif %}
                 </div>
             </div>
@@ -383,9 +397,9 @@
                     <span class="stat-number">{{ statistiques.visitedCount ?? 0 }}</span>
                     <div class="stat-label">Équipements visités</div>
                 </div>
-                {% if statistiquesSupplementaires %}
+                {% if statistiquesSupplementaires and statistiquesSupplementaires.total > 0 %}
                 <div class="stat-item">
-                    <span class="stat-number">{{ statistiquesSupplementaires.total ?? 0 }}</span>
+                    <span class="stat-number">{{ statistiquesSupplementaires.total }}</span>
                     <div class="stat-label">Équipements supplémentaires</div>
                 </div>
                 {% endif %}
@@ -408,7 +422,22 @@
                     <tr>
                         <td class="status-red">⊗</td>
                         <td>Travaux curatifs urgents</td>
-                        <td><strong>{{ statistiques.status_counts.urgent ?? 0 }}</strong></td>
+                        <td><strong>{{ statistiques.status_counts.urgent ?? statistiques.status_counts.red ?? 0 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="status-orange">⚠</td>
+                        <td>Travaux à prévoir</td>
+                        <td><strong>{{ statistiques.status_counts.orange ?? 0 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="status-green">✓</td>
+                        <td>Bon état</td>
+                        <td><strong>{{ statistiques.status_counts.green ?? 0 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="status-gray">?</td>
+                        <td>Inaccessible/Inexistant</td>
+                        <td><strong>{{ statistiques.status_counts.gray ?? 0 }}</strong></td>
                     </tr>
                 </tbody>
             </table>
@@ -524,10 +553,10 @@
                                         <span class="detail-value">{{ equipment.miseEnService ?? 'A RENSEIGNER' }}</span>
                                     </div>
                                     
-                                    {% if equipment.repereSiteClient %}
+                                    {% if equipment.repere %}
                                         <div class="detail-item">
                                             <span class="detail-label">Repère site client</span>
-                                            <span class="detail-value">{{ equipment.repereSiteClient }}</span>
+                                            <span class="detail-value">{{ equipment.repere }}</span>
                                         </div>
                                     {% endif %}
                                     
