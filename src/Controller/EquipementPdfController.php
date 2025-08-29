@@ -263,7 +263,7 @@ class EquipementPdfController extends AbstractController
                         'filtre_annee' => $clientAnneeFilter,
                         'filtre_visite' => $clientVisiteFilter,
                         'total_equipements_bruts' => count($equipments)
-                    ], $clientSelectedInformations
+                    ]
                 );
             }
             
@@ -1185,7 +1185,7 @@ class EquipementPdfController extends AbstractController
 /**
  * Génère un PDF d'erreur informatif
  */
-private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = [], $clientSelectedInformations): Response
+private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = []): Response
 {
     $this->customLog("Génération PDF d'erreur pour {$agence}/{$id}");
     
@@ -1203,7 +1203,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         'debug_info' => $debugInfo,
         'isFiltered' => false,
         'dateDeDerniererVisite' => null,
-        'clientSelectedInformations' => $clientSelectedInformations
+        // 'clientSelectedInformations' => $clientSelectedInformations
     ]);
     
     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
