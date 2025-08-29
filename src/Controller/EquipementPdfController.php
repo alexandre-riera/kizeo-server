@@ -266,13 +266,12 @@ class EquipementPdfController extends AbstractController
             $processedCount = 0;
             foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
-                    // OPTIMISATION MÉMOIRE : Garbage collection régulier
+                    $this->customLog("=== DÉBUT TRAITEMENT ÉQUIPEMENT {$index} ===");
+                    
                     // ✅ PROTECTION avant l'appel à formatBytes
                     if ($index > 0 && $index % 25 === 0) {
                         gc_collect_cycles();
                         $currentMemory = memory_get_usage(true);
-                        
-                        // ✅ Vérification AVANT d'appeler formatBytes
                         if ($currentMemory > 0) {
                             $this->customLog("GC forcé #{$index} - Mémoire: " . $this->formatBytes($currentMemory));
                         } else {
@@ -287,49 +286,104 @@ class EquipementPdfController extends AbstractController
                         continue; // Ignorer cet équipement
                     }
                     
-                    $photoResult = $this->getPhotosForEquipmentWithDirectScan($equipment);
-                    
-                    // CORRECTION : Adapter le format de retour pour le template
-                    $picturesData = [];
-                    
-                    if (!empty($photoResult['photos_indexed'])) {
-                        $picturesData = $photoResult['photos_indexed'];
-                        $photoSource = 'direct_scan';
+                    $this->customLog("Traitement équipement: {$numeroEquipement}");
+
+                    // ✅ LOGS DÉTAILLÉS pour chaque étape
+                    $this->customLog("Étape 1: Vérification isEnMaintenance");
+                    $isInMaintenance = false;
+                    if (method_exists($equipment, 'isEnMaintenance')) {
+                        try {
+                            $isInMaintenance = $equipment->isEnMaintenance();
+                            $this->customLog("isEnMaintenance: " . ($isInMaintenance ? 'true' : 'false'));
+                        } catch (\Exception $e) {
+                            $this->customLog("Erreur isEnMaintenance: " . $e->getMessage());
+                        }
                     } else {
-                        $picturesData = [];
-                        $photoSource = 'none';
+                        $this->customLog("Méthode isEnMaintenance non disponible");
                     }
                     
-                    // $photoSourceStats[$photoSource] = ($photoSourceStats[$photoSource] ?? 0) + 1;
-                    
-                    $equipmentsWithPictures[] = [
-                        'equipment' => $equipment,
-                        'pictures' => $picturesData,
-                        'photo_source' => $photoSource
-                    ];
-                    $processedCount++;
-                    // Libérer la variable temporaire
-                    unset($photoResult, $picturesData);
+                    $this->customLog("Étape 2: Récupération raison sociale et visite");
+                    try {
+                        $raisonSociale = $equipment->getRaisonSociale();
+                        $visite = $equipment->getVisite();
+                        $this->customLog("Raison sociale: " . substr($raisonSociale, 0, 50) . "...");
+                        $this->customLog("Visite: {$visite}");
+                    } catch (\Exception $e) {
+                        $this->customLog("Erreur récupération données base: " . $e->getMessage());
+                        continue;
+                    }
+
+                    $this->customLog("Étape 3: Récupération des photos");
+                    $picturesData = [];
+                    try {
+                        if ($isInMaintenance) {
+                            // Équipements au contrat
+                            $this->customLog("Récupération photos équipement au contrat");
+                            $picturesArray = $entityManager->getRepository(Form::class)->findBy([
+                                'code_equipement' => $numeroEquipement,
+                                'raison_sociale_visite' => $raisonSociale . "\\" . $visite
+                            ]);
+                            
+                            $this->customLog("Nombre d'entrées Form trouvées: " . count($picturesArray));
+                            
+                            if (!empty($picturesArray)) {
+                                $this->customLog("Appel getPictureArrayByIdEquipment...");
+                                $picturesData = $entityManager->getRepository(Form::class)
+                                    ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                                $this->customLog("Photos récupérées: " . count($picturesData));
+                            } else {
+                                $this->customLog("Aucune entrée Form trouvée, tentative photo locale...");
+                                $picturesData = $this->getLocalPhotosForEquipment($equipment);
+                                $this->customLog("Photos locales trouvées: " . count($picturesData));
+                            }
+                        } else {
+                            // Équipements hors contrat
+                            $this->customLog("Récupération photos équipement hors contrat");
+                            $picturesData = $entityManager->getRepository(Form::class)
+                                ->getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment);
+                            $this->customLog("Photos supplémentaires récupérées: " . count($picturesData));
+                        }
+                    } catch (\Exception $e) {
+                        $this->customLog("ERREUR lors de la récupération des photos: " . $e->getMessage());
+                        $picturesData = [];
+                    }
+
+                    $this->customLog("Étape 4: Construction des données d'équipement");
+                    try {
+                        $equipmentData = [
+                            'equipment' => $equipment,
+                            'pictures' => $picturesData,
+                            'numeroEquipement' => $numeroEquipement,
+                            'isEnMaintenance' => $isInMaintenance
+                        ];
+                        
+                        $equipmentsWithPictures[] = $equipmentData;
+                        $processedCount++;
+                        
+                        $this->customLog("Équipement ajouté avec succès. Total traités: {$processedCount}");
+                        
+                    } catch (\Exception $e) {
+                        $this->customLog("Erreur construction données équipement: " . $e->getMessage());
+                    }
+
+                    $this->customLog("=== FIN TRAITEMENT ÉQUIPEMENT {$index} ===");
+
+                    // Vérifier la mémoire après chaque équipement
+                    $currentMemoryAfter = memory_get_usage(true);
+                    if ($currentMemoryAfter > 800 * 1024 * 1024) { // 800 MB
+                        $this->customLog("ATTENTION: Mémoire élevée après équipement {$numeroEquipement}: " . 
+                                        $this->formatBytes($currentMemoryAfter));
+                        
+                        if ($processedCount >= 50) {
+                            $this->customLog("Arrêt du traitement pour éviter OutOfMemory.");
+                            break;
+                        }
+                    }
                     
                 } catch (\Exception $e) {
-                    $this->customLog("Erreur équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                    $photoSourceStats['error'] = ($photoSourceStats['error'] ?? 0) + 1;
-                    
-                    $equipmentsWithPictures[] = [
-                        'equipment' => $equipment,
-                        'pictures' => [],
-                        'photo_source' => 'error'
-                    ];
-                    $processedCount++;
-                }
-                
-                // SÉCURITÉ MÉMOIRE : Arrêter si la mémoire devient critique
-                $memoryUsage = memory_get_usage(true);
-                $memoryLimitBytes = $this->formatBytes($memoryUsage);
-                
-                if ($memoryUsage > ($memoryLimitBytes * 0.8)) {
-                    $this->customLog("ATTENTION: Mémoire critique atteinte ({$memoryUsage} / {$memoryLimitBytes}). Arrêt du traitement.");
-                    break;
+                    $this->customLog("EXCEPTION dans boucle équipement {$index}: " . $e->getMessage());
+                    $this->customLog("Stack trace: " . $e->getTraceAsString());
+                    continue; // Continuer avec l'équipement suivant
                 }
             }
             // LOG MÉMOIRE AVANT GÉNÉRATION PDF
@@ -565,6 +619,41 @@ class EquipementPdfController extends AbstractController
         return round($size, $precision) . ' ' . $units[$i];
     }
 
+    private function getLocalPhotosForEquipment($equipment): array
+    {
+        try {
+            // Construction du chemin selon ta structure
+            $agence = $equipment->getCodeAgence() ?? 'S50';
+            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? 'UNKNOWN';
+            $annee = '2025';
+            $visite = 'CE1';
+            $numeroEquipement = $equipment->getNumeroEquipement();
+            
+            $photoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$raisonSociale}/{$annee}/{$visite}/{$numeroEquipement}_generale.jpg";
+            
+            $this->customLog("Recherche photo locale: {$photoPath}");
+            
+            if (file_exists($photoPath) && is_readable($photoPath)) {
+                $photoContent = file_get_contents($photoPath);
+                $photoEncoded = base64_encode($photoContent);
+                
+                $photoObject = new \stdClass();
+                $photoObject->picture = $photoEncoded;
+                $photoObject->update_time = date('Y-m-d H:i:s', filemtime($photoPath));
+                $photoObject->photo_type = 'generale_locale';
+                
+                $this->customLog("Photo locale trouvée et encodée");
+                return [$photoObject];
+            }
+            
+            $this->customLog("Aucune photo locale trouvée");
+            return [];
+            
+        } catch (\Exception $e) {
+            $this->customLog("Erreur récupération photo locale: " . $e->getMessage());
+            return [];
+        }
+    }
 
     /**
      * MÉTHODE CORRIGÉE - Retour des photos avec format compatible template
