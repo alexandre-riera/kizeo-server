@@ -267,16 +267,24 @@ class EquipementPdfController extends AbstractController
             foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
                     // OPTIMISATION MÉMOIRE : Garbage collection régulier
+                    // ✅ PROTECTION avant l'appel à formatBytes
                     if ($index > 0 && $index % 25 === 0) {
                         gc_collect_cycles();
                         $currentMemory = memory_get_usage(true);
-                        $this->customLog("GC forcé #{$index} - Mémoire: " . $currentMemory);
                         
-                        // Vérification mémoire critique
-                        if ($currentMemory > (1024 * 1024 * 1024 * 0.8)) { // 80% de 1GB
-                            $this->customLog("ALERTE MÉMOIRE: Arrêt préventif à {$index} équipements");
-                            break;
+                        // ✅ Vérification AVANT d'appeler formatBytes
+                        if ($currentMemory > 0) {
+                            $this->customLog("GC forcé #{$index} - Mémoire: " . $this->formatBytes($currentMemory));
+                        } else {
+                            $this->customLog("GC forcé #{$index} - Mémoire: N/A");
                         }
+                    }
+
+                    // ✅ PROTECTION contre les équipements avec numéro vide
+                    $numeroEquipement = $equipment->getNumeroEquipement();
+                    if (empty($numeroEquipement)) {
+                        $this->customLog("ATTENTION: Équipement avec numéro vide trouvé (ID: {$equipment->getId()})");
+                        continue; // Ignorer cet équipement
                     }
                     
                     $photoResult = $this->getPhotosForEquipmentWithDirectScan($equipment);
@@ -474,8 +482,9 @@ class EquipementPdfController extends AbstractController
     private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, $equipmentsFiltered): Response
     {
         // ✅ SÉCURISER l'appel à memory_get_peak_usage
-        $memoryUsage = memory_get_peak_usage(true);
-        $memoryFormatted = $this->formatBytes($memoryUsage > 0 ? $memoryUsage : 0);
+        // ✅ SÉCURISER l'appel à memory_get_peak_usage
+        $peakMemory = memory_get_peak_usage(true);
+        $memoryText = ($peakMemory > 0) ? $this->formatBytes($peakMemory) : 'N/A';
         
         // juste avant la génération du HTML/PDF
 
@@ -517,7 +526,7 @@ class EquipementPdfController extends AbstractController
             <p><strong>Client:</strong> {$id}</p>
             <p><strong>Agence:</strong> {$agence}</p>
             <p><strong>Erreur:</strong> {$errorMessage}</p>
-            <p><strong>Mémoire pic:</strong> {$memoryFormatted}</p>
+            <p><strong>Mémoire pic:</strong> {$memoryText}</p>
             <p>Veuillez contacter le support technique.</p>
         </body></html>
         ";
@@ -539,14 +548,14 @@ class EquipementPdfController extends AbstractController
      */
     private function formatBytes(int $size, int $precision = 2): string
     {
-        // ✅ PROTECTION contre les valeurs nulles, négatives ou zéro
+        // ✅ PROTECTION contre les valeurs problématiques
         if ($size <= 0) {
             return '0 B';
         }
         
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         
-        // ✅ Utilisation de la division progressive au lieu de log()
+        // ✅ Utilisation de la méthode sécurisée sans log()
         $i = 0;
         while ($size > 1024 && $i < count($units) - 1) {
             $size /= 1024;
