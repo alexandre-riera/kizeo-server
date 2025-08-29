@@ -479,7 +479,7 @@ class EquipementPdfController extends AbstractController
                 'filtrage_success' => true,
                 'total_equipements_bruts' => count($equipments),
                 'total_equipements_filtres' => count($equipmentsFiltered),
-                'clientSelectedInformations' => $this->getClientInformationsByAgence($agence, $id, $entityManager) ?: null,
+                'clientSelectedInformations' => $clientSelectedInformations,
                 // 🆕 NOUVELLES VARIABLES POUR L'OPTIMISATION
                 'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
                 'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
@@ -1193,7 +1193,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         'debug_info' => $debugInfo,
         'isFiltered' => false,
         'dateDeDerniererVisite' => null,
-        'clientSelectedInformations' => $this->getClientInformationsByAgence($agence, $id, $entityManager) ?: null,
+        'clientSelectedInformations' => $clientSelectedInformations
     ]);
     
     $filename = "equipements_client_{$id}_{$agence}_error.pdf";
