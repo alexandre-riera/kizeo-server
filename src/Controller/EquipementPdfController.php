@@ -462,11 +462,13 @@ class EquipementPdfController extends AbstractController
                 if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
             }
             $filename .= '.pdf';
+            
             $nomClient = trim($clientSelectedInformations->getRaisonSociale());
             $adressep1 = trim($clientSelectedInformations->getAdressep1());
             $adressep2 = trim($clientSelectedInformations->getAdressep2());
             $cpostalp = trim($clientSelectedInformations->getCpostalp());
             $villep = trim($clientSelectedInformations->getVillep());
+            $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1}, {$adressep2}, {$cpostalp} {$villep}");
 
             $templateVars = [
                 'equipmentsWithPictures' => $equipmentsWithPictures,
