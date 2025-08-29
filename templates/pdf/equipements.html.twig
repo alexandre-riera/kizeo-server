@@ -362,16 +362,15 @@
                     <h3>Client</h3>
                     {% if nomClient %}
                         <p><strong>{{ nomClient }}</strong></p>
-                        {% if adressep1 %}
-                            <p>{{ adressep1 }}</p>
-                        {% endif %}
-                        {% if adressep2 %}
-                            <p>{{ adressep2 }}</p>
-                        {% endif %}
-                        {% if cpostalp is defined and villep is defined %}
-                            <p>{{ cpostalp }} {{ villep }}</p>
-                            {% endif %}
-                        {% endif %}
+                    {% endif %}
+                    {% if adressep1 %}
+                        <p>{{ adressep1 }}</p>
+                    {% endif %}
+                    {% if adressep2 %}
+                        <p>{{ adressep2 }}</p>
+                    {% endif %}
+                    {% if cpostalp is defined and villep is defined %}
+                        <p>{{ cpostalp }} {{ villep }}</p>
                     {% endif %}
                 </div>
             </div>
