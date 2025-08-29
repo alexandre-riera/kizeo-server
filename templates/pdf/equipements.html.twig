@@ -360,17 +360,16 @@
                 
                 <div class="info-group">
                     <h3>Client</h3>
-                    {% if clientSelectedInformations %}
-                        {% if clientSelectedInformations.raison_sociale is defined %}
-                            <p><strong>{{ clientSelectedInformations.raison_sociale }}</strong></p>
-                            {% if clientSelectedInformations.adressep_1 is defined %}
-                                <p>{{ clientSelectedInformations.adressep_1 }}</p>
-                            {% endif %}
-                            {% if clientSelectedInformations.adressep_2 is defined %}
-                                <p>{{ clientSelectedInformations.adressep_2 }}</p>
-                            {% endif %}
-                            {% if clientSelectedInformations.cpostalp is defined and clientSelectedInformations.villep is defined %}
-                                <p>{{ clientSelectedInformations.cpostalp }} {{ clientSelectedInformations.villep }}</p>
+                    {% if nomClient %}
+                        <p><strong>{{ nomClient }}</strong></p>
+                        {% if adressep1 %}
+                            <p>{{ adressep1 }}</p>
+                        {% endif %}
+                        {% if adressep2 %}
+                            <p>{{ adressep2 }}</p>
+                        {% endif %}
+                        {% if cpostalp is defined and villep is defined %}
+                            <p>{{ cpostalp }} {{ villep }}</p>
                             {% endif %}
                         {% endif %}
                     {% else %}

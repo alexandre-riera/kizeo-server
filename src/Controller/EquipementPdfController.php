@@ -462,7 +462,12 @@ class EquipementPdfController extends AbstractController
                 if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
             }
             $filename .= '.pdf';
-            dd($clientSelectedInformations->getRaisonSociale());
+            $nomClient = trim($clientSelectedInformations->getRaisonSociale());
+            $adressep1 = trim($clientSelectedInformations->getAdressep1());
+            $adressep2 = trim($clientSelectedInformations->getAdressep2());
+            $cpostalp = trim($clientSelectedInformations->getCpostalp());
+            $villep = trim($clientSelectedInformations->getVillep());
+
             $templateVars = [
                 'equipmentsWithPictures' => $equipmentsWithPictures,
                 'equipementsSupplementaires' => $equipementsSupplementaires,
@@ -480,7 +485,11 @@ class EquipementPdfController extends AbstractController
                 'filtrage_success' => true,
                 'total_equipements_bruts' => count($equipments),
                 'total_equipements_filtres' => count($equipmentsFiltered),
-                'clientSelectedInformations' => $clientSelectedInformations,
+                'nomClient' => $nomClient,
+                'adressep1' => $adressep1,
+                'adressep2' => $adressep2,
+                'cpostalp' => $cpostalp,
+                'villep' => $villep,
                 // 🆕 NOUVELLES VARIABLES POUR L'OPTIMISATION
                 'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
                 'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
