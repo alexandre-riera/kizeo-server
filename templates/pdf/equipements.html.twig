@@ -532,10 +532,15 @@
             
             <div class="equipment-card">
                 <div class="equipment-header">
-                    <div class="equipment-status {{ statusColors[equipment.etat] ?: 'noir' }} status-icon"></div>
+                    {% if statusColors[equipment.etat] is defined %}
+                        <div class="equipment-status {{ statusColors[equipment.etat] ?: 'noir' }} status-icon"></div>
+                        {#<img src="backend-kizeo.somafi-group.fr/public/img/logos/{{ statusColors[equipment.etat] }}.png" alt="Statut" width="30" height="30">#}
+                    {% endif %}
                     <div class="equipment-title">
-                        <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?: 'Type non renseigné' }}</div>
-                        <div class="equipment-type">{{ statusMapping[equipment.etat] ?: equipment.etat }}</div>
+                        {% if statusColors[equipment.numeroEquipement] is defined and statusColors[equipment.libelleEquipement] is defined %}
+                            <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?: 'Type non renseigné' }}</div>
+                            <div class="equipment-type">{{ statusMapping[equipment.etat] ?: equipment.etat }}</div>
+                        {% endif %}
                     </div>
                 </div>
                 
