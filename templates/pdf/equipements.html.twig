@@ -536,18 +536,18 @@
                     {% if statusColors is not empty %}
                         <div class="equipment-status {{ statusColors[equipment.equipment.etat] }} status-icon"></div>
                     {% endif %}
-                    {% if equipment.numeroEquipement and equipment.libelleEquipement and equipment.etat %}
+                    {% if equipment.equipment.numeroEquipement and equipment.equipment.libelleEquipement and equipment.equipment.etat %}
                         <div class="equipment-title">
-                            <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement }}</div>
-                            <div class="equipment-type">{{ statusMapping[equipment.etat] }}</div>
+                            <div class="equipment-number">Équipement {{ equipment.equipment.numeroEquipement }} - {{ equipment.equipment.libelleEquipement }}</div>
+                            <div class="equipment-type">{{ statusMapping[equipment.equipment.etat] }}</div>
                         </div>
                     {% endif %}
                 </div>
                 
                 <div class="equipment-body">
                     <div class="equipment-photo">
-                        {% if equipment.picturesData.generale %}
-                            <img src="data:image/jpeg;base64,{{ equipment.picturesData.generale }}" alt="Photo équipement">
+                        {% if equipment.equipment.picturesData.generale %}
+                            <img src="data:image/jpeg;base64,{{ equipment.equipment.picturesData.generale }}" alt="Photo équipement">
                         {% else %}
                             <div style="width: 100%; height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #bdc3c7; border: 1px solid #bdc3c7; border-radius: 5px;">
                                 Photo non disponible
@@ -559,40 +559,40 @@
                         <table class="details-table">
                             <tr>
                                 <th>Numéro</th>
-                                <td>{{ equipment.numeroEquipement }}</td>
+                                <td>{{ equipment.equipment.numeroEquipement }}</td>
                             </tr>
                             <tr>
                                 <th>Type</th>
-                                <td>{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                                <td>{{ equipment.equipment.libelleEquipement ?? 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>Marque</th>
-                                <td>{{ equipment.marque ?? 'nc' }}</td>
+                                <td>{{ equipment.equipment.marque ?? 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Modèle</th>
-                                <td>{{ equipment.modele ?? 'Non renseigné' }}</td>
+                                <td>{{ equipment.equipment.modele ?? 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>État</th>
-                                <td>{{ statusMapping[equipment.etat] is defined ? statusMapping[equipment.etat] : equipment.etat }}</td>
+                                <td>{{ statusMapping[equipment.equipment.etat] is defined ? statusMapping[equipment.equipment.etat] : equipment.equipment.etat }}</td>
                             </tr>
                             <tr>
                                 <th>Mise en service</th>
-                                <td>{{ equipment.miseEnService ?? 'nc' }}</td>
+                                <td>{{ equipment.equipment.miseEnService ?? 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Année</th>
-                                <td>{{ equipment.dateEnregistrement ? equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
+                                <td>{{ equipment.equipment.dateEnregistrement ? equipment.equipment.dateEnregistrement|date('Y') : 'Année non présente sur équipement' }}</td>
                             </tr>
                             <tr>
                                 <th>Repère site client</th>
-                                <td>{{ equipment.repereSiteClient is defined ? equipment.repereSiteClient : 'Non repèré' }}</td>
+                                <td>{{ equipment.equipment.repereSiteClient is defined ? equipment.equipment.repereSiteClient : 'Non repèré' }}</td>
                             </tr>
-                            {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
+                            {% if equipment.equipment.anomalies is defined and equipment.equipment.anomalies is not null and equipment.equipment.anomalies|trim is not empty %}
                             <tr class="anomalies-row">
                                 <th>Anomalies</th>
-                                <td>{{ equipment.anomalies }}</td>
+                                <td>{{ equipment.equipment.anomalies }}</td>
                             </tr>
                             {% endif %}
                         </table>
