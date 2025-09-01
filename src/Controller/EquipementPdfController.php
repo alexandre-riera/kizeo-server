@@ -445,7 +445,7 @@ class EquipementPdfController extends AbstractController
             $statistiques = $this->calculateEquipmentStatisticsImproved($equipmentsFiltered);
             
             // 9. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
-            $statistiquesSupplementaires = null;
+            $statistiquesSupplementaires = [];
             if (!empty($equipementsSupplementaires)) {
                 $equipmentsSupplementairesOnly = array_map(function($item) {
                     return $item['equipment'];
