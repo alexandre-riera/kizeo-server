@@ -410,7 +410,7 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Nombre d'équipements supplémentaires</div>
-                        {% if statistiquesSupplementaires.total %}
+                        {% if statistiquesSupplementaires is not empty %}
                         <div class="stat-value">{{ statistiquesSupplementaires.total }}</div>
                         {% endif %}
                     </div>
