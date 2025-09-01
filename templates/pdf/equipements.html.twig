@@ -547,7 +547,7 @@
                     <div class="equipment-photo">
                         {% if equipment.pictures > 0 %}
                         {% for photo in equipment.pictures %}
-                            <img src="data:image/jpeg;base64,{{ photo['picture'] }}" alt="Photo équipement">
+                            <img src="data:image/jpeg;base64,{{ photo['picture'][0] }}" alt="Photo équipement">
                         {% endfor %}
                         {% else %}
                             <div style="width: 100%; height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #bdc3c7; border: 1px solid #bdc3c7; border-radius: 5px;">
