@@ -416,7 +416,7 @@
             </div>
             
             {# ÉQUIPEMENTS AU CONTRAT #}
-            {% if statistiques is defined and statistiques|length > 0 %}
+            {% if statistiques and statistiques|length > 0 %}
                 <div class="equipment-summary">
                     <div class="section-title">Équipements visités</div>
                     <div class="section-subtitle">(Équipements au contrat - Inexistants)</div>
@@ -430,28 +430,28 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% if statistiques.A is defined and statistiques.A > 0 %}
+                            {% if statistiques.A and statistiques.A > 0 %}
                             <tr>
                                 <td><span class="status-icon vert"></span></td>
                                 <td>Bon état</td>
                                 <td>{{ statistiques.A }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.C is defined and statistiques.C > 0 %}
+                            {% if statistiques.C and statistiques.C > 0 %}
                             <tr>
                                 <td><span class="status-icon rouge"></span></td>
                                 <td>Travaux curatifs urgents</td>
                                 <td>{{ statistiques.C }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.E is defined and statistiques.E > 0 %}
+                            {% if statistiques.E and statistiques.E > 0 %}
                             <tr>
                                 <td><span class="status-icon rouge"></span></td>
                                 <td>Équipement à l'arrêt</td>
                                 <td>{{ statistiques.E }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.B is defined and statistiques.B > 0 %}
+                            {% if statistiques.B and statistiques.B > 0 %}
                             <tr>
                                 <td><span class="status-icon orange"></span></td>
                                 <td>Travaux à prévoir</td>
@@ -691,10 +691,10 @@
     {# FOOTER #}
     <div class="footer">
         Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} 
-        {% if equipmentsWithPictures is defined %}
+        {% if equipmentsWithPictures %}
             - {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
         {% endif %}
-        {% if isFiltered is defined and isFiltered %}
+        {% if isFiltered %}
             <br><em>Filtres appliqués lors de la génération</em>
         {% endif %}
     </div>
