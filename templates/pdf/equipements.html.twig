@@ -432,32 +432,32 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% if statistiques.A and statistiques.A > 0 %}
+                            {% if statistiques.status_counts.green and statistiques.status_counts.green > 0 %}
                             <tr>
                                 <td><span class="status-icon vert"></span></td>
                                 <td>Bon état</td>
-                                <td>{{ statistiques.A }}</td>
+                                <td>{{ statistiques.status_counts.green }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.C and statistiques.C > 0 %}
+                            {% if statistiques.status_counts.red and statistiques.status_counts.red > 0 %}
                             <tr>
                                 <td><span class="status-icon rouge"></span></td>
                                 <td>Travaux curatifs urgents</td>
-                                <td>{{ statistiques.C }}</td>
+                                <td>{{ statistiques.status_counts.red }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.E and statistiques.E > 0 %}
+                            {% if statistiques.status_counts.red  and statistiques.status_counts.red  > 0 %}
                             <tr>
                                 <td><span class="status-icon rouge"></span></td>
                                 <td>Équipement à l'arrêt</td>
-                                <td>{{ statistiques.E }}</td>
+                                <td>{{ statistiques.status_counts.red  }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.B and statistiques.B > 0 %}
+                            {% if statistiques.status_counts.orange and statistiques.status_counts.orange > 0 %}
                             <tr>
                                 <td><span class="status-icon orange"></span></td>
                                 <td>Travaux à prévoir</td>
-                                <td>{{ statistiques.B }}</td>
+                                <td>{{ statistiques.status_counts.orange }}</td>
                             </tr>
                             {% endif %}
                         </tbody>
@@ -466,7 +466,7 @@
             {% endif %}
             
             {# ÉQUIPEMENTS SUPPLÉMENTAIRES #}
-            {% if statistiquesSupplementaires is defined and statistiquesSupplementaires %}
+            {% if statistiquesSupplementaires is not empty %}
                 <div class="equipment-summary">
                     <div class="section-title">Équipements supplémentaires</div>
                     
@@ -519,7 +519,7 @@
     </div>
     
     {# PAGES ÉQUIPEMENTS AU CONTRAT #}
-    {% if equipmentsWithPictures is defined and equipmentsWithPictures|length > 0 %}
+    {% if equipmentsWithPictures %}
         {% set equipmentCount = 0 %}
         {% for equipment in equipmentsWithPictures %}
             {% set equipmentCount = equipmentCount + 1 %}
