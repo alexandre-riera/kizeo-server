@@ -468,8 +468,7 @@ class EquipementPdfController extends AbstractController
             $cpostalp = trim($clientSelectedInformations->getCpostalp());
             $villep = trim($clientSelectedInformations->getVillep());
             $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
-            dump('$equipmentsWithPictures');
-            dd($equipmentsWithPictures);
+            
             $templateVars = [
                 'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
                 'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
