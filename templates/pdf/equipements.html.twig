@@ -321,17 +321,17 @@
                             {# Mise en service #}
                             <tr class="info-row">
                                 <td class="info-key">Mise en service</td>
-                                <td class="info-value">{{ equipment.miseEnService ?? equipment.dateEnregistrement|date('Y') ?? 'nc' }}</td>
+                                <td class="info-value">{{ equipment.miseEnService }}</td>
                             </tr>
                             
                             {# Repère site client #}
                             <tr class="info-row">
                                 <td class="info-key">Repère site client</td>
-                                <td class="info-value">{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
+                                <td class="info-value">{{ equipment.repereSiteClient }}</td>
                             </tr>
                             
                             {# Anomalies (seulement si présentes) #}
-                            {% if equipment.anomalies and equipment.anomalies|trim is not empty %}
+                            {% if equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
                                 <td class="info-value">{{ equipment.anomalies }}</td>
@@ -351,7 +351,7 @@
     {% endif %}
     
     {# PAGES ÉQUIPEMENTS SUPPLÉMENTAIRES #}
-    {% if equipementsSupplementaires is defined and equipementsSupplementaires|length > 0 %}
+    {% if equipementsSupplementaires|length > 0 %}
         {% set suppCount = 0 %}
         {% for equipmentData in equipementsSupplementaires %}
             {% set equipment = equipmentData.equipment %}
