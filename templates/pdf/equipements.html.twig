@@ -193,30 +193,161 @@
 <body>
     {# PREMIÈRE PAGE - Informations générales #}
     {% if visit is defined %}
+    {# Définition des mappings de statuts #}
+    {% set statusMapping = {
+        'A': 'Bon état',
+        'B': 'Travaux à prévoir', 
+        'C': 'Travaux curatifs urgents',
+        'D': 'Équipement inaccessible',
+        'E': 'Équipement à l\'arrêt',
+        'F': 'Équipement mis à l\'arrêt',
+        'G': 'Équipement non présent'
+    } %}
+    
+    {% set statusColors = {
+        'A': 'vert',
+        'B': 'orange',
+        'C': 'rouge',
+        'D': 'noir',
+        'E': 'rouge',
+        'F': 'rouge',
+        'G': 'noir'
+    } %}
+    {# PREMIÈRE PAGE - RÉSUMÉ #}
     <div class="first-page">
         <div class="page-content">
-            <div class="header-title">Compte rendu d'entretien</div>
+            <h1 class="header-title">Compte rendu d'entretien</h1>
             
             <div class="visit-info">
-                <p><strong>Visite :</strong> {{ visit.nom ?? 'Non renseigné' }}</p>
-                <p><strong>Date de visite :</strong> {{ visit.dateVisite ? visit.dateVisite|date('d/m/Y') : 'Non renseignée' }}</p>
+                <p><strong>Visite :</strong> {{ clientVisiteFilter }} - {{ clientAnneeFilter}}</p>
+                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') }}</p>
             </div>
             
-            {% if client is defined %}
             <div class="client-info">
-                <h3>{{ client.raisonSociale ?? 'Client non renseigné' }}</h3>
-                {% if client.adresse %}
-                    <p>{{ client.adresse }}</p>
-                    <p>{{ client.codePostal }} {{ client.ville }}</p>
-                {% endif %}
+                <h3>{{nomClient}}</h3>
+                <p>{{adressep1}}</p>
+                <p>{{adressep2}}</p>
+                <p>{{cpostalp}} {{villep}}</p>
             </div>
+            
+            <div class="summary-section">
+                <h2 class="summary-title">Résumé</h2>
+                
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements au contrat</div>
+                        <div class="stat-value">{{ statistiques.total}}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements inexistants</div>
+                        <div class="stat-value">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements supplémentaires</div>
+                        {% if statistiquesSupplementaires is not empty %}
+                        <div class="stat-value">{{ statistiquesSupplementaires.total }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {# ÉQUIPEMENTS AU CONTRAT #}
+            {% if statistiques and statistiques|length > 0 %}
+                <div class="equipment-summary">
+                    <div class="section-title">Équipements visités</div>
+                    <div class="section-subtitle">(Équipements au contrat - Inexistants)</div>
+                    
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>État</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if statistiques.status_counts.green and statistiques.status_counts.green > 0 %}
+                            <tr>
+                                <td><span class="status-icon vert"></span></td>
+                                <td>Bon état</td>
+                                <td>{{ statistiques.status_counts.green }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.red and statistiques.status_counts.red > 0 %}
+                            <tr>
+                                <td><span class="status-icon rouge"></span></td>
+                                <td>Travaux curatifs urgents</td>
+                                <td>{{ statistiques.status_counts.red }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.red  and statistiques.status_counts.red  > 0 %}
+                            <tr>
+                                <td><span class="status-icon rouge"></span></td>
+                                <td>Équipement à l'arrêt</td>
+                                <td>{{ statistiques.status_counts.red  }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.orange and statistiques.status_counts.orange > 0 %}
+                            <tr>
+                                <td><span class="status-icon orange"></span></td>
+                                <td>Travaux à prévoir</td>
+                                <td>{{ statistiques.status_counts.orange }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
             {% endif %}
             
-            <div style="margin-top: 40px;">
-                <h3>Résumé</h3>
-                <p><strong>Nombre d'équipements au contrat :</strong> {{ summary.equipmentsContrat ?? 0 }}</p>
-                <p><strong>Nombre d'équipements inexistants :</strong> {{ summary.equipmentsInexistants ?? 0 }}</p>
-                <p><strong>Nombre d'équipements supplémentaires :</strong> {{ summary.equipmentsSupplementaires ?? 0 }}</p>
+            {# ÉQUIPEMENTS SUPPLÉMENTAIRES #}
+            {% if statistiquesSupplementaires is not empty %}
+                <div class="equipment-summary">
+                    <div class="section-title">Équipements supplémentaires</div>
+                    
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>État</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in statistiquesSupplementaires %}
+                                {% if status != 'total' and count > 0 %}
+                                <tr>
+                                    <td><span class="status-icon {{ statusColors[status] }}"></span></td>
+                                    <td>{{ statusMapping[status] }}</td>
+                                    <td>{{ count }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            
+            {# LÉGENDE #}
+            <div class="legend">
+                <div class="legend-title">Légende :</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-icon vert status-icon"></span>
+                        <span>Bon état</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon orange status-icon"></span>
+                        <span>Travaux à prévoir</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon rouge status-icon"></span>
+                        <span>Travaux curatifs/Arrêt</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-icon noir status-icon"></span>
+                        <span>Inaccessible/Inexistant</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
