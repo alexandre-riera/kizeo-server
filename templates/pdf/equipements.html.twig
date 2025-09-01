@@ -547,7 +547,9 @@
                     <div class="equipment-photo">
                         {% if equipment.pictures > 0 %}
                         {% for photo in equipment.pictures %}
-                            {{ dump(photo) }}
+                            {{ dump(photo['photo_type']) }}
+                            {{ dump(photo['picture']) }}
+
                             <img src="data:image/jpeg;base64,{{ photo['picture'] }}" alt="Photo équipement">
                         {% endfor %}
                         {% else %}
