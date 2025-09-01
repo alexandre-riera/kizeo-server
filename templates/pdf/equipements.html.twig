@@ -523,7 +523,7 @@
     {% if equipmentsWithPictures is defined and equipmentsWithPictures|length > 0 %}
         {% set equipmentCount = 0 %}
         {% for equipment in equipmentsWithPictures %}
-            {% dump(equipment) %}
+            {{ dump(equipment) }}
             {% set equipmentCount = equipmentCount + 1 %}
             
             {# Nouveau page tous les 3 équipements #}
