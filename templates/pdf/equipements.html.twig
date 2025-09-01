@@ -533,8 +533,8 @@
             
             <div class="equipment-card">
                 <div class="equipment-header">
-                    {% if statusColors[equipment.etat] %}
-                        <div class="equipment-status {{ statusColors[equipment.etat] }} status-icon"></div>
+                    {% if statusColors is not empty %}
+                        <div class="equipment-status {{ statusColors[equipment.equipment.etat] }} status-icon"></div>
                     {% endif %}
                     {% if equipment.numeroEquipement and equipment.libelleEquipement and equipment.etat %}
                         <div class="equipment-title">
