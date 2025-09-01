@@ -355,29 +355,30 @@
             border-radius: 3px;
         }
         
-        /* Fonction helper pour mapper les statuts */
-        {% set statusMapping = {
-            'A': 'Bon état',
-            'B': 'Travaux à prévoir', 
-            'C': 'Travaux curatifs urgents',
-            'D': 'Équipement inaccessible',
-            'E': 'Équipement à l\'arrêt',
-            'F': 'Équipement mis à l\'arrêt',
-            'G': 'Équipement non présent'
-        } %}
-        
-        {% set statusColors = {
-            'A': 'vert',
-            'B': 'orange', 
-            'C': 'rouge',
-            'D': 'noir',
-            'E': 'rouge',
-            'F': 'rouge',
-            'G': 'noir'
-        } %}
+
     </style>
 </head>
 <body>
+    {# Définition des mappings de statuts #}
+    {% set statusMapping = {
+        'A': 'Bon état',
+        'B': 'Travaux à prévoir', 
+        'C': 'Travaux curatifs urgents',
+        'D': 'Équipement inaccessible',
+        'E': 'Équipement à l\'arrêt',
+        'F': 'Équipement mis à l\'arrêt',
+        'G': 'Équipement non présent'
+    } %}
+    
+    {% set statusColors = {
+        'A': 'vert',
+        'B': 'orange', 
+        'C': 'rouge',
+        'D': 'noir',
+        'E': 'rouge',
+        'F': 'rouge',
+        'G': 'noir'
+    } %}
     {# PREMIÈRE PAGE - RÉSUMÉ #}
     <div class="first-page">
         <div class="page-content">
@@ -385,7 +386,7 @@
             
             <div class="visit-info">
                 <p><strong>Visite :</strong> {{ clientVisiteFilter ?: 'CE2' }} - {{ clientAnneeFilter ?: '2025' }}</p>
-                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') ?: '05/08/2025' }}</p>
+                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') ?? '05/08/2025' }}</p>
             </div>
             
             <div class="client-info">
@@ -401,7 +402,7 @@
                 <div class="summary-stats">
                     <div class="stat-item">
                         <div class="stat-label">Nombre d'équipements au contrat</div>
-                        <div class="stat-value">{{ statistiques.total ?: '0' }}</div>
+                        <div class="stat-value">{{ statistiques.total ?? '0' }}</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Nombre d'équipements inexistants</div>
@@ -409,9 +410,7 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Nombre d'équipements supplémentaires</div>
-                        {% if statistiquesSupplementaires.total is defined %}
-                            <div class="stat-value">{{ statistiquesSupplementaires.total ?: '0' }}</div>
-                        {% endif %}
+                        <div class="stat-value">{{ statistiquesSupplementaires.total ?? '0' }}</div>
                     </div>
                 </div>
             </div>
@@ -481,8 +480,8 @@
                             {% for status, count in statistiquesSupplementaires %}
                                 {% if status != 'total' and count > 0 %}
                                 <tr>
-                                    <td><span class="status-icon {{ statusColors[status] ?: 'noir' }}"></span></td>
-                                    <td>{{ statusMapping[status] ?: status }}</td>
+                                    <td><span class="status-icon {{ statusColors[status] ?? 'noir' }}"></span></td>
+                                    <td>{{ statusMapping[status] ?? status }}</td>
                                     <td>{{ count }}</td>
                                 </tr>
                                 {% endif %}
@@ -532,15 +531,10 @@
             
             <div class="equipment-card">
                 <div class="equipment-header">
-                    {% if statusColors[equipment.etat] is defined %}
-                        <div class="equipment-status {{ statusColors[equipment.etat] ?: 'noir' }} status-icon"></div>
-                        {#<img src="backend-kizeo.somafi-group.fr/public/img/logos/{{ statusColors[equipment.etat] }}.png" alt="Statut" width="30" height="30">#}
-                    {% endif %}
+                    <div class="equipment-status {{ statusColors[equipment.etat] is defined ? statusColors[equipment.etat] : 'noir' }} status-icon"></div>
                     <div class="equipment-title">
-                        {% if statusColors[equipment.numeroEquipement] is defined and statusColors[equipment.libelleEquipement] is defined %}
-                            <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?: 'Type non renseigné' }}</div>
-                            <div class="equipment-type">{{ statusMapping[equipment.etat] ?: equipment.etat }}</div>
-                        {% endif %}
+                        <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}</div>
+                        <div class="equipment-type">{{ statusMapping[equipment.etat] is defined ? statusMapping[equipment.etat] : equipment.etat }}</div>
                     </div>
                 </div>
                 
@@ -563,23 +557,23 @@
                             </tr>
                             <tr>
                                 <th>Type</th>
-                                <td>{{ equipment.libelleEquipement ?: 'Non renseigné' }}</td>
+                                <td>{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>Marque</th>
-                                <td>{{ equipment.marque ?: 'nc' }}</td>
+                                <td>{{ equipment.marque ?? 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Modèle</th>
-                                <td>{{ equipment.modele ?: 'Non renseigné' }}</td>
+                                <td>{{ equipment.modele ?? 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>État</th>
-                                <td>{{ statusMapping[equipment.etat] ?: equipment.etat }}</td>
+                                <td>{{ statusMapping[equipment.etat] is defined ? statusMapping[equipment.etat] : equipment.etat }}</td>
                             </tr>
                             <tr>
                                 <th>Mise en service</th>
-                                <td>{{ equipment.miseEnService ?: 'nc' }}</td>
+                                <td>{{ equipment.miseEnService ?? 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Année</th>
@@ -587,7 +581,7 @@
                             </tr>
                             <tr>
                                 <th>Repère site client</th>
-                                <td>{{ equipment.repereSiteClient ?: 'Non repèré' }}</td>
+                                <td>{{ equipment.repereSiteClient is defined ? equipment.repereSiteClient : 'Non repèré' }}</td>
                             </tr>
                             {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
                             <tr class="anomalies-row">
@@ -623,10 +617,10 @@
             
             <div class="equipment-card">
                 <div class="equipment-header">
-                    <div class="equipment-status {{ statusColors[equipment.etat] ?: 'noir' }} status-icon"></div>
+                    <div class="equipment-status {{ statusColors[equipment.etat] ?? 'noir' }} status-icon"></div>
                     <div class="equipment-title">
-                        <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?: 'Type non renseigné' }}</div>
-                        <div class="equipment-type">{{ statusMapping[equipment.etat] ?: equipment.etat }}</div>
+                        <div class="equipment-number">Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}</div>
+                        <div class="equipment-type">{{ statusMapping[equipment.etat] ?? equipment.etat }}</div>
                     </div>
                 </div>
                 
@@ -649,23 +643,23 @@
                             </tr>
                             <tr>
                                 <th>Type</th>
-                                <td>{{ equipment.libelleEquipement ?: 'Non renseigné' }}</td>
+                                <td>{{ equipment.libelleEquipement is defined ? equipment.libelleEquipement : 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>Marque</th>
-                                <td>{{ equipment.marque ?: 'nc' }}</td>
+                                <td>{{ equipment.marque is defined ? equipment.marque : 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Modèle</th>
-                                <td>{{ equipment.modele ?: 'Non renseigné' }}</td>
+                                <td>{{ equipment.modele is defined ? equipment.modele : 'Non renseigné' }}</td>
                             </tr>
                             <tr>
                                 <th>État</th>
-                                <td>{{ statusMapping[equipment.etat] ?: equipment.etat }}</td>
+                                <td>{{ statusMapping[equipment.etat] is defined ? statusMapping[equipment.etat] : equipment.etat }}</td>
                             </tr>
                             <tr>
                                 <th>Mise en service</th>
-                                <td>{{ equipment.miseEnService ?: 'nc' }}</td>
+                                <td>{{ equipment.miseEnService is defined ? equipment.miseEnService : 'nc' }}</td>
                             </tr>
                             <tr>
                                 <th>Année</th>
@@ -673,7 +667,7 @@
                             </tr>
                             <tr>
                                 <th>Repère site client</th>
-                                <td>{{ equipment.repereSiteClient ?: 'Non repèré' }}</td>
+                                <td>{{ equipment.repereSiteClient ?? 'Non repèré' }}</td>
                             </tr>
                             {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
                             <tr class="anomalies-row">
