@@ -202,7 +202,7 @@
 </head>
 <body>
     {% set equipementsPerPage = 3 %}
-    {% set totalPages = (equipements|length / equipementsPerPage)|round(0, 'ceil') %}
+    {% set totalPages = (equipmentsWithPictures|length / equipementsPerPage)|round(0, 'ceil') %}
     
     <div class="page-container">
         {% for pageNum in 1..totalPages %}
@@ -221,8 +221,8 @@
                     {% set endIndex = startIndex + equipementsPerPage - 1 %}
                     
                     {% for i in startIndex..endIndex %}
-                        {% if equipements[i] is defined %}
-                            {% set equipement = equipements[i] %}
+                        {% if equipmentsWithPictures[i] is defined %}
+                            {% set equipement = equipmentsWithPictures[i] %}
                             <div class="equipement">
                                 <div class="equipement-title">
                                     Équipement {{ equipement.numero|default('N/A') }}{% if equipement.client is defined %} - {{ equipement.client }}{% endif %}
