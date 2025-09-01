@@ -7,6 +7,7 @@
     <style>
         @page {
             margin: 0;
+            margin-bottom: 30px;
             padding: 0;
             size: A4;
         }
@@ -697,11 +698,11 @@
     {% endif %}
     
     {# FOOTER #}
-    <div class="footer">
+    {# <div class="footer">
         Document généré automatiquement le {{ "now"|date_modify("+2 hours")|date('d/m/Y à H:i') }} 
         {% if equipmentsWithPictures %}
             - {{ equipmentsWithPictures|length }} équipements traités
         {% endif %}
-    </div>
+    </div> #}
 </body>
 </html>
