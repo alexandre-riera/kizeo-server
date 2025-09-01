@@ -386,14 +386,14 @@
             
             <div class="visit-info">
                 <p><strong>Visite :</strong> {{ clientVisiteFilter ?: 'CE2' }} - {{ clientAnneeFilter ?: '2025' }}</p>
-                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') ?? '05/08/2025' }}</p>
+                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') }}</p>
             </div>
             
             <div class="client-info">
-                <h3>VINISUD SERVICES</h3>
-                <p>ZA NICOPOLIS</p>
-                <p>RUE DES LAURIERS</p>
-                <p>83170 BRIGNOLES</p>
+                <h3>{{nomClient}}</h3>
+                <p>{{adressep1}}</p>
+                <p>{{adressep2}}</p>
+                <p>{{cpostalp}} {{villep}}</p>
             </div>
             
             <div class="summary-section">
