@@ -547,6 +547,7 @@
                         {% if equipment.pictures > 0 %}
                         {% for photo in equipment.pictures %}
                             {{ dump(photo) }}
+                            {{ die()^}}
                             {{ dump(photo['photo_type']) }}
                             {# {{ dump(photo['picture']) }} #}
                             {% if photo['photo_type'] is defined and photo['photo_type'] == "_generale" %}
