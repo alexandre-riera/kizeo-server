@@ -544,16 +544,13 @@
                 
                 <div class="equipment-body">
                     <div class="equipment-photo">
-                        {% if equipment.pictures > 0 %}
-                        {% for photo in equipment.pictures %}
-                            {% if photo['photo_type'] is defined and photo['photo_type'] == "_generale" %}
-                                <img src="data:image/jpeg;base64,{{ photo['picture'] }}" alt="Photo équipement">
-                            {% else %}
-                                <img src="https://www.placeholderimage.eu/api/nature/id/9/260/260" alt="Photo équipement">
-                            {% endif %}
-                        {% endfor %}
+                        {% if equipment.pictures == 1 %}
+                            <img src="data:image/jpeg;base64,{{ photo['picture'] }}" alt="Photo équipement">
+                        {% elseif equipment.pictures == 2 %}
+                            <img src="data:image/jpeg;base64,{{ photo['picture'][0] }}" alt="Photo équipement">
                         {% else %}
                             <div style="width: 100%; height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #bdc3c7; border: 1px solid #bdc3c7; border-radius: 5px;">
+                                <img src="https://www.placeholderimage.eu/api/nature/id/9/260/260" alt="Photo équipement">
                                 Photo non disponible
                             </div>
                         {% endif %}
