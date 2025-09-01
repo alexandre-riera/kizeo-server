@@ -331,7 +331,7 @@
                             </tr>
                             
                             {# Anomalies (seulement si présentes) #}
-                            {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
+                            {% if equipment.anomalies and equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
                                 <td class="info-value">{{ equipment.anomalies }}</td>
@@ -459,7 +459,7 @@
                             </tr>
                             
                             {# Anomalies (seulement si présentes) #}
-                            {% if equipment.anomalies is defined and equipment.anomalies is not null and equipment.anomalies|trim is not empty %}
+                            {% if equipment.anomalies and equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
                                 <td class="info-value">{{ equipment.anomalies }}</td>
