@@ -463,11 +463,11 @@
                                 <td>{{ statistiques.status_counts.orange }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.status_counts.black and statistiques.status_counts.black > 0 %}
+                            {% if statistiques.status_counts.gray and statistiques.status_counts.gray > 0 %}
                             <tr>
                                 <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
-                                <td>Travaux à prévoir</td>
-                                <td>{{ statistiques.status_counts.black }}</td>
+                                <td>Inaccessible le jour de la vite</td>
+                                <td>{{ statistiques.status_counts.gray }}</td>
                             </tr>
                             {% endif %}
                         </tbody>
