@@ -424,7 +424,6 @@
             {% if statistiques and statistiques|length > 0 %}
                 <div class="equipment-summary">
                     <div class="section-title">Équipements visités</div>
-                    <div class="section-subtitle">(Équipements au contrat)</div>
                     
                     <table class="status-table">
                         <thead>
@@ -466,7 +465,7 @@
                             {% if statistiques.status_counts.gray and statistiques.status_counts.gray > 0 %}
                             <tr>
                                 <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
-                                <td>Inaccessible le jour de la vite</td>
+                                <td>Inaccessible le jour de la visite</td>
                                 <td>{{ statistiques.status_counts.gray }}</td>
                             </tr>
                             {% endif %}
@@ -562,7 +561,7 @@
                     <td class="equipment-info-cell">
                         <table class="equipment-info-table">
                             {# En-tête avec titre et logo d'état #}
-                            <tr class="equipment-header-row">
+                            {# <tr class="equipment-header-row">
                                 <td colspan="2" class="equipment-title">
                                     Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}
                                     <div class="status-logo {% if equipment.etat %}
@@ -577,7 +576,7 @@
                                         {% endif %}
                                     {% endif %}"></div>
                                 </td>
-                            </tr>
+                            </tr> #}
                             
                             {# Numéro #}
                             <tr class="info-row">
