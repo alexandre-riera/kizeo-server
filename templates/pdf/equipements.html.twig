@@ -448,12 +448,6 @@
                                 <td>{{ statistiques.status_counts.red }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.status_counts.red  and statistiques.status_counts.red  > 0 %}
-                            <tr>
-                                <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" /></td>
-                                <td>Équipement à l'arrêt</td>
-                                <td>{{ statistiques.status_counts.red  }}</td>
-                            </tr>
                             {% endif %}
                             {% if statistiques.status_counts.orange and statistiques.status_counts.orange > 0 %}
                             <tr>
@@ -462,11 +456,25 @@
                                 <td>{{ statistiques.status_counts.orange }}</td>
                             </tr>
                             {% endif %}
-                            {% if statistiques.status_counts.gray and statistiques.status_counts.gray > 0 %}
+                            {% if statistiques.status_counts.inaccessible and statistiques.status_counts.inaccessible > 0 %}
                             <tr>
                                 <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
                                 <td>Inaccessible le jour de la visite</td>
-                                <td>{{ statistiques.status_counts.gray }}</td>
+                                <td>{{ statistiques.status_counts.inaccessible }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.absent and statistiques.status_counts.absent > 0 %}
+                            <tr>
+                                <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
+                                <td>Non trouvé sur site</td>
+                                <td>{{ statistiques.status_counts.absent }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.arret and statistiques.status_counts.arret > 0 %}
+                            <tr>
+                                <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
+                                <td>Équipement à l'arrêt</td>
+                                <td>{{ statistiques.status_counts.arret }}</td>
                             </tr>
                             {% endif %}
                         </tbody>

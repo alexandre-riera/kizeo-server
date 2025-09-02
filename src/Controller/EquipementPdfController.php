@@ -2429,6 +2429,9 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             'red' => 0,
             'urgent' => 0, // Alias pour red
             'gray' => 0,
+            'inaccessible' => 0,
+            'arret' => 0,
+            'absent' => 0,
             'unknown' => 0
         ];
         
@@ -2458,8 +2461,14 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     $statusCounts['urgent']++; // Alias
                     break;
                 case 'Equipement inaccessible':
+                    $statusCounts['inaccessible']++;
+                    break;
                 case 'Equipement à l\'arrêt':
+                    $statusCounts['arret']++;
+                    break;
                 case 'Equipement non présent sur site':
+                    $statusCounts['absent']++;
+                    break;
                 case 'D':
                 case 'E':
                 case 'F':
