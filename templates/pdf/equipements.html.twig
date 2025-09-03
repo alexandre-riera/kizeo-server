@@ -304,7 +304,7 @@
         
         /* Logo d'état */
         .status-logo {
-            position: absolute;
+            position: relative;
             right: 10px;
             top: 50%;
             transform: translateY(-50%);
@@ -571,7 +571,7 @@
                             <tr class="equipment-header-row">
                                 <td colspan="2" class="equipment-title">
                                     Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}
-                                    <div {% if equipment.etat %}
+                                    <div class="status-logo {% if equipment.etat %}
                                         {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
                                             status-green
                                         {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
