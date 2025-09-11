@@ -574,6 +574,8 @@
             <table class="equipment-main-table">
                 <tr>
                     {# Photo #}
+                    {# DEBUG - à supprimer après #}
+                    <p>Debug: {{ equipment.pictures|length }} photos disponibles</p>
                     <td class="equipment-photo-cell">
                         {% if pictures|length > 0 %}
                             <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="equipment-photo" alt="Photo équipement">
