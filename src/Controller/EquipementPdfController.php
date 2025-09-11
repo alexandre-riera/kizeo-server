@@ -325,7 +325,7 @@ class EquipementPdfController extends AbstractController
                         
                         if (!empty($scanResult['photos'])) {
                             // Adapter le format pour compatibilité avec le template
-                            $picturesData = $scanResult['photos_indexed'] ?? $scanResult['photos'];
+                            $picturesData = $scanResult['photos'] ?? [];
                             $photoSourceStats['direct_scan']++;
                             $this->customLog("✅ Photos trouvées via scan dynamique: " . count($picturesData));
                             $this->customLog("Dossier client détecté: " . ($scanResult['client_folder_found'] ?? 'N/A'));
