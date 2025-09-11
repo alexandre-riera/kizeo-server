@@ -2782,6 +2782,7 @@ class FormRepository extends ServiceEntityRepository
         }
     }
 
+    
     private function findPhotoTraditionalWay($equipment): ?string
     {
         // Méthode existante avec raison sociale

@@ -2390,6 +2390,39 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         return $photos;
     }
 
+    // ROUTE DE TEST POUR KUEHNE POUR DEBUGGUER L'AFFICHAGE DES PHOTOS DANS LE PDF CLIENT A ENLEVER APRES DIAGNOSTIC
+    #[Route('/debug/photos/kuehne/{equipmentCode}', name: 'debug_photos_kuehne')]
+    public function debugPhotosKuehne(string $equipmentCode, EntityManagerInterface $entityManager): Response
+    {
+        // Récupérer l'équipement depuis la base
+        $equipment = $entityManager->getRepository(EquipementS40::class)
+            ->findOneBy(['numeroEquipement' => $equipmentCode]);
+        
+        if (!$equipment) {
+            return $this->json(['error' => 'Équipement non trouvé']);
+        }
+        
+        $formRepository = $entityManager->getRepository(EquipementS40::class);
+        
+        // Test de la méthode
+        $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+        
+        $debugInfo = [
+            'equipment_code' => $equipmentCode,
+            'raison_sociale' => $equipment->getRaisonSociale(),
+            'code_agence' => $equipment->getCodeAgence(),
+            'photos_found' => count($photos),
+            'photos_data' => !empty($photos) ? [
+                'has_picture' => !empty($photos[0]['picture']),
+                'picture_size' => !empty($photos[0]['picture']) ? strlen($photos[0]['picture']) : 0,
+                'update_time' => $photos[0]['update_time'] ?? null
+            ] : null
+        ];
+        
+        return $this->json($debugInfo);
+    }
+
+
     /**
      * Fallback vers l'API pour récupérer la photo générale
      */
