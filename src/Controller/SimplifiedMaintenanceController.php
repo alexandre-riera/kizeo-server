@@ -4137,7 +4137,8 @@ class SimplifiedMaintenanceController extends AbstractController
             $offset = 0;
             $batchSize = 20; // Taille raisonnable
             
-            while (count($validSubmissions) < $maxSubmissions && $offset < 200) {
+            // while (count($validSubmissions) < $maxSubmissions && $offset < 200) {
+            while (count($validSubmissions) < $maxSubmissions && $offset < 1500) {
                 
                 // UTILISER L'ENDPOINT SIMPLE qui fonctionne
                 $response = $this->client->request(
