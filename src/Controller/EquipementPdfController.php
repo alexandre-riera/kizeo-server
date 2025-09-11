@@ -2396,7 +2396,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
     {
         // Récupérer l'équipement depuis la base
         $equipment = $entityManager->getRepository(EquipementS40::class)
-            ->findOneBy(['numeroEquipement' => $equipmentCode]);
+            ->findOneBy(['numero_equipement' => $equipmentCode]);
         
         if (!$equipment) {
             return $this->json(['error' => 'Équipement non trouvé']);
