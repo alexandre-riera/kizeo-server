@@ -2760,6 +2760,7 @@ class FormRepository extends ServiceEntityRepository
             // Construire le chemin vers la photo générale
             $agence = $equipment->getCodeAgence(); // Ex: S60
             $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(); // Ex: GEODIS_CORBAS
+            $raisonSociale = str_replace(' ', '_', $raisonSociale); // Important pour les espaces
             $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement())); // Ex: 2025  
             $typeVisite = $equipment->getVisite(); // Ex: CE1
             $codeEquipement = $equipment->getNumeroEquipement(); // Ex: BLE01
