@@ -72,7 +72,7 @@ class FixRaisonSocialeVisiteCommand extends Command
                     $codeEquipement = $form->getCodeEquipement();
                     
                     // Trouver l'équipement correspondant
-                    $equipment = $repository->findOneBy(['equipement_id' => $codeEquipement]);
+                    $equipment = $repository->findOneBy(['equipementId' => $codeEquipement]);
                     
                     if ($equipment) {
                         $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
