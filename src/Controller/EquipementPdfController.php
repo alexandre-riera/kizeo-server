@@ -269,7 +269,7 @@ class EquipementPdfController extends AbstractController
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             $processedCount = 0;
-            $formRepository = $entityManager->getRepository(FormDataEquipements::class);
+            $formRepository = $entityManager->getRepository(Form::class);
             
             foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
@@ -2417,89 +2417,6 @@ class EquipementPdfController extends AbstractController
                 return 'https://www.pdf.somafi-group.fr/background/rennes.jpg';
             default:
                 return 'https://www.pdf.somafi-group.fr/background/group.jpg'; // Image par défaut
-        }
-    }
-
-    /**
-     * Méthode mise à jour pour récupérer uniquement les photos générales
-     */
-    private function getGeneralPhotosForEquipment($equipment, $formRepository, EntityManagerInterface $entityManager): array
-    {
-        // Méthode 1 : Utiliser le service de stockage
-        $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
-        
-        // Méthode 2 : Si la première méthode ne fonctionne pas, essayer le scan
-        if (empty($photos)) {
-            $this->customLog("🔄 Tentative de scan pour {$equipment->getNumeroEquipement()}");
-            $photos = $formRepository->findGeneralPhotoByScanning($equipment);
-        }
-        
-        // Méthode 3 : Fallback vers l'API si aucune photo locale trouvée
-        if (empty($photos)) {
-            $this->customLog("🔄 Fallback API pour {$equipment->getNumeroEquipement()}");
-            $photos = $this->fallbackToApiForGeneralPhoto($equipment, $formRepository, $entityManager);
-        }
-        
-        return $photos;
-    }
-
-    // ROUTE DE TEST POUR KUEHNE POUR DEBUGGUER L'AFFICHAGE DES PHOTOS DANS LE PDF CLIENT A ENLEVER APRES DIAGNOSTIC
-    #[Route('/debug/photos/kuehne/{equipmentCode}', name: 'debug_photos_kuehne')]
-    public function debugPhotosKuehne(string $equipmentCode, EntityManagerInterface $entityManager): Response
-    {
-        // Récupérer l'équipement depuis la base
-        $equipment = $entityManager->getRepository(EquipementS40::class)
-            ->findOneBy(['numero_equipement' => $equipmentCode]);
-        
-        if (!$equipment) {
-            return $this->json(['error' => 'Équipement non trouvé']);
-        }
-
-        $formRepository = $entityManager->getRepository(Form::class);
-
-        // Test de la méthode
-        $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment,  $entityManager);
-
-        $debugInfo = [
-            'equipment_code' => $equipmentCode,
-            'raison_sociale' => $equipment->getRaisonSociale(),
-            'code_agence' => $equipment->getCodeAgence(),
-            'photos_found' => count($photos),
-            'photos_data' => !empty($photos) ? [
-                'has_picture' => !empty($photos[0]['picture']),
-                'picture_size' => !empty($photos[0]['picture']) ? strlen($photos[0]['picture']) : 0,
-                'update_time' => $photos[0]['update_time'] ?? null
-            ] : null
-        ];
-        
-        return $this->json($debugInfo);
-    }
-
-
-    /**
-     * Fallback vers l'API pour récupérer la photo générale
-     */
-    private function fallbackToApiForGeneralPhoto($equipment, $formRepository, EntityManagerInterface $entityManager): array
-    {
-        try {
-            // Récupérer toutes les photos via l'API
-            $allPhotos = $formRepository->getPictureArrayByIdEquipment([], $entityManager, $equipment);
-            
-            // Filtrer pour ne garder que les photos générales
-            $generalPhotos = [];
-            foreach ($allPhotos as $photo) {
-                // Ajouter un identifiant pour marquer comme photo générale
-                $photo->photo_type = 'generale_api';
-                $photo->equipment_number = $equipment->getNumeroEquipement();
-                $generalPhotos[] = $photo;
-                break; // Ne prendre que la première photo comme générale
-            }
-            
-            return $generalPhotos;
-            
-        } catch (\Exception $e) {
-            $this->customLog("Erreur fallback API pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-            return [];
         }
     }
 
