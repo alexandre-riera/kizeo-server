@@ -2405,7 +2405,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         $formRepository = $entityManager->getRepository(EquipementS40::class);
         
         // Test de la méthode
-        $photos = $formRepository->getGeneralPhotosForEquipment($equipment, $formRepository, $entityManager);
+        $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment,  $entityManager);
         
         $debugInfo = [
             'equipment_code' => $equipmentCode,
