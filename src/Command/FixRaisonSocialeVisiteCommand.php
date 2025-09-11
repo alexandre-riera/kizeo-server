@@ -18,7 +18,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class FixRaisonSocialeVisiteCommand extends Command
 {
-    private $entityManager;
+     private $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -36,7 +36,7 @@ class FixRaisonSocialeVisiteCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $agenceCode = $input->getArgument('agence');
 
-        $io->title("Correction des champs raison_sociale_visite pour l'agence {$agenceCode}");
+        $io->title("Correction ROBUSTE des champs raison_sociale_visite pour l'agence {$agenceCode}");
 
         try {
             // Récupérer le repository de l'agence
@@ -47,6 +47,16 @@ class FixRaisonSocialeVisiteCommand extends Command
             }
 
             $repository = $this->entityManager->getRepository($agencyClass);
+            
+            // 🔥 DÉTECTION AUTOMATIQUE du nom de champ correct
+            $equipmentFieldName = $this->detectEquipmentFieldName($repository, $io);
+            
+            if (!$equipmentFieldName) {
+                $io->error("Impossible de détecter le nom du champ d'équipement pour {$agenceCode}");
+                return Command::FAILURE;
+            }
+            
+            $io->info("Champ détecté : {$equipmentFieldName}");
             
             // Récupérer les Forms avec raison_sociale_visite manquant
             $qb = $this->entityManager->getRepository(Form::class)->createQueryBuilder('f')
@@ -71,8 +81,8 @@ class FixRaisonSocialeVisiteCommand extends Command
                 try {
                     $codeEquipement = $form->getCodeEquipement();
                     
-                    // Trouver l'équipement correspondant
-                    $equipment = $repository->findOneBy(['numeroEquipement ' => $codeEquipement]);
+                    // Utiliser le champ détecté automatiquement
+                    $equipment = $repository->findOneBy([$equipmentFieldName => $codeEquipement]);
                     
                     if ($equipment) {
                         $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
@@ -108,5 +118,41 @@ class FixRaisonSocialeVisiteCommand extends Command
             $io->error("Erreur globale : " . $e->getMessage());
             return Command::FAILURE;
         }
+    }
+
+    /**
+     * 🔥 DÉTECTION AUTOMATIQUE du nom correct du champ
+     */
+    private function detectEquipmentFieldName($repository, SymfonyStyle $io): ?string
+    {
+        $possibleFields = [
+            'numero_equipement',    // Snake case (plus commun)
+            'numeroEquipement',     // Camel case
+            'num_equipement',       // Variante courte
+            'numEquipement'         // Autre variante
+        ];
+
+        foreach ($possibleFields as $fieldName) {
+            try {
+                // Test en essayant de faire une requête simple
+                $testQuery = $repository->createQueryBuilder('e')
+                    ->select('COUNT(e.id)')
+                    ->where("e.{$fieldName} IS NOT NULL")
+                    ->getQuery();
+                
+                $testQuery->getSingleScalarResult();
+                
+                // Si ça marche, on a trouvé le bon champ !
+                $io->info("✅ Champ trouvé : {$fieldName}");
+                return $fieldName;
+                
+            } catch (\Exception $e) {
+                // Ce champ n'existe pas, on continue
+                $io->comment("❌ Champ testé : {$fieldName} - Non trouvé");
+                continue;
+            }
+        }
+        
+        return null;
     }
 }
