@@ -31,6 +31,7 @@ use App\Entity\EquipementS140;
 use App\Entity\EquipementS150;
 use App\Entity\EquipementS160;
 use App\Entity\EquipementS170;
+use App\Repository\FormRepository;
 use App\Service\ShortLinkService;
 use App\Service\PdfStorageService;
 use App\Service\ImageStorageService;
@@ -2401,9 +2402,9 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
         if (!$equipment) {
             return $this->json(['error' => 'Équipement non trouvé']);
         }
-        
-        $formRepository = $entityManager->getRepository(EquipementS40::class);
-        
+
+        $formRepository = $entityManager->getRepository(FormRepository::class);
+
         // Test de la méthode
         $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment,  $entityManager);
 
