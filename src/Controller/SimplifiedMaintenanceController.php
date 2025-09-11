@@ -4130,6 +4130,69 @@ class SimplifiedMaintenanceController extends AbstractController
         }
     }
 
+    private function getFormSubmissionsFixed(string $formId, string $agencyCode, int $maxSubmissions = 20): array
+    {
+        try {
+            $validSubmissions = [];
+            $offset = 0;
+            $batchSize = 20; // Taille raisonnable
+            
+            while (count($validSubmissions) < $maxSubmissions && $offset < 200) {
+                
+                // UTILISER L'ENDPOINT SIMPLE qui fonctionne
+                $response = $this->client->request(
+                    'GET',
+                    "https://forms.kizeo.com/rest/v3/forms/{$formId}/data",
+                    [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ],
+                        'query' => [
+                            'limit' => $batchSize,
+                            'offset' => $offset
+                        ],
+                        'timeout' => 90
+                    ]
+                );
+
+                $formData = $response->toArray();
+                $batchSubmissions = $formData['data'] ?? [];
+                
+                if (empty($batchSubmissions)) {
+                    break; // Plus de données
+                }
+                
+                // Traitement des soumissions SANS filtrage d'agence strict
+                foreach ($batchSubmissions as $entry) {
+                    if (count($validSubmissions) >= $maxSubmissions) {
+                        break 2;
+                    }
+                    
+                    // Conversion au format attendu par le traitement
+                    $validSubmissions[] = [
+                        'form_id' => $entry['form_id'] ?? $formId,
+                        'entry_id' => $entry['id'], // ATTENTION : 'id' pas '_id' dans l'endpoint simple
+                        'client_name' => 'À déterminer lors du traitement',
+                        'date' => $entry['answer_time'] ?? 'N/A',
+                        'technician' => 'À déterminer lors du traitement'
+                    ];
+                }
+                
+                $offset += $batchSize;
+                
+                // Petite pause pour éviter de surcharger l'API
+                usleep(50000); // 0.05 seconde
+            }
+            
+            return $validSubmissions;
+            
+        } catch (\Exception $e) {
+            dump("Erreur getFormSubmissionsFixed: " . $e->getMessage());
+            return [];
+        }
+    }
+
     /**
      * Route pour vider le cache d'une agence
      */
