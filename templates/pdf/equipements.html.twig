@@ -242,7 +242,14 @@
             min-height: 100vh;
         }
         
-        /* Table principale pour chaque équipement */
+        /* Centrage spécifique pour les pages d'équipements */
+        .equipment-page .page-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centre verticalement */
+            min-height: calc(100vh - 200px); /* Hauteur disponible moins marges */
+        }
+
         .equipment-container {
             display: flex;
             flex-direction: column;
@@ -560,6 +567,7 @@
                 {% if equipmentCount > 1 %}</div></div>{% endif %}
                 <div class="equipment-page">
                     <div class="page-content">
+                        <div class="equipment-container">
             {% endif %}
             
             {# Table principale avec photo à gauche et infos à droite #}
@@ -671,6 +679,7 @@
             {% if equipmentCount % 2 == 0 or loop.last %}
                     </div>
                 </div>
+            </div>
             {% endif %}
         {% endfor %}
     {% endif %}
