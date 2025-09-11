@@ -103,9 +103,75 @@ class EquipementPdfController extends AbstractController
     }
     
     /**
-     * Génère un PDF complet pour tous les équipements d'un client
-     * VERSION OPTIMISÉE - Avec scan dynamique des photos locales
-     * Route: /client/equipements/pdf/{agence}/{id}
+     * Nettoie les valeurs qui commencent par "A COMPLETER", "A RENSEIGNER", etc.
+     * Version avancée qui gère différents formats et accents
+     */
+    private function cleanCompleteValuesAdvanced(string $value): string
+    {
+        // Patterns possibles : "A COMPLETER", "A COMPLETERgirardo", "A COMPLETER girardo", etc.
+        $patterns = [
+            '/^A\s*COMPLETER\s*-?\s*/i',  // "A COMPLETER" suivi optionnellement d'un tiret
+            '/^A\s*RENSEIGNER\s*-?\s*/i', // "A RENSEIGNER" aussi
+            '/^À\s*COMPLETER\s*-?\s*/i',  // Avec accent
+            '/^À\s*RENSEIGNER\s*-?\s*/i'  // Avec accent
+        ];
+        
+        $cleanedValue = trim($value);
+        
+        foreach ($patterns as $pattern) {
+            $cleanedValue = preg_replace($pattern, '', $cleanedValue);
+        }
+        
+        return trim($cleanedValue);
+    }
+
+    /**
+     * Applique le nettoyage "A COMPLETER" à un équipement
+     */
+    private function cleanEquipmentValues($equipment): void
+    {
+        // Liste des méthodes getter/setter à nettoyer
+        $fieldsToClean = [
+            'Marque' => ['getMarque', 'setMarque'],
+            'MiseEnService' => ['getMiseEnService', 'setMiseEnService'],
+            'LibelleEquipement' => ['getLibelleEquipement', 'setLibelleEquipement'],
+            'NumeroDeSerie' => ['getNumeroDeSerie', 'setNumeroDeSerie'],
+            'Hauteur' => ['getHauteur', 'setHauteur'],
+            'Largeur' => ['getLargeur', 'setLargeur'],
+            'Longueur' => ['getLongueur', 'setLongueur'],
+            'RepereSiteClient' => ['getRepereSiteClient', 'setRepereSiteClient'],
+            'ModeFonctionnement' => ['getModeFonctionnement', 'setModeFonctionnement'],
+            'PlaqueSignaletique' => ['getPlaqueSignaletique', 'setPlaqueSignaletique'],
+            'Etat' => ['getEtat', 'setEtat'],
+            'RaisonSociale' => ['getRaisonSociale', 'setRaisonSociale'],
+            'Modele' => ['getModele', 'setModele']
+        ];
+        
+        foreach ($fieldsToClean as $fieldName => [$getter, $setter]) {
+            try {
+                // Vérifier que les méthodes existent avant de les appeler
+                if (method_exists($equipment, $getter) && method_exists($equipment, $setter)) {
+                    $currentValue = $equipment->$getter();
+                    
+                    if (is_string($currentValue) && !empty($currentValue)) {
+                        $cleanedValue = $this->cleanCompleteValuesAdvanced($currentValue);
+                        
+                        // Seulement modifier si la valeur a changé
+                        if ($cleanedValue !== $currentValue) {
+                            $this->customLog("Nettoyage {$fieldName}: '{$currentValue}' -> '{$cleanedValue}'");
+                            $equipment->$setter($cleanedValue);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->customLog("Erreur nettoyage champ {$fieldName}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * FONCTION PRINCIPALE MODIFIÉE - generateClientEquipementsPdf
+     * VERSION OPTIMISÉE avec nettoyage des valeurs "A COMPLETER"
      */
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
@@ -158,6 +224,22 @@ class EquipementPdfController extends AbstractController
             if (empty($equipments)) {
                 throw new \Exception("Aucun équipement trouvé pour le client {$id}");
             }
+            
+            // ✅ NOUVEAU : NETTOYAGE DES VALEURS "A COMPLETER" SUR TOUS LES ÉQUIPEMENTS
+            $this->customLog("=== DÉBUT NETTOYAGE DES VALEURS 'A COMPLETER' ===");
+            $cleanedCount = 0;
+            
+            foreach ($equipments as $equipment) {
+                try {
+                    $this->cleanEquipmentValues($equipment);
+                    $cleanedCount++;
+                } catch (\Exception $e) {
+                    $this->customLog("Erreur nettoyage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                }
+            }
+            
+            $this->customLog("Nettoyage terminé sur {$cleanedCount} équipements");
+            $this->customLog("=== FIN NETTOYAGE DES VALEURS 'A COMPLETER' ===");
             
             // 3. LOGIQUE DE FILTRAGE CORRIGÉE SELON VOS SPÉCIFICATIONS
             $equipmentsFiltered = [];
