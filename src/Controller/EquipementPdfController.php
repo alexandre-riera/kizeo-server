@@ -111,8 +111,8 @@ class EquipementPdfController extends AbstractController
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
         // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION OPTIMISÉE
-        ini_set('memory_limit', '512M'); // Réduire à 512M au lieu de 1G
-        ini_set('max_execution_time', 180); // 3 minutes au lieu de 5
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', 180);
         set_time_limit(180);
         
         // Activer le garbage collector agressif
@@ -137,9 +137,7 @@ class EquipementPdfController extends AbstractController
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
             
-            // 📊 NOUVEAU : Paramètre de limitation d'équipements
-            // $maxEquipments = (int) $request->query->get('maxEquipments', 100); // Limite par défaut : 100
-            $maxEquipments = (int) $request->query->get('maxEquipments', 500); // Limite par défaut : 500
+            $maxEquipments = (int) $request->query->get('maxEquipments', 500);
             
             $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
             $this->customLog("Agence: {$agence}, Client: {$id}");
@@ -240,7 +238,7 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            // 4. 🚨 LIMITATION CRITIQUE : Ne traiter que les X premiers équipements
+            // 4. LIMITATION CRITIQUE : Ne traiter que les X premiers équipements
             if (count($equipmentsFiltered) > $maxEquipments) {
                 $this->customLog("LIMITATION: Réduction de " . count($equipmentsFiltered) . " à {$maxEquipments} équipements");
                 $equipmentsFiltered = array_slice($equipmentsFiltered, 0, $maxEquipments);
@@ -271,12 +269,13 @@ class EquipementPdfController extends AbstractController
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             $processedCount = 0;
+            $formRepository = $entityManager->getRepository(FormDataEquipements::class);
             
             foreach ($equipmentsFiltered as $index => $equipment) {
                 try {
                     $this->customLog("=== DÉBUT TRAITEMENT ÉQUIPEMENT {$index} ===");
                     
-                    // 🗑️ Garbage collection plus fréquent
+                    // Garbage collection plus fréquent
                     if ($index > 0 && $index % 20 === 0) {
                         gc_collect_cycles();
                         $currentMemory = memory_get_usage(true);
@@ -285,7 +284,7 @@ class EquipementPdfController extends AbstractController
                         }
                     }
 
-                    // ✅ PROTECTION contre les équipements avec numéro vide
+                    // PROTECTION contre les équipements avec numéro vide
                     $numeroEquipement = $equipment->getNumeroEquipement();
                     if (empty($numeroEquipement)) {
                         $this->customLog("ATTENTION: Équipement avec numéro vide trouvé (ID: {$equipment->getId()})");
@@ -316,41 +315,47 @@ class EquipementPdfController extends AbstractController
                         continue;
                     }
 
-                    // 📸 RÉCUPÉRATION DES PHOTOS OPTIMISÉE
+                    // RÉCUPÉRATION DES PHOTOS OPTIMISÉE - NOUVELLE VERSION
                     $picturesData = [];
                     try {
                         if ($isInMaintenance) {
-                            // Équipements au contrat
+                            // Équipements au contrat - essayer d'abord les photos locales
                             $this->customLog("Récupération photos équipement au contrat");
-                            $picturesArray = $entityManager->getRepository(Form::class)->findBy([
-                                'code_equipement' => $numeroEquipement,
-                                'raison_sociale_visite' => $raisonSociale . "\\" . $visite
-                            ]);
                             
-                            $this->customLog("Nombre d'entrées Form trouvées: " . count($picturesArray));
+                            // NOUVEAU: Essayer d'abord les photos locales
+                            $picturesData = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                            $this->customLog("Photos locales trouvées: " . count($picturesData));
                             
-                            if (!empty($picturesArray)) {
-                                $this->customLog("Appel getPictureArrayByIdEquipment...");
-                                $picturesData = $entityManager->getRepository(Form::class)
-                                    ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                                $this->customLog("Photos récupérées: " . count($picturesData));
-                                if (!empty($picturesData)) {
-                                    $photoSourceStats['api_fallback']++;
-                                }
+                            if (!empty($picturesData)) {
+                                $photoSourceStats['local']++;
                             } else {
-                                $this->customLog("Aucune entrée Form trouvée, tentative photo locale...");
-                                $picturesData = $this->getOptimizedLocalPhotosForEquipment($equipment);
-                                $this->customLog("Photos locales trouvées: " . count($picturesData));
-                                if (!empty($picturesData)) {
-                                    $photoSourceStats['local']++;
+                                // Fallback vers l'API si pas de photos locales
+                                $this->customLog("Pas de photos locales, tentative API...");
+                                $picturesArray = $entityManager->getRepository(Form::class)->findBy([
+                                    'code_equipement' => $numeroEquipement,
+                                    'raison_sociale_visite' => $raisonSociale . "\\" . $visite
+                                ]);
+                                
+                                $this->customLog("Nombre d'entrées Form trouvées: " . count($picturesArray));
+                                
+                                if (!empty($picturesArray)) {
+                                    $this->customLog("Appel getPictureArrayByIdEquipment...");
+                                    $picturesData = $entityManager->getRepository(Form::class)
+                                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
+                                    $this->customLog("Photos API récupérées: " . count($picturesData));
+                                    if (!empty($picturesData)) {
+                                        $photoSourceStats['api_fallback']++;
+                                    } else {
+                                        $photoSourceStats['none']++;
+                                    }
                                 } else {
                                     $photoSourceStats['none']++;
                                 }
                             }
                         } else {
-                            // Équipements hors contrat
+                            // Équipements hors contrat - uniquement photos locales
                             $this->customLog("Récupération photos équipement hors contrat");
-                            $picturesData = $this->getOptimizedLocalPhotosForEquipment($equipment);
+                            $picturesData = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
                             $this->customLog("Photos supplémentaires récupérées: " . count($picturesData));
                             if (!empty($picturesData)) {
                                 $photoSourceStats['local']++;
@@ -384,7 +389,7 @@ class EquipementPdfController extends AbstractController
 
                     $this->customLog("=== FIN TRAITEMENT ÉQUIPEMENT {$index} ===");
 
-                    // ⚠️ CONTRÔLE MÉMOIRE CRITIQUE
+                    // CONTRÔLE MÉMOIRE CRITIQUE
                     $currentMemoryAfter = memory_get_usage(true);
                     if ($currentMemoryAfter > 400 * 1024 * 1024) { // 400 MB
                         $this->customLog("ATTENTION: Mémoire critique après équipement {$numeroEquipement}: " . 
@@ -401,8 +406,7 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            // FILTRER LES EQUIPEMENTS POUR NE GARDER QUE LES PLUS RÉCENT EN DATE DE DERNIERE VISITE
-            // 🔄 DÉDUPLICATION DES ÉQUIPEMENTS PAR NUMÉRO ET DATE DE VISITE
+            // DÉDUPLICATION DES ÉQUIPEMENTS PAR NUMÉRO ET DATE DE VISITE
             $this->customLog("=== DÉBUT DÉDUPLICATION ===");
             $this->customLog("Nombre d'équipements avant déduplication: " . count($equipmentsWithPictures));
 
@@ -487,7 +491,7 @@ class EquipementPdfController extends AbstractController
             $this->customLog("Nombre de doublons supprimés: {$duplicatesRemoved}");
             $this->customLog("=== FIN DÉDUPLICATION ===");
 
-            // 🗑️ Nettoyage mémoire après déduplication
+            // Nettoyage mémoire après déduplication
             unset($uniqueEquipments);
             gc_collect_cycles();
 
@@ -497,7 +501,7 @@ class EquipementPdfController extends AbstractController
                 $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory));
             }
 
-            // 📊 RÉSUMÉ PHOTOS
+            // RÉSUMÉ PHOTOS
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
             $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
             $this->customLog("- Photos scan: " . ($photoSourceStats['direct_scan'] ?? 0)); 
@@ -559,10 +563,8 @@ class EquipementPdfController extends AbstractController
             $cpostalp = trim($clientSelectedInformations->getCpostalp());
             $villep = trim($clientSelectedInformations->getVillep());
             $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
-            
-            // dd($statistiques);
 
-                $templateVars = [
+            $templateVars = [
                 'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
                 'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
                 'equipementsNonPresents' => $this->convertStdClassToArray($equipementsNonPresents ?? []),
@@ -584,7 +586,7 @@ class EquipementPdfController extends AbstractController
                 'adressep2' => $adressep2,
                 'cpostalp' => $cpostalp,
                 'villep' => $villep,
-                // 🆕 NOUVELLES VARIABLES POUR L'OPTIMISATION
+                // NOUVELLES VARIABLES POUR L'OPTIMISATION
                 'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
                 'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
                 'totalEquipmentsFound' => count($equipmentsFiltered),
@@ -1294,39 +1296,89 @@ class EquipementPdfController extends AbstractController
         return $this->json($results);
     }
 
-/**
- * Génère un PDF d'erreur informatif
- */
-private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = []): Response
-{
-    $this->customLog("Génération PDF d'erreur pour {$agence}/{$id}");
-    
-    $html = $this->renderView('pdf/equipements.html.twig', [
-        'equipmentsWithPictures' => [],
-        'equipementsSupplementaires' => [],
-        'equipementsNonPresents' => [],
-        'clientId' => $id,
-        'agence' => $agence,
-        'imageUrl' => $imageUrl,
-        'clientAnneeFilter' => '',
-        'clientVisiteFilter' => '',
-        'error_mode' => true,
-        'error_message' => $errorMessage,
-        'debug_info' => $debugInfo,
-        'isFiltered' => false,
-        'dateDeDerniererVisite' => null
-    ]);
-    
-    $filename = "equipements_client_{$id}_{$agence}_error.pdf";
-    $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
-    
-    return new Response($pdfContent, Response::HTTP_OK, [
-        'Content-Type' => 'application/pdf',
-        'Content-Disposition' => "inline; filename=\"$filename\"",
-        'X-Generation-Mode' => 'error'
-    ]);
-}
+    /**
+     * Génère un PDF d'erreur informatif
+     */
+    private function generateErrorPdf(string $agence, string $id, string $imageUrl, EntityManagerInterface $entityManager, string $errorMessage, array $debugInfo = []): Response
+    {
+        $this->customLog("Génération PDF d'erreur pour {$agence}/{$id}");
+        
+        $html = $this->renderView('pdf/equipements.html.twig', [
+            'equipmentsWithPictures' => [],
+            'equipementsSupplementaires' => [],
+            'equipementsNonPresents' => [],
+            'clientId' => $id,
+            'agence' => $agence,
+            'imageUrl' => $imageUrl,
+            'clientAnneeFilter' => '',
+            'clientVisiteFilter' => '',
+            'error_mode' => true,
+            'error_message' => $errorMessage,
+            'debug_info' => $debugInfo,
+            'isFiltered' => false,
+            'dateDeDerniererVisite' => null
+        ]);
+        
+        $filename = "equipements_client_{$id}_{$agence}_error.pdf";
+        $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+        
+        return new Response($pdfContent, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"$filename\"",
+            'X-Generation-Mode' => 'error'
+        ]);
+    }
 
+    private function getEquipmentsWithPhotos(array $equipments, EntityManagerInterface $entityManager): array
+    {
+        $equipmentsWithPictures = [];
+        $formRepository = $entityManager->getRepository(Form::class);
+        
+        foreach ($equipments as $equipment) {
+            try {
+                // Récupération des photos
+                $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                
+                $this->customLog("Equipment {$equipment->getNumeroEquipement()}: " . count($photos) . " photos trouvées");
+                
+                $equipmentsWithPictures[] = [
+                    "numeroEquipement" => $equipment->getNumeroEquipement(),
+                    "typeEquipement" => $equipment->getTypeEquipement(),
+                    "marque" => $equipment->getMarque(),
+                    "modele" => $equipment->getModele(),
+                    "etat" => $equipment->getEtat(),
+                    "miseEnService" => $equipment->getMiseEnService(),
+                    "repere" => $equipment->getRepere(),
+                    "anomalies" => $equipment->getAnomalies(),
+                    "pictures" => $photos, // Les photos sont ici
+                    "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
+                    "annee" => date('Y'),
+                    "visite" => $equipment->getVisite()
+                ];
+                
+            } catch (\Exception $e) {
+                $this->customLog("Erreur equipment {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                
+                // Ajouter quand même l'équipement sans photo
+                $equipmentsWithPictures[] = [
+                    "numeroEquipement" => $equipment->getNumeroEquipement(),
+                    "typeEquipement" => $equipment->getTypeEquipement(),
+                    "marque" => $equipment->getMarque(),
+                    "modele" => $equipment->getModele(),
+                    "etat" => $equipment->getEtat(),
+                    "miseEnService" => $equipment->getMiseEnService(),
+                    "repere" => $equipment->getRepere(),
+                    "anomalies" => $equipment->getAnomalies(),
+                    "pictures" => [], // Tableau vide
+                    "client" => explode("\\", $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(),
+                    "annee" => date('Y'),
+                    "visite" => $equipment->getVisite()
+                ];
+            }
+        }
+        
+        return $equipmentsWithPictures;
+    }
     /**
      * Traitement par batch des équipements
      */
