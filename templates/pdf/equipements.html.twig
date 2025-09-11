@@ -655,8 +655,8 @@
                 </tr>
             </table>
             
-            {# Fermer la page si on a 3 équipements ou si c'est le dernier #}
-            {% if equipmentCount % 3 == 0 or loop.last %}
+            {# Fermer la page si on a 2 équipements ou si c'est le dernier #}
+            {% if equipmentCount % 2 == 0 or loop.last %}
                     </div>
                 </div>
             {% endif %}
@@ -671,8 +671,8 @@
             {% set pictures = equipmentData.pictures %}
             {% set suppCount = suppCount + 1 %}
             
-            {# Nouvelle page tous les 3 équipements #}
-            {% if (suppCount - 1) % 3 == 0 %}
+            {# Nouvelle page tous les 2 équipements #}
+            {% if (suppCount - 1) % 2 == 0 %}
                 {% if suppCount > 1 %}</div></div>{% endif %}
                 <div class="equipment-page">
                     <div class="page-content">
@@ -783,8 +783,8 @@
                 </tr>
             </table>
             
-            {# Fermer la page si on a 3 équipements ou si c'est le dernier #}
-            {% if suppCount % 3 == 0 or loop.last %}
+            {# Fermer la page si on a 2 équipements ou si c'est le dernier #}
+            {% if suppCount % 2 == 0 or loop.last %}
                     </div>
                 </div>
             {% endif %}
