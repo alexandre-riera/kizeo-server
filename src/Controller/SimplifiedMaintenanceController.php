@@ -4137,8 +4137,12 @@ class SimplifiedMaintenanceController extends AbstractController
             $offset = 0;
             $batchSize = 20; // Taille raisonnable
             
-            // while (count($validSubmissions) < $maxSubmissions && $offset < 200) {
-            while (count($validSubmissions) < $maxSubmissions && $offset < 1500) {
+            // Avec 20 résultats par page × 10 pages = maximum 200 formulaires traités, même si l'agence
+            // while (count($validSubmissions) < $maxSubmissions && $offset < 200) { 
+
+            // Avec 20 résultats par page × 75 pages = maximum 1500 formulaires traités
+            // Sur KIZEO le formulaire avec le plus de soumissions est PORTLAND avec 399, on est large
+            while (count($validSubmissions) < $maxSubmissions && $offset < 1500) { 
                 
                 // UTILISER L'ENDPOINT SIMPLE qui fonctionne
                 $response = $this->client->request(
