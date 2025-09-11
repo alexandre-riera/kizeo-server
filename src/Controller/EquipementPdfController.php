@@ -104,7 +104,7 @@ class EquipementPdfController extends AbstractController
     
     /**
      * Génère un PDF complet pour tous les équipements d'un client
-     * VERSION OPTIMISÉE - Avec limitation et compression des photos
+     * VERSION OPTIMISÉE - Avec scan dynamique des photos locales
      * Route: /client/equipements/pdf/{agence}/{id}
      */
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
@@ -265,7 +265,7 @@ class EquipementPdfController extends AbstractController
                 );
             }
             
-            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - VERSION OPTIMISÉE
+            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - VERSION SCAN DYNAMIQUE
             $equipmentsWithPictures = [];
             $dateDeDerniererVisite = null;
             $processedCount = 0;
@@ -315,50 +315,43 @@ class EquipementPdfController extends AbstractController
                         continue;
                     }
 
-                    // RÉCUPÉRATION DES PHOTOS OPTIMISÉE - NOUVELLE VERSION
+                    // ✅ NOUVELLE RÉCUPÉRATION DES PHOTOS AVEC SCAN DYNAMIQUE
                     $picturesData = [];
                     try {
-                        if ($isInMaintenance) {
-                            // Équipements au contrat - essayer d'abord les photos locales
-                            $this->customLog("Récupération photos équipement au contrat");
+                        $this->customLog("🔍 Tentative scan dynamique pour {$numeroEquipement}");
+                        
+                        // Utiliser la nouvelle fonction de scan dynamique
+                        $scanResult = $this->getPhotosForEquipmentOptimized($equipment);
+                        
+                        if (!empty($scanResult['photos'])) {
+                            // Adapter le format pour compatibilité avec le template
+                            $picturesData = $scanResult['photos_indexed'] ?? $scanResult['photos'];
+                            $photoSourceStats['direct_scan']++;
+                            $this->customLog("✅ Photos trouvées via scan dynamique: " . count($picturesData));
+                            $this->customLog("Dossier client détecté: " . ($scanResult['client_folder_found'] ?? 'N/A'));
+                        } else {
+                            $this->customLog("❌ Aucune photo trouvée via scan dynamique");
                             
-                            // NOUVEAU: Essayer d'abord les photos locales
-                            $picturesData = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
-                            $this->customLog("Photos locales trouvées: " . count($picturesData));
-                            
-                            if (!empty($picturesData)) {
-                                $photoSourceStats['local']++;
-                            } else {
-                                // Fallback vers l'API si pas de photos locales
-                                $this->customLog("Pas de photos locales, tentative API...");
+                            // Fallback uniquement pour les équipements en maintenance
+                            if ($isInMaintenance) {
+                                $this->customLog("Tentative fallback API pour équipement en maintenance...");
                                 $picturesArray = $entityManager->getRepository(Form::class)->findBy([
                                     'code_equipement' => $numeroEquipement,
                                     'raison_sociale_visite' => $raisonSociale . "\\" . $visite
                                 ]);
                                 
-                                $this->customLog("Nombre d'entrées Form trouvées: " . count($picturesArray));
-                                
                                 if (!empty($picturesArray)) {
-                                    $this->customLog("Appel getPictureArrayByIdEquipment...");
                                     $picturesData = $entityManager->getRepository(Form::class)
                                         ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                                    $this->customLog("Photos API récupérées: " . count($picturesData));
                                     if (!empty($picturesData)) {
                                         $photoSourceStats['api_fallback']++;
+                                        $this->customLog("Photos API récupérées: " . count($picturesData));
                                     } else {
                                         $photoSourceStats['none']++;
                                     }
                                 } else {
                                     $photoSourceStats['none']++;
                                 }
-                            }
-                        } else {
-                            // Équipements hors contrat - uniquement photos locales
-                            $this->customLog("Récupération photos équipement hors contrat");
-                            $picturesData = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
-                            $this->customLog("Photos supplémentaires récupérées: " . count($picturesData));
-                            if (!empty($picturesData)) {
-                                $photoSourceStats['local']++;
                             } else {
                                 $photoSourceStats['none']++;
                             }
@@ -503,8 +496,8 @@ class EquipementPdfController extends AbstractController
 
             // RÉSUMÉ PHOTOS
             $this->customLog("📊 RÉSUMÉ PHOTOS:");
-            $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0));
-            $this->customLog("- Photos scan: " . ($photoSourceStats['direct_scan'] ?? 0)); 
+            $this->customLog("- Photos scan dynamique: " . ($photoSourceStats['direct_scan'] ?? 0));
+            $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0)); 
             $this->customLog("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
             $this->customLog("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
             $this->customLog("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
@@ -635,6 +628,53 @@ class EquipementPdfController extends AbstractController
         }
     }
 
+    private function getPhotosForEquipmentOptimized($equipment): array
+    {
+        $numeroEquipement = $equipment->getNumeroEquipement();
+        $agence = $equipment->getCodeAgence() ?? 'S40';
+        
+        // Scanner tous les dossiers clients pour trouver les photos
+        $baseAgencePath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+        
+        if (!is_dir($baseAgencePath)) {
+            $this->customLog("❌ Répertoire agence n'existe pas: {$baseAgencePath}");
+            return ['photos' => [], 'photos_indexed' => [], 'source' => 'no_agency_dir', 'count' => 0];
+        }
+        
+        $this->customLog("🔍 Scanning agence directory: {$baseAgencePath}");
+        
+        $clientDirs = scandir($baseAgencePath);
+        foreach ($clientDirs as $clientDir) {
+            if ($clientDir === '.' || $clientDir === '..') continue;
+            
+            $clientPath = $baseAgencePath . $clientDir . "/2025/CE1/";
+            if (!is_dir($clientPath)) continue;
+            
+            $photoPath = $clientPath . $numeroEquipement . '_generale.jpg';
+            
+            if (file_exists($photoPath) && is_readable($photoPath)) {
+                $this->customLog("✅ Photo trouvée: {$photoPath} (dossier: {$clientDir})");
+                
+                $photoContent = file_get_contents($photoPath);
+                $photoEncoded = base64_encode($photoContent);
+                
+                return [
+                    'photos' => [[
+                        'picture' => $photoEncoded,
+                        'update_time' => date('Y-m-d H:i:s', filemtime($photoPath)),
+                        'photo_type' => 'generale_locale'
+                    ]],
+                    'photos_indexed' => [$photoEncoded],
+                    'source' => 'local_scan_found',
+                    'count' => 1,
+                    'client_folder_found' => $clientDir
+                ];
+            }
+        }
+        
+        $this->customLog("❌ Aucune photo trouvée pour {$numeroEquipement} dans {$agence}");
+        return ['photos' => [], 'photos_indexed' => [], 'source' => 'not_found_after_scan', 'count' => 0];
+    }
     // 🔧 SOLUTION 1: Convertir tous les objets stdClass en tableaux
     private function convertStdClassToArray($data)
     {
