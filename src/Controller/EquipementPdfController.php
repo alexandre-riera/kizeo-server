@@ -2403,7 +2403,7 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             return $this->json(['error' => 'Équipement non trouvé']);
         }
 
-        $formRepository = $entityManager->getRepository(FormRepository::class);
+        $formRepository = $entityManager->getRepository(Form::class);
 
         // Test de la méthode
         $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment,  $entityManager);
