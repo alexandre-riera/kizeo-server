@@ -27,6 +27,10 @@
             background-color: rgba(255, 255, 255, 0.95);
             padding: 20px;
             border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centre verticalement */
+            min-height: calc(100vh - 200px); /* Hauteur disponible moins marges */
         }
         
         /* PREMIÈRE PAGE */
@@ -239,11 +243,19 @@
         }
         
         /* Table principale pour chaque équipement */
+        .equipment-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly; /* Répartit l'espace équitablement */
+            flex: 1;
+        }
         .equipment-main-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Réduit l'espacement */
             border: 2px solid #333;
+            flex: 1; /* Permet de s'étendre */
+            max-height: 280px; /* Limite la hauteur pour éviter le débordement */
         }
         
         /* Photo sur la gauche */
