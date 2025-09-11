@@ -2754,55 +2754,76 @@ class FormRepository extends ServiceEntityRepository
      */
     public function getGeneralPhotoFromLocalStorage($equipment, EntityManagerInterface $entityManager): array
     {
-        $picturesdata = [];
-        
         try {
-            // Construire le chemin vers la photo générale
-            $agence = $equipment->getCodeAgence(); // Ex: S60
-            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale(); // Ex: GEODIS_CORBAS
-            $raisonSociale = str_replace(' ', '_', $raisonSociale); // Important pour les espaces
-            $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement())); // Ex: 2025  
-            $typeVisite = $equipment->getVisite(); // Ex: CE1
-            $codeEquipement = $equipment->getNumeroEquipement(); // Ex: BLE01
+            // Essayer d'abord la méthode traditionnelle
+            $photoPath = $this->findPhotoTraditionalWay($equipment);
             
-            // Construire le chemin de la photo générale
-            $photoGeneraleName = $codeEquipement . '_generale.jpg';
-            $photoPath = sprintf(
-                '%s/public/img/%s/%s/%s/%s/%s',
-                $_SERVER['DOCUMENT_ROOT'],
-                $agence,
-                $raisonSociale,
-                $anneeVisite,
-                $typeVisite,
-                $photoGeneraleName
-            );
-            
-            // Vérifier si le fichier existe
-            if (file_exists($photoPath) && is_readable($photoPath)) {
-                // Lire et encoder la photo
-                $photoContent = file_get_contents($photoPath);
-                $pictureEncoded = base64_encode($photoContent);
-                
-                // Créer l'objet photo au format attendu
-                $picturesdataObject = new \stdClass();
-                $picturesdataObject->picture = $pictureEncoded;
-                $picturesdataObject->update_time = date('Y-m-d H:i:s', filemtime($photoPath));
-                $picturesdataObject->photo_type = 'generale';
-                $picturesdataObject->local_path = $photoPath;
-                $picturesdataObject->equipment_number = $codeEquipement;
-                
-                $picturesdata[] = $picturesdataObject;
-                
-                error_log("✅ Photo générale trouvée pour {$codeEquipement}: {$photoPath}");
-            } else {
-                error_log("⚠️ Photo générale non trouvée pour {$codeEquipement}: {$photoPath}");
+            // Si échec, utiliser le scan dynamique
+            if (!$photoPath) {
+                $photoPath = $this->findPhotoWithDynamicScan($equipment, 'generale');
             }
             
+            if ($photoPath && file_exists($photoPath)) {
+                $photoContent = file_get_contents($photoPath);
+                $photoEncoded = base64_encode($photoContent);
+                
+                return [[
+                    'picture' => $photoEncoded,
+                    'update_time' => date('Y-m-d H:i:s', filemtime($photoPath)),
+                    'photo_type' => 'generale_locale'
+                ]];
+            }
+            
+            return [];
+            
         } catch (\Exception $e) {
-            error_log("❌ Erreur récupération photo générale pour {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+            $this->customLog("Erreur récupération photo: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function findPhotoTraditionalWay($equipment): ?string
+    {
+        // Méthode existante avec raison sociale
+        $agence = $equipment->getCodeAgence();
+        $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
+        $raisonSociale = str_replace(' ', '_', $raisonSociale);
+        $equipmentCode = $equipment->getNumeroEquipement();
+        
+        $photoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$raisonSociale}/2025/CE1/{$equipmentCode}_generale.jpg";
+        
+        return file_exists($photoPath) ? $photoPath : null;
+    }
+
+    private function findPhotoWithDynamicScan($equipment, string $photoType = 'generale'): ?string
+    {
+        $agence = $equipment->getCodeAgence(); // Ex: S40
+        $equipmentCode = $equipment->getNumeroEquipement();
+        
+        // Chemin de base de l'agence
+        $baseAgencyPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+        
+        if (!is_dir($baseAgencyPath)) {
+            return null;
         }
         
-        return $picturesdata;
+        // Scanner tous les dossiers clients de l'agence
+        $clientDirs = array_filter(scandir($baseAgencyPath), function($item) use ($baseAgencyPath) {
+            return is_dir($baseAgencyPath . $item) && !in_array($item, ['.', '..']);
+        });
+        
+        // Chercher dans chaque dossier client
+        foreach ($clientDirs as $clientDir) {
+            $photoPath = $baseAgencyPath . $clientDir . "/2025/CE1/{$equipmentCode}_{$photoType}.jpg";
+            
+            if (file_exists($photoPath) && is_readable($photoPath)) {
+                $this->customLog("Photo trouvée: {$photoPath}");
+                return $photoPath;
+            }
+        }
+        
+        $this->customLog("Aucune photo trouvée pour {$equipmentCode} dans {$agence}");
+        return null;
     }
 
     /**
