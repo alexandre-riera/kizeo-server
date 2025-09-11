@@ -400,6 +400,96 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
+            // FILTRER LES EQUIPEMENTS POUR NE GARDER QUE LES PLUS RÉCENT EN DATE DE DERNIERE VISITE
+            // 🔄 DÉDUPLICATION DES ÉQUIPEMENTS PAR NUMÉRO ET DATE DE VISITE
+            $this->customLog("=== DÉBUT DÉDUPLICATION ===");
+            $this->customLog("Nombre d'équipements avant déduplication: " . count($equipmentsWithPictures));
+
+            $uniqueEquipments = [];
+            $duplicatesRemoved = 0;
+
+            foreach ($equipmentsWithPictures as $equipmentData) {
+                $numeroEquipement = $equipmentData['numeroEquipement'];
+                $equipment = $equipmentData['equipment'];
+                
+                try {
+                    // Récupération de la date de dernière visite
+                    $dateVisite = null;
+                    if (method_exists($equipment, 'getDerniereVisite')) {
+                        $derniereVisite = $equipment->getDerniereVisite();
+                        if ($derniereVisite instanceof \DateTime) {
+                            $dateVisite = $derniereVisite;
+                        } elseif (is_string($derniereVisite) && !empty($derniereVisite)) {
+                            try {
+                                $dateVisite = new \DateTime($derniereVisite);
+                            } catch (\Exception $e) {
+                                $this->customLog("Impossible de parser la date de dernière visite: {$derniereVisite}");
+                                $dateVisite = new \DateTime('1970-01-01'); // Date par défaut très ancienne
+                            }
+                        }
+                    }
+                    
+                    // Si aucune date trouvée, utiliser une date par défaut très ancienne
+                    if (!$dateVisite) {
+                        $dateVisite = new \DateTime('1970-01-01');
+                    }
+                    
+                    // Vérifier si cet équipement existe déjà
+                    if (!isset($uniqueEquipments[$numeroEquipement])) {
+                        // Premier équipement avec ce numéro
+                        $uniqueEquipments[$numeroEquipement] = [
+                            'data' => $equipmentData,
+                            'dateVisite' => $dateVisite
+                        ];
+                        $this->customLog("Nouvel équipement: {$numeroEquipement} - Date: " . $dateVisite->format('Y-m-d H:i:s'));
+                    } else {
+                        // Équipement déjà existant, comparer les dates
+                        $existingDate = $uniqueEquipments[$numeroEquipement]['dateVisite'];
+                        
+                        if ($dateVisite > $existingDate) {
+                            // L'équipement actuel est plus récent
+                            $this->customLog("Remplacement équipement {$numeroEquipement}: " . 
+                                        $existingDate->format('Y-m-d H:i:s') . " -> " . $dateVisite->format('Y-m-d H:i:s'));
+                            $uniqueEquipments[$numeroEquipement] = [
+                                'data' => $equipmentData,
+                                'dateVisite' => $dateVisite
+                            ];
+                            $duplicatesRemoved++;
+                        } else {
+                            // L'équipement existant est plus récent ou égal, on garde l'ancien
+                            $this->customLog("Conservation équipement {$numeroEquipement}: " . 
+                                        $existingDate->format('Y-m-d H:i:s') . " >= " . $dateVisite->format('Y-m-d H:i:s'));
+                            $duplicatesRemoved++;
+                        }
+                    }
+                    
+                } catch (\Exception $e) {
+                    $this->customLog("Erreur lors de la déduplication pour {$numeroEquipement}: " . $e->getMessage());
+                    
+                    // En cas d'erreur, garder l'équipement s'il n'existe pas déjà
+                    if (!isset($uniqueEquipments[$numeroEquipement])) {
+                        $uniqueEquipments[$numeroEquipement] = [
+                            'data' => $equipmentData,
+                            'dateVisite' => new \DateTime('1970-01-01')
+                        ];
+                    }
+                }
+            }
+
+            // Reconstruire le tableau final avec seulement les données d'équipement
+            $equipmentsWithPictures = [];
+            foreach ($uniqueEquipments as $uniqueEquipment) {
+                $equipmentsWithPictures[] = $uniqueEquipment['data'];
+            }
+
+            $this->customLog("Nombre d'équipements après déduplication: " . count($equipmentsWithPictures));
+            $this->customLog("Nombre de doublons supprimés: {$duplicatesRemoved}");
+            $this->customLog("=== FIN DÉDUPLICATION ===");
+
+            // 🗑️ Nettoyage mémoire après déduplication
+            unset($uniqueEquipments);
+            gc_collect_cycles();
+
             // LOG MÉMOIRE AVANT GÉNÉRATION PDF
             $beforePdfMemory = memory_get_usage(true);
             if ($beforePdfMemory > 0) {
@@ -445,7 +535,7 @@ class EquipementPdfController extends AbstractController
             $statistiques = $this->calculateEquipmentStatisticsImproved($equipmentsFiltered);
             
             // 9. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
-            $statistiquesSupplementaires = null;
+            $statistiquesSupplementaires = [];
             if (!empty($equipementsSupplementaires)) {
                 $equipmentsSupplementairesOnly = array_map(function($item) {
                     return $item['equipment'];
@@ -468,8 +558,10 @@ class EquipementPdfController extends AbstractController
             $cpostalp = trim($clientSelectedInformations->getCpostalp());
             $villep = trim($clientSelectedInformations->getVillep());
             $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
+            
+            // dd($statistiques);
 
-            $templateVars = [
+                $templateVars = [
                 'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
                 'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
                 'equipementsNonPresents' => $this->convertStdClassToArray($equipementsNonPresents ?? []),
@@ -2337,6 +2429,9 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
             'red' => 0,
             'urgent' => 0, // Alias pour red
             'gray' => 0,
+            'inaccessible' => 0,
+            'arret' => 0,
+            'absent' => 0,
             'unknown' => 0
         ];
         
@@ -2366,8 +2461,14 @@ private function generateErrorPdf(string $agence, string $id, string $imageUrl, 
                     $statusCounts['urgent']++; // Alias
                     break;
                 case 'Equipement inaccessible':
+                    $statusCounts['inaccessible']++;
+                    break;
                 case 'Equipement à l\'arrêt':
+                    $statusCounts['arret']++;
+                    break;
                 case 'Equipement non présent sur site':
+                    $statusCounts['absent']++;
+                    break;
                 case 'D':
                 case 'E':
                 case 'F':
