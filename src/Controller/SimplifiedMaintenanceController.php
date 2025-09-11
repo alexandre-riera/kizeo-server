@@ -4142,7 +4142,7 @@ class SimplifiedMaintenanceController extends AbstractController
 
             // Avec 20 résultats par page × 75 pages = maximum 1500 formulaires traités
             // Sur KIZEO le formulaire avec le plus de soumissions est PORTLAND avec 399, on est large
-            while (count($validSubmissions) < $maxSubmissions && $offset < 1500) { 
+            while (count($validSubmissions) < $maxSubmissions && $offset < 5000) { 
                 
                 // UTILISER L'ENDPOINT SIMPLE qui fonctionne
                 $response = $this->client->request(
