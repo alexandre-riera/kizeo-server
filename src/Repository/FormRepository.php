@@ -2409,6 +2409,26 @@ class FormRepository extends ServiceEntityRepository
             $typeVisite = $equipment->getVisite();
             $codeEquipement = $equipment->getNumeroEquipement();
             
+            // 🔥 CORRECTION : Construction correcte du champ raison_sociale_visite
+            $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
+            
+            // Vérifier si une entrée Form existe déjà
+            $existingForm = $this->findOneBy([
+                'code_equipement' => $codeEquipement,
+                'raison_sociale_visite' => $raisonSocialeVisite
+            ]);
+            
+            if (!$existingForm) {
+                // Créer une nouvelle entrée Form si elle n'existe pas
+                $existingForm = new Form();
+                $existingForm->setCodeEquipement($codeEquipement);
+                $existingForm->setFormId($formData->getFormId());
+                $existingForm->setDataId($formData->getDataId());
+            }
+            
+            // 🔥 CORRECTION CRITIQUE : Assigner le champ raison_sociale_visite
+            $existingForm->setRaisonSocialeVisite($raisonSocialeVisite);
+            
             // Mapping des photos à migrer
             $photosToMigrate = [
                 'compte_rendu' => $formData->getPhotoCompteRendu(),
@@ -2433,9 +2453,32 @@ class FormRepository extends ServiceEntityRepository
                         $codeEquipement . '_' . $photoType
                     )) {
                         $migratedCount++;
+                        
+                        // 🔥 CORRECTION : Mettre à jour le champ approprié de l'entité Form
+                        switch ($photoType) {
+                            case 'compte_rendu':
+                                $existingForm->setPhotoCompteRendu($photoName);
+                                break;
+                            case 'environnement':
+                                $existingForm->setPhotoEnvironnementEquipement1($photoName);
+                                break;
+                            case 'plaque':
+                                $existingForm->setPhotoPlaque($photoName);
+                                break;
+                            case 'etiquette_somafi':
+                                $existingForm->setPhotoEtiquetteSomafi($photoName);
+                                break;
+                            case 'generale':
+                                $existingForm->setPhoto2($photoName);
+                                break;
+                        }
                     }
                 }
             }
+            
+            // 🔥 SAUVEGARDER l'entité Form avec le champ raison_sociale_visite correctement renseigné
+            $this->getEntityManager()->persist($existingForm);
+            $this->getEntityManager()->flush();
             
             return $migratedCount > 0;
             
@@ -2443,6 +2486,53 @@ class FormRepository extends ServiceEntityRepository
             error_log("Erreur migration photos équipement: " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * 🔥 MÉTHODE SUPPLÉMENTAIRE : Pour corriger les données existantes
+     */
+    public function fixMissingRaisonSocialeVisite($agencyCode): array
+    {
+        $results = ['fixed' => 0, 'errors' => 0];
+        
+        try {
+            // Récupérer toutes les entrées Form avec raison_sociale_visite manquant ou vide
+            $qb = $this->createQueryBuilder('f')
+                ->where('f.raison_sociale_visite IS NULL OR f.raison_sociale_visite = :empty')
+                ->andWhere('f.code_equipement IS NOT NULL')
+                ->setParameter('empty', '');
+            
+            $formsToFix = $qb->getQuery()->getResult();
+            
+            foreach ($formsToFix as $form) {
+                try {
+                    $codeEquipement = $form->getCodeEquipement();
+                    
+                    // Trouver l'équipement correspondant pour récupérer raison_sociale et visite
+                    $repository = $this->getRepositoryForAgency($agencyCode, $this->getEntityManager());
+                    $equipment = $repository->findOneBy(['numeroEquipement' => $codeEquipement]);
+                    
+                    if ($equipment) {
+                        $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
+                        $form->setRaisonSocialeVisite($raisonSocialeVisite);
+                        
+                        $this->getEntityManager()->persist($form);
+                        $results['fixed']++;
+                    }
+                    
+                } catch (\Exception $e) {
+                    $results['errors']++;
+                    error_log("Erreur correction Form ID {$form->getId()}: " . $e->getMessage());
+                }
+            }
+            
+            $this->getEntityManager()->flush();
+            
+        } catch (\Exception $e) {
+            error_log("Erreur globale correction raison_sociale_visite: " . $e->getMessage());
+        }
+        
+        return $results;
     }
 
     /**
