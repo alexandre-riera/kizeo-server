@@ -455,7 +455,7 @@ class HomeController extends AbstractController
             
             // ✅ CORRIGÉ : Utiliser $idClientSelected au lieu de $clientSelected
             if (!empty($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
-                $directoriesLists = $homeRepository->getListOfPdf($idClientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
+                $directoriesLists = $homeRepository->getListOfPdf($clientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
             }
         }
 
