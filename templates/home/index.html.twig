@@ -475,8 +475,8 @@
                                             <option value="">Sélectionnez un client</option>
                                             {% for client in clientsGroup %}
                                                 <!-- ✅ SUPPRIME L'AGENCE DU NOM DU CLIENT -->
-                                                <option value="{{ client.idContact }}-{{ client.raisonSociale }}">
-                                                    {{ client.idContact }}-{{ client.raisonSociale }}
+                                                <option value="{{ client }}-{{ client.raisonSociale }}">
+                                                    {{ client }}-{{ client.raisonSociale }}
                                                 </option>
                                             {% endfor %}
                                         </select>
