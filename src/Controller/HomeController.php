@@ -123,7 +123,7 @@ class HomeController extends AbstractController
                     $clientSelected = trim($clientSelectedSplitted[1]);
                     $agenceSelected = trim(substr($clientSelectedSplitted[2], -4, 4)); // Extraire le code agence (S10, S40, etc.)
                     // Charger les informations et équipements du client
-                    $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, $homeRepository, $clientSelected);
+                    $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, $homeRepository, $idClientSelected); // ← CHANGEMENT ICI
                 }
             }
         }
@@ -229,8 +229,8 @@ class HomeController extends AbstractController
                 }
             }
             
-            if ($clientSelected && ($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
-                $directoriesLists = $homeRepository->getListOfPdf($clientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
+            if (!empty($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
+                $directoriesLists = $homeRepository->getListOfPdf($idClientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
             }
         }
 
