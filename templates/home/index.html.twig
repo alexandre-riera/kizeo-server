@@ -441,13 +441,13 @@
                                 <h3>Clients sous contrat : S50 - Grenoble</h3>
                             </div>
                             <div class="card-body">
+                                <div class="form-group">
+                                    <input type="text" id="searchClients" class="form-control" placeholder="Rechercher un client..." onkeyup="filterFunction()">
+                                </div>
                                 <form method="post" action="{{ path('app_front') }}">
                                     <!-- ✅ CHAMP CACHÉ POUR CONSERVER L'AGENCE -->
                                     <input type="hidden" name="hiddenAgence" value="S50">
                                     
-                                    <div class="form-group">
-                                        <input type="text" id="searchClients" class="form-control" placeholder="Rechercher un client..." onkeyup="filterFunction()">
-                                    </div>
                                     <div class="form-group">
                                         <select class="form-control" id="clientsList" name="clientName">
                                             <option value="">Sélectionnez un client</option>
