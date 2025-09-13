@@ -379,8 +379,6 @@
     </style>
 </head>
 <body>
-    {# PREMIÈRE PAGE - Informations générales #}
-    {# {% if visit is defined %} #}
     {# Définition des mappings de statuts #}
     {% set statusMapping = {
         'A': 'Bon état',
@@ -401,6 +399,7 @@
         'F': 'rouge',
         'G': 'noir'
     } %}
+    
     {# PREMIÈRE PAGE - RÉSUMÉ #}
     <div class="first-page">
         <div class="page-content">
@@ -432,9 +431,13 @@
                     </div>
                     <div class="stat-item">
                         <div class="stat-label">Nombre d'équipements supplémentaires</div>
-                        {% if statistiquesSupplementaires is not empty %}
-                        <div class="stat-value">{{ statistiquesSupplementaires.total }}</div>
+                        {% set totalSupplementaires = 0 %}
+                        {% if statistiquesSupplementaires is defined and statistiquesSupplementaires is not empty %}
+                            {% if statistiquesSupplementaires.total is defined %}
+                                {% set totalSupplementaires = statistiquesSupplementaires.total %}
+                            {% endif %}
                         {% endif %}
+                        <div class="stat-value">{{ totalSupplementaires }}</div>
                     </div>
                 </div>
             </div>
@@ -502,12 +505,14 @@
             
             {# ÉQUIPEMENTS SUPPLÉMENTAIRES #}
             {% set hasRealSupplementaryEquipment = false %}
-            {% if statistiquesSupplementaires is not empty %}
-                {% for status, count in statistiquesSupplementaires %}
-                    {% if status != 'total' and count > 0 %}
-                        {% set hasRealSupplementaryEquipment = true %}
-                    {% endif %}
-                {% endfor %}
+            {% if statistiquesSupplementaires is defined and statistiquesSupplementaires is not empty %}
+                {% if statistiquesSupplementaires.status_counts is defined %}
+                    {% for status, count in statistiquesSupplementaires.status_counts %}
+                        {% if count > 0 %}
+                            {% set hasRealSupplementaryEquipment = true %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             {% endif %}
             
             {# Afficher la section seulement s'il y a des équipements supplémentaires réels #}
@@ -524,11 +529,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for status, count in statistiquesSupplementaires %}
-                                {% if status != 'total' and count > 0 %}
+                            {% for status, count in statistiquesSupplementaires.status_counts %}
+                                {% if count > 0 %}
                                 <tr>
-                                    <td><span class="status-icon {{ statusColors[status] }}"></span></td>
-                                    <td>{{ statusMapping[status] }}</td>
+                                    <td><span class="status-icon {{ statusColors[status] ?? 'noir' }}"></span></td>
+                                    <td>{{ statusMapping[status] ?? status }}</td>
                                     <td>{{ count }}</td>
                                 </tr>
                                 {% endif %}
@@ -537,44 +542,20 @@
                     </table>
                 </div>
             {% endif %}
-            
-            {# LÉGENDE #}
-            {# <div class="legend">
-                <div class="legend-title">Légende :</div>
-                <div class="legend-items">
-                    <div class="legend-item">
-                        <span class="legend-icon vert status-icon"></span>
-                        <span>Bon état</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-icon orange status-icon"></span>
-                        <span>Travaux à prévoir</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-icon rouge status-icon"></span>
-                        <span>Travaux curatifs/Arrêt</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-icon noir status-icon"></span>
-                        <span>Inaccessible/Inexistant</span>
-                    </div>
-                </div>
-            </div> #}
         </div>
     </div>
-    {# {% endif %} #}
     
-    {# PAGES ÉQUIPEMENTS AU CONTRAT #}
+    {# PAGES ÉQUIPEMENTS AU CONTRAT - VERSION CORRIGÉE #}
     {% if equipmentsWithPictures is defined and equipmentsWithPictures|length > 0 %}
         {% set equipmentCount = 0 %}
+        
         {% for equipmentData in equipmentsWithPictures %}
             {% set equipment = equipmentData.equipment %}
             {% set pictures = equipmentData.pictures %}
             {% set equipmentCount = equipmentCount + 1 %}
             
-            {# Nouvelle page tous les 3 équipements #}
-            {% if (equipmentCount - 1) % 2 == 0 %}
-                {% if equipmentCount > 1 %}</div></div>{% endif %}
+            {# Ouvrir une nouvelle page pour le 1er équipement et tous les 2 équipements #}
+            {% if equipmentCount == 1 or (equipmentCount - 1) % 2 == 0 %}
                 <div class="equipment-page">
                     <div class="page-content">
                         <div class="equipment-container">
@@ -674,7 +655,7 @@
                             </tr>
                             
                             {# Anomalies (seulement si présentes) #}
-                            {% if equipment.anomalies|trim is not empty %}
+                            {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
                                 <td class="info-value">{{ equipment.anomalies }}</td>
@@ -685,34 +666,34 @@
                 </tr>
             </table>
             
-            {# Fermer la page si on a 2 équipements ou si c'est le dernier #}
+            {# Fermer la page SEULEMENT après 2 équipements OU si dernier #}
             {% if equipmentCount % 2 == 0 or loop.last %}
+                        </div>
                     </div>
                 </div>
-            </div>
             {% endif %}
         {% endfor %}
     {% endif %}
     
-    {# PAGES ÉQUIPEMENTS SUPPLÉMENTAIRES #}
-    {% if equipementsSupplementaires|length > 0 %}
+    {# PAGES ÉQUIPEMENTS SUPPLÉMENTAIRES - VERSION CORRIGÉE #}
+    {% if equipementsSupplementaires is defined and equipementsSupplementaires|length > 0 %}
         {% set suppCount = 0 %}
+        
         {% for equipmentData in equipementsSupplementaires %}
             {% set equipment = equipmentData.equipment %}
             {% set pictures = equipmentData.pictures %}
             {% set suppCount = suppCount + 1 %}
             
-            {# Nouvelle page tous les 2 équipements #}
-            {% if (suppCount - 1) % 2 == 0 %}
-                {% if suppCount > 1 %}</div></div>{% endif %}
+            {# Ouvrir page pour 1er équipement supplémentaire et tous les 2 #}
+            {% if suppCount == 1 or (suppCount - 1) % 2 == 0 %}
                 <div class="equipment-page">
                     <div class="page-content">
+                        <div class="equipment-container">
             {% endif %}
             
             {# Table principale avec photo à gauche et infos à droite #}
             <table class="equipment-main-table">
                 <tr>
-                    {# Photo #}
                     <td class="equipment-photo-cell">
                         {% if pictures|length > 0 %}
                             <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="equipment-photo" alt="Photo équipement">
@@ -723,10 +704,8 @@
                         {% endif %}
                     </td>
                     
-                    {# Table imbriquée des informations #}
                     <td class="equipment-info-cell">
                         <table class="equipment-info-table">
-                            {# En-tête avec titre et logo d'état #}
                             <tr class="equipment-header-row">
                                 <td colspan="2" class="equipment-title">
                                     Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}
@@ -744,31 +723,26 @@
                                 </td>
                             </tr>
                             
-                            {# Numéro #}
                             <tr class="info-row">
                                 <td class="info-key">Numéro</td>
                                 <td class="info-value">{{ equipment.numeroEquipement }}</td>
                             </tr>
                             
-                            {# Type #}
                             <tr class="info-row">
                                 <td class="info-key">Type</td>
                                 <td class="info-value">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
                             </tr>
                             
-                            {# Marque #}
                             <tr class="info-row">
                                 <td class="info-key">Marque</td>
                                 <td class="info-value">{{ equipment.marque ?? 'Non renseigné' }}</td>
                             </tr>
                             
-                            {# Modèle #}
                             <tr class="info-row">
                                 <td class="info-key">Modèle</td>
                                 <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
                             </tr>
                             
-                            {# État #}
                             <tr class="info-row">
                                 <td class="info-key">État</td>
                                 <td class="info-value">
@@ -790,20 +764,17 @@
                                 </td>
                             </tr>
                             
-                            {# Mise en service #}
                             <tr class="info-row">
                                 <td class="info-key">Mise en service</td>
-                                <td class="info-value">{{ equipment.dateEnregistrement|date('Y')}}</td>
+                                <td class="info-value">{{ equipment.dateEnregistrement|date('Y') }}</td>
                             </tr>
                             
-                            {# Repère site client #}
                             <tr class="info-row">
                                 <td class="info-key">Repère site client</td>
-                                <td class="info-value">{{ equipment.repereSiteClient}}</td>
+                                <td class="info-value">{{ equipment.repereSiteClient }}</td>
                             </tr>
                             
-                            {# Anomalies (seulement si présentes) #}
-                            {% if equipment.anomalies|trim is not empty %}
+                            {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
                                 <td class="info-value">{{ equipment.anomalies }}</td>
@@ -814,8 +785,9 @@
                 </tr>
             </table>
             
-            {# Fermer la page si on a 2 équipements ou si c'est le dernier #}
+            {# Fermer après 2 équipements OU si dernier #}
             {% if suppCount % 2 == 0 or loop.last %}
+                        </div>
                     </div>
                 </div>
             {% endif %}
