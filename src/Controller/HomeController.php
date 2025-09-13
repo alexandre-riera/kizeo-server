@@ -689,7 +689,6 @@ class HomeController extends AbstractController
             });
             
             error_log("Équipements après filtrage: " . count($clientSelectedEquipmentsFiltered));
-            dd($clientSelectedEquipmentsFiltered);
             // 3. GÉNÉRATION DU HTML DE RÉPONSE
             if (empty($clientSelectedEquipmentsFiltered)) {
                 $html = $this->renderView('components/equipment_table_empty.html.twig', [
@@ -823,7 +822,7 @@ class HomeController extends AbstractController
                 break;
         }
         $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
-        
+        dd($clientSelectedEquipmentsFiltered);
         // Validation des filtres
         if (empty($clientAnneeFilter)) {
             $errors[] = 'Sélectionnez l\'année.';
