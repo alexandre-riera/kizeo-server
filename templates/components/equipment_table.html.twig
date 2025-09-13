@@ -88,7 +88,7 @@
                                 {% endif %}
                                 
 
-                                {%if equipment.statutDeMaintenance == "Vert" %}
+                                {#{%if equipment.statutDeMaintenance == "Vert" %}
                                     <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
                                     {% elseif equipment.statutDeMaintenance == "Orange" %}
                                     <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
@@ -105,7 +105,7 @@
 
                                     {% elseif equipment.getEtat() is null %}
                                     <td><figure><img style="height:35px;width:35px;" src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/absent.png') }} " alt="etat-equipement" /><figcaption>Absent</figcaption></figure></td>
-                                {% endif %}
+                                {% endif %}#}
                                 
                                 <td>
                                 {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
