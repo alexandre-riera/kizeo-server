@@ -501,7 +501,17 @@
             {% endif %}
             
             {# ÉQUIPEMENTS SUPPLÉMENTAIRES #}
+            {% set hasRealSupplementaryEquipment = false %}
             {% if statistiquesSupplementaires is not empty %}
+                {% for status, count in statistiquesSupplementaires %}
+                    {% if status != 'total' and count > 0 %}
+                        {% set hasRealSupplementaryEquipment = true %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            
+            {# Afficher la section seulement s'il y a des équipements supplémentaires réels #}
+            {% if hasRealSupplementaryEquipment %}
                 <div class="equipment-summary">
                     <div class="section-title">Équipements supplémentaires</div>
                     
