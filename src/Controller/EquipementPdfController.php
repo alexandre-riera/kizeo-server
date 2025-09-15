@@ -2452,11 +2452,7 @@ class EquipementPdfController extends AbstractController
             'green' => 0,
             'orange' => 0, 
             'red' => 0,
-            'urgent' => 0, // Alias pour red
-            'gray' => 0,
-            'inaccessible' => 0,
-            'arret' => 0,
-            'absent' => 0,
+            'black' => 0,
             'unknown' => 0
         ];
         
@@ -2482,23 +2478,18 @@ class EquipementPdfController extends AbstractController
                 case 'Travaux curatifs urgents':
                 case 'Travaux urgent ou à l\'arrêt':
                 case 'C':
-                    $statusCounts['red']++;
-                    $statusCounts['urgent']++; // Alias
-                    break;
-                case 'Equipement inaccessible':
-                    $statusCounts['inaccessible']++;
-                    break;
-                case 'Equipement à l\'arrêt':
-                    $statusCounts['arret']++;
-                    break;
-                case 'Equipement non présent sur site':
-                    $statusCounts['absent']++;
-                    break;
                 case 'D':
                 case 'E':
                 case 'F':
+                    $statusCounts['red']++;
+                    break;
+                case 'Equipement à l\'arrêt':
+                case 'Equipement à l\'arrêt le jour de la visite':
+                case 'Equipement non présent sur site':
+                case 'Equipement inaccessible':
                 case 'G':
-                    $statusCounts['gray']++;
+                case 'D':
+                    $statusCounts['black']++;
                     break;
                 default:
                     $statusCounts['unknown']++;

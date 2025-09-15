@@ -222,12 +222,17 @@ class HomeController extends AbstractController
                 if (!in_array($equipment->getDerniereVisite(), $dateArray)) {
                     $dateArray[] = $equipment->getDerniereVisite();
                 }
-                if ($equipment->isEnMaintenance()) {
-                    $clientSelectedEquipmentsFilteredAuContrat[] = $equipment;
-                } else {
-                    $clientSelectedEquipmentsFilteredHorsContrat[] = $equipment;
-                }
             }
+
+            // Cette ligne crée un nouveau tableau et écrase l'ancien contenu
+            $clientSelectedEquipmentsFilteredAuContrat = array_filter($clientSelectedEquipmentsFiltered, function($equipment) {
+                return $equipment->isEnMaintenance() === true;
+            });
+
+            // Pareil ici
+            $clientSelectedEquipmentsFilteredHorsContrat = array_filter($clientSelectedEquipmentsFiltered, function($equipment) {
+                return $equipment->isEnMaintenance() === false;
+            });
             
             if ($clientSelected && ($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
