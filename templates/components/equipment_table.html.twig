@@ -53,9 +53,9 @@
                                 <td>{{ equipment.getMiseEnService() }}</td>
                                 <td>{{ equipment.getNumeroDeSerie() }}</td>
                                 <td>{{ equipment.getMarque() }}</td>
-                                <td>{{ equipment.getHauteur() }}</td>
-                                <td>{{ equipment.getLargeur() }}</td>
-                                <td>{{ equipment.getLongueur() }}</td>
+                                <td>{{ equipment.getHauteur() == "A COMPLETER" ? "" : equipment.getHauteur() }}</td>
+                                <td>{{ equipment.getLargeur() == "A COMPLETER" ? "" : equipment.getLargeur() }}</td>
+                                <td>{{ equipment.getLongueur() == "A COMPLETER" ? "" : equipment.getLongueur() }}</td>
                                 <td>{{ equipment.getDateEnregistrement() }}</td>
                                 
                                 {% if equipment.getAnomalies() is not empty %}
