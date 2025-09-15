@@ -518,9 +518,7 @@ class HomeController extends AbstractController
                 $html = $this->renderView('components/equipment_table.html.twig', [
                     'clientSelectedEquipmentsFiltered' => $clientSelectedEquipmentsFiltered,
                     'clientSelectedEquipmentsFilteredAuContrat' => $clientSelectedEquipmentsFilteredAuContrat,
-                    'clientSelectedEquipmentsFilteredHorsContrat' => $clientSelectedEquipmentsFilteredHorsContrat,
-                    'agenceSelected' => $agenceSelected,
-                    'idClientSelected' => $idClientSelected
+                    'clientSelectedEquipmentsFilteredHorsContrat' => $clientSelectedEquipmentsFilteredHorsContrat
                 ]);
             }
 
