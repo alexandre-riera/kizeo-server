@@ -52,6 +52,222 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 class HomeController extends AbstractController
 {
+    // #[Route('/', name: 'app_front')]
+    // public function index(CacheInterface $cache, EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request, HomeRepository $homeRepository): Response
+    // {
+    //     $user = $this->getUser();
+    //     if (!$user) {
+    //         return $this->redirectToRoute('app_login');
+    //     }
+
+    //     // Récupérer les codes d'agence de l'utilisateur
+    //     $userAgencies = $this->getUserAgencies($user);
+        
+    //     // Si l'utilisateur n'a aucun rôle d'agence, rediriger ou afficher un message d'erreur
+    //     if (empty($userAgencies)) {
+    //         $this->addFlash('error', 'Vous n\'avez accès à aucune agence. Contactez l\'administrateur.');
+    //         return $this->redirectToRoute('app_logout');
+    //     }
+
+    //     // GET CONTACTS KIZEO BY AGENCY
+    //     $clientsGroup = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_GROUP"]);
+    //     $clientsStEtienne = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_ST_ETIENNE"]);
+    //     $clientsGrenoble = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_GRENOBLE"]);
+    //     $clientsLyon = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_LYON"]);
+    //     $clientsBordeaux = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_BORDEAUX"]);
+    //     $clientsParisNord = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_PARIS_NORD"]);
+    //     $clientsMontpellier = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_MONTPELLIER"]);
+    //     $clientsHautsDeFrance = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_HAUTS_DE_FRANCE"]);
+    //     $clientsToulouse = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_TOULOUSE"]);
+    //     $clientsEpinal = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_EPINAL"]);
+    //     $clientsPaca = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_PACA"]);
+    //     $clientsRouen = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_ROUEN"]);
+    //     $clientsRennes = $homeRepository->getListClientFromKizeoById($_ENV["PROD_CLIENTS_RENNES"]);
+        
+    //     // Variables pour le template
+    //     $agenceSelected = null;
+    //     $clientSelected = null;
+    //     $clientSelectedInformations = null;
+    //     $clientSelectedEquipments = [];
+    //     $clientSelectedEquipmentsFiltered = [];
+    //     $clientSelectedEquipmentsFilteredAuContrat = [];
+    //     $clientSelectedEquipmentsFilteredHorsContrat = [];
+    //     $idClientSelected = "";
+    //     $directoriesLists = [];
+        
+    //     // **ÉTAPE 1 : Logique de sélection d'agence**
+    //     if (count($userAgencies) === 1) {
+    //         // Un seul rôle d'agence : sélection automatique
+    //         $agenceSelected = $userAgencies[0];
+    //     } elseif (count($userAgencies) > 1) {
+    //         // Plusieurs rôles : vérifier si une agence a été soumise
+    //         if ($request->isMethod('POST') && $request->request->has('agenceName')) {
+    //             $selectedAgency = $request->request->get('agenceName');
+    //             // Vérifier que l'agence sélectionnée est dans les rôles de l'utilisateur
+    //             if (in_array($selectedAgency, $userAgencies)) {
+    //                 $agenceSelected = $selectedAgency;
+    //             }
+    //         }
+    //     }
+
+    //     // **ÉTAPE 2 : Logique de sélection de client**
+    //     // if ($agenceSelected && $request->isMethod('POST') && $request->request->has('clientName')) {
+    //     if (isset($_POST['clientName'])) {
+    //         $clientSelected = $_POST['clientName'];
+
+    //         // Extraire l'ID client et nettoyer le nom
+    //         if ($clientSelected != "") {
+    //             $clientSelectedSplitted = preg_split("/[-]/", $clientSelected);
+    //             if (count($clientSelectedSplitted) >= 2) {
+    //                 $idClientSelected = trim($clientSelectedSplitted[0]);
+    //                 $clientSelected = trim($clientSelectedSplitted[1]);
+    //                 $agenceSelected = trim(substr($clientSelectedSplitted[2], -4, 4)); // Extraire le code agence (S10, S40, etc.)
+    //                 // Charger les informations et équipements du client
+    //                 $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, $homeRepository, $idClientSelected); // ← CHANGEMENT ICI
+    //             }
+    //         }
+    //     }
+
+    //     // **ÉTAPE 3 : Gestion des filtres**
+    //     $clientAnneeFilterArray = [];
+    //     $clientVisiteFilterArray = [];
+    //     $clientAnneeFilter = "";
+    //     $clientVisiteFilter = "";
+    //     $defaultYear = "";
+    //     $defaultVisit = "";
+
+    //     if (!empty($clientSelectedEquipments)) {
+    //         // Construire les arrays de filtres
+    //         foreach ($clientSelectedEquipments as $equipment) {
+    //             if ($equipment->getDerniereVisite() !== null) {
+    //                 $date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+    //                 if (!in_array($date_equipment, $clientAnneeFilterArray)) {
+    //                     $clientAnneeFilterArray[] = $date_equipment;
+    //                 }
+    //             }
+                
+    //             $visite_equipment = $equipment->getVisite();
+    //             if (!in_array($visite_equipment, $clientVisiteFilterArray)) {
+    //                 $clientVisiteFilterArray[] = $visite_equipment;
+    //             }
+    //         }
+
+    //         // Trouver la date la plus récente pour les filtres par défaut
+    //         $absoluteLatestVisitDate = null;
+    //         foreach ($clientSelectedEquipments as $equipment) {
+    //             if ($equipment->getDerniereVisite() !== null) {
+    //                 $currentDate = new DateTime($equipment->getDerniereVisite());
+    //                 if ($absoluteLatestVisitDate === null || $currentDate > $absoluteLatestVisitDate) {
+    //                     $absoluteLatestVisitDate = $currentDate;
+    //                 }
+    //             }
+    //         }
+
+    //         if ($absoluteLatestVisitDate) {
+    //             $defaultYear = $absoluteLatestVisitDate->format('Y');
+                
+    //             // Trouver la visite correspondant à la date la plus récente
+    //             foreach ($clientSelectedEquipments as $equipment) {
+    //                 if ($equipment->getDerniereVisite() !== null) {
+    //                     $equipmentDate = new DateTime($equipment->getDerniereVisite());
+    //                     if ($equipmentDate == $absoluteLatestVisitDate) {
+    //                         $defaultVisit = $equipment->getVisite();
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         // Récupérer les filtres depuis la requête ou utiliser les valeurs par défaut
+    //         $clientAnneeFilter = $request->query->get('clientAnneeFilter', $defaultYear);
+    //         $clientVisiteFilter = $request->query->get('clientVisiteFilter', $defaultVisit);
+
+    //         // Appliquer les filtres
+    //         if ($request->query->get('submitFilters')) {
+    //             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+    //             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+                
+    //             if (empty($clientAnneeFilter)) {
+    //                 $this->addFlash('error', 'Sélectionnez l\'année.');
+    //             }
+    //             if (empty($clientVisiteFilter)) {
+    //                 $this->addFlash('error', 'Sélectionnez la visite.');
+    //             }
+    //         }
+
+    //         // Filtrer les équipements
+    //         if (!empty($clientAnneeFilter) && !empty($clientVisiteFilter)) {
+    //             $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($clientAnneeFilter, $clientVisiteFilter) {
+    //                 if ($equipment->getDerniereVisite() === null) return false;
+    //                 $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+    //                 return ($annee_date_equipment == $clientAnneeFilter && $equipment->getVisite() == $clientVisiteFilter);
+    //             });
+    //         } else {
+    //             // Filtrage par défaut avec la dernière visite
+    //             $clientSelectedEquipmentsFiltered = array_filter($clientSelectedEquipments, function($equipment) use ($defaultYear, $defaultVisit) {
+    //                 if ($equipment->getDerniereVisite() === null) return false;
+    //                 $annee_date_equipment = date("Y", strtotime($equipment->getDerniereVisite()));
+    //                 return ($annee_date_equipment == $defaultYear && $equipment->getVisite() == $defaultVisit);
+    //             });
+    //         }
+
+    //         // Si aucun équipement filtré, montrer tous
+    //         if (empty($clientSelectedEquipmentsFiltered)) {
+    //             $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
+    //         }
+
+    //         // Générer la liste des PDF
+    //         $dateArray = [];
+    //         foreach($clientSelectedEquipmentsFiltered as $equipment) {
+    //             if (!in_array($equipment->getDerniereVisite(), $dateArray)) {
+    //                 $dateArray[] = $equipment->getDerniereVisite();
+    //             }
+    //             if ($equipment->isEnMaintenance()) {
+    //                 $clientSelectedEquipmentsFilteredAuContrat[] = $equipment;
+    //             } else {
+    //                 $clientSelectedEquipmentsFilteredHorsContrat[] = $equipment;
+    //             }
+    //         }
+            
+    //         if (!empty($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
+    //             $directoriesLists = $homeRepository->getListOfPdf($idClientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
+    //         }
+    //     }
+
+    //     return $this->render('home/index.html.twig', [
+    //         'userAgencies' => $userAgencies,
+    //         'clientsGroup' => $clientsGroup,
+    //         'clientsStEtienne' => $clientsStEtienne,
+    //         'clientsGrenoble' => $clientsGrenoble,
+    //         'clientsLyon' => $clientsLyon,
+    //         'clientsBordeaux' => $clientsBordeaux,
+    //         'clientsParisNord' => $clientsParisNord,
+    //         'clientsMontpellier' => $clientsMontpellier,
+    //         'clientsHautsDeFrance' => $clientsHautsDeFrance,
+    //         'clientsToulouse' => $clientsToulouse,
+    //         'clientsEpinal' => $clientsEpinal,
+    //         'clientsPaca' => $clientsPaca,
+    //         'clientsRouen' => $clientsRouen,
+    //         'clientsRennes' => $clientsRennes,
+    //         'clientSelected' => $clientSelected,
+    //         'agenceSelected' => $agenceSelected,
+    //         'clientSelectedInformations' => $clientSelectedInformations,
+    //         'clientSelectedEquipmentsFiltered' => $clientSelectedEquipmentsFiltered,
+    //         'clientSelectedEquipmentsFilteredAuContrat' => $clientSelectedEquipmentsFilteredAuContrat,
+    //         'clientSelectedEquipmentsFilteredHorsContrat' => $clientSelectedEquipmentsFilteredHorsContrat,
+    //         'totalClientSelectedEquipmentsFiltered' => count($clientSelectedEquipmentsFiltered),
+    //         'directoriesLists' => $directoriesLists,
+    //         'clientSelectedEquipments' => $clientSelectedEquipments,
+    //         'idClientSelected' => $idClientSelected,
+    //         'clientAnneeFilterArray' => $clientAnneeFilterArray,
+    //         'clientAnneeFilter' => $clientAnneeFilter,
+    //         'clientVisiteFilterArray' => $clientVisiteFilterArray,
+    //         'clientVisiteFilter' => $clientVisiteFilter,
+    //         'defaultYear' => $defaultYear,
+    //         'defaultVisit' => $defaultVisit,
+    //     ]);
+    // }
+
     #[Route('/', name: 'app_front')]
     public function index(CacheInterface $cache, EntityManagerInterface $entityManager, SerializerInterface $serializer, Request $request, HomeRepository $homeRepository): Response
     {
@@ -108,22 +324,30 @@ class HomeController extends AbstractController
                     $agenceSelected = $selectedAgency;
                 }
             }
+            
+            // ✅ NOUVEAU : Récupérer l'agence depuis le champ caché si présent
+            if ($request->isMethod('POST') && $request->request->has('hiddenAgence')) {
+                $hiddenAgency = $request->request->get('hiddenAgence');
+                if (in_array($hiddenAgency, $userAgencies)) {
+                    $agenceSelected = $hiddenAgency;
+                }
+            }
         }
 
-        // **ÉTAPE 2 : Logique de sélection de client**
-        // if ($agenceSelected && $request->isMethod('POST') && $request->request->has('clientName')) {
-        if (isset($_POST['clientName'])) {
+        // **ÉTAPE 2 : Logique de sélection de client (CORRIGÉE)**
+        if (isset($_POST['clientName']) && !empty($agenceSelected)) {
             $clientSelected = $_POST['clientName'];
 
-            // Extraire l'ID client et nettoyer le nom
+            // ✅ NOUVELLE LOGIQUE : Extraire seulement l'ID et le nom, pas l'agence
             if ($clientSelected != "") {
-                $clientSelectedSplitted = preg_split("/[-]/", $clientSelected);
+                $clientSelectedSplitted = preg_split("/[-]/", $clientSelected, 2); // Limiter à 2 parties max
                 if (count($clientSelectedSplitted) >= 2) {
                     $idClientSelected = trim($clientSelectedSplitted[0]);
                     $clientSelected = trim($clientSelectedSplitted[1]);
-                    $agenceSelected = trim(substr($clientSelectedSplitted[2], -4, 4)); // Extraire le code agence (S10, S40, etc.)
+                    // ✅ L'agence vient maintenant du champ caché ou de l'étape 1, plus du nom du client !
+                    
                     // Charger les informations et équipements du client
-                    $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, $homeRepository, $clientSelected);
+                    $this->loadClientData($agenceSelected, $idClientSelected, $entityManager, $clientSelectedInformations, $clientSelectedEquipments, $homeRepository, $idClientSelected);
                 }
             }
         }
@@ -234,7 +458,8 @@ class HomeController extends AbstractController
                 return $equipment->isEnMaintenance() === false;
             });
             
-            if ($clientSelected && ($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
+            // ✅ CORRIGÉ : Utiliser $idClientSelected au lieu de $clientSelected
+            if (!empty($clientVisiteFilter ?: $defaultVisit) && $agenceSelected) {
                 $directoriesLists = $homeRepository->getListOfPdf($clientSelected, ($clientVisiteFilter ?: $defaultVisit), $agenceSelected, $dateArray);
             }
         }
@@ -469,7 +694,6 @@ class HomeController extends AbstractController
             });
             
             error_log("Équipements après filtrage: " . count($clientSelectedEquipmentsFiltered));
-            
             // 3. GÉNÉRATION DU HTML DE RÉPONSE
             if (empty($clientSelectedEquipmentsFiltered)) {
                 $html = $this->renderView('components/equipment_table_empty.html.twig', [
@@ -603,7 +827,7 @@ class HomeController extends AbstractController
                 break;
         }
         $clientSelectedEquipmentsFiltered = $clientSelectedEquipments;
-        
+        dd($clientSelectedEquipmentsFiltered);
         // Validation des filtres
         if (empty($clientAnneeFilter)) {
             $errors[] = 'Sélectionnez l\'année.';

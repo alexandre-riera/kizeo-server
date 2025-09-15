@@ -20,7 +20,7 @@
     {% block clientEquipements %}
         <div>
             <table id="table" class="table-equipement-client table-bordered" data-toggle="table" data-pagination="true" data-search="true" data-filter-control="true" data-show-search-clear-button="true">
-                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFilteredAuContrat|length }} Équipements au contrat </CAPTION>
+                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFiltered|length }} Équipements au contrat </CAPTION>
                 <thead>
                     <tr class="sticky">
                         <th data-sortable="true" data-filter-control="select" data-field="visite">Visite</th>
@@ -42,8 +42,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if clientSelectedEquipmentsFilteredAuContrat is not empty %}
-                        {% for equipment in clientSelectedEquipmentsFilteredAuContrat %}
+                    {% if clientSelectedEquipmentsFiltered is not empty %}
+                        {% for equipment in clientSelectedEquipmentsFiltered %}
                             <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                                 <td>{{ equipment.getVisite() }}</td>
                                 <td>{{ equipment.getNumeroEquipement() }}</td>
@@ -62,89 +62,91 @@
                                     <td>{{ equipment.getAnomalies() }}</td>
                                 {% else %}
                                     <td></td>
+                                {% endif %}                             
+                                {%if equipment.etat == "A" %}
+                                    <td>Bon état de fonctionnement le jour de la visite</td>
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>Vert</figcaption></figure></td>
+                                    {% elseif equipment.etat == "B" %}
+                                        <td>Travaux préventifs</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>Orange</figcaption></figure></td>
+                                    {% elseif equipment.etat == "C" %}
+                                        <td>Travaux curatifs</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "D" %}
+                                        <td>Equipement inaccessible le jour de la visite</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>Noir</figcaption></figure></td>
+                                    {% elseif equipment.etat == "E" %}
+                                        <td>Equipement à l'arrêt le jour de la visite</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "F" %}
+                                        <td>Equipement mis à l'arrêt lors de l'intervention</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "G" %}
+                                        <td>Equipement non présent sur site</td>
+                                    {% else %}
+                                        <td>{{ equipment.getEtat() }}</td>
                                 {% endif %}
-                                {% if equipment.etat is not empty %}                                
-                                    {%if equipment.etat == "A" %}
-                                        <td>Bon état de fonctionnement le jour de la visite</td>
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>Vert</figcaption></figure></td>
-                                        {% elseif equipment.etat == "B" %}
-                                            <td>Travaux préventifs</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>Orange</figcaption></figure></td>
-                                        {% elseif equipment.etat == "C" %}
-                                            <td>Travaux curatifs</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "D" %}
-                                            <td>Equipement inaccessible le jour de la visite</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>Noir</figcaption></figure></td>
-                                        {% elseif equipment.etat == "E" %}
-                                            <td>Equipement à l'arrêt le jour de la visite</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "F" %}
-                                            <td>Equipement mis à l'arrêt lors de l'intervention</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "G" %}
-                                            <td>Equipement non présent sur site</td>
-                                        {% else %}
-                                            <td>{{ equipment.getEtat() }}</td>
-                                    {% endif %}
-                                    
+                                
 
-                                    {%if equipment.statutDeMaintenance == "Vert" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                {#{%if equipment.statutDeMaintenance == "Vert" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Orange" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "A_REPARER" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "RAS" and equipment.etat == "G" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
 
-                                        {% elseif equipment.getEtat() is null %}
-                                        <td><figure><img style="height:35px;width:35px;" src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/absent.png') }} " alt="etat-equipement" /><figcaption>Absent</figcaption></figure></td>
-                                    {% endif %}
-                                    
-                                    <td>
-                                    {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
-                                        <button onclick="editEquipement(
-                                            '{{ equipment.getId() }}',
-                                            '{{ equipment.getLibelleEquipement() }}',
-                                            '{{ equipment.getVisite() }}',
-                                            '{{ equipment.getRaisonSociale() }}',
-                                            '{{ equipment.getModeleNacelle() }}',
-                                            '{{ equipment.getHauteurNacelle() }}',
-                                            '{{ equipment.getIfExistDB() }}',
-                                            '{{ equipment.getSignatureTech() }}',
-                                            '{{ equipment.getTrigrammeTech() }}',
-                                            '{{ equipment.getAnomalies() }}',
-                                            '{{ equipment.getIdContact() }}',
-                                            '{{ equipment.getCodeSociete() }}',
-                                            '{{ equipment.getCodeAgence() }}',
-                                            '{{ equipment.getNumeroEquipement() }}',
-                                            '{{ equipment.getModeFonctionnement() }}',
-                                            '{{ equipment.getRepereSiteClient() }}',
-                                            '{{ equipment.getMiseEnService() }}',
-                                            '{{ equipment.getNumeroDeSerie() }}',
-                                            '{{ equipment.getMarque() }}',
-                                            '{{ equipment.getHauteur() }}',
-                                            '{{ equipment.getLargeur() }}',
-                                            '{{ equipment.getLongueur() }}',
-                                            '{{ equipment.getPlaqueSignaletique() }}',
-                                            '{{ equipment.getEtat() }}',
-                                            '{{ equipment.getDerniereVisite() }}',
-                                            '{{ equipment.getStatutDeMaintenance() }}',
-                                            '{{ equipment.getPresenceCarnetEntretien() }}',
-                                            '{{ equipment.getStatutConformite() }}'
-                                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                                        </button>
-                                    {% endif %}
-                                    <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                                    {# <a style="margin-top:10px;" href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
-                                    class="btn btn-primary" target="_blank" title="PDF de cet équipement">
-                                        <i class="fa-solid fa-file-pdf"></i>PDF équipement
-                                    </a> #}
-                                    </td>
+                                    {% elseif equipment.getEtat() is null %}
+                                    <td><figure><img style="height:35px;width:35px;" src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/absent.png') }} " alt="etat-equipement" /><figcaption>Absent</figcaption></figure></td>
+                                {% endif %}#}
+                                
+                                <td>
+                                {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
+                                    <button onclick="editEquipement(
+                                        '{{ equipment.getId() }}',
+                                        '{{ equipment.getLibelleEquipement() }}',
+                                        '{{ equipment.getVisite() }}',
+                                        '{{ equipment.getRaisonSociale() }}',
+                                        '{{ equipment.getModeleNacelle() }}',
+                                        '{{ equipment.getHauteurNacelle() }}',
+                                        '{{ equipment.getIfExistDB() }}',
+                                        '{{ equipment.getSignatureTech() }}',
+                                        '{{ equipment.getTrigrammeTech() }}',
+                                        '{{ equipment.getAnomalies() }}',
+                                        '{{ equipment.getIdContact() }}',
+                                        '{{ equipment.getCodeSociete() }}',
+                                        '{{ equipment.getCodeAgence() }}',
+                                        '{{ equipment.getNumeroEquipement() }}',
+                                        '{{ equipment.getModeFonctionnement() }}',
+                                        '{{ equipment.getRepereSiteClient() }}',
+                                        '{{ equipment.getMiseEnService() }}',
+                                        '{{ equipment.getNumeroDeSerie() }}',
+                                        '{{ equipment.getMarque() }}',
+                                        '{{ equipment.getHauteur() }}',
+                                        '{{ equipment.getLargeur() }}',
+                                        '{{ equipment.getLongueur() }}',
+                                        '{{ equipment.getPlaqueSignaletique() }}',
+                                        '{{ equipment.getEtat() }}',
+                                        '{{ equipment.getDerniereVisite() }}',
+                                        '{{ equipment.getStatutDeMaintenance() }}',
+                                        '{{ equipment.getPresenceCarnetEntretien() }}',
+                                        '{{ equipment.getStatutConformite() }}'
+                                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
                                 {% endif %}
+                                <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                                {# <a style="margin-top:10px;" href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
+                                class="btn btn-primary" target="_blank" title="PDF de cet équipement">
+                                    <i class="fa-solid fa-file-pdf"></i>PDF équipement
+                                </a> #}
+                                </td>
                             </tr>
                         {% endfor %}
                     {% endif %}
@@ -158,7 +160,7 @@
         </div>
         <div>
             <table id="tableHorsContrat" class="table-equipement-client table-bordered" data-toggle="table" data-pagination="true" data-search="true" data-filter-control="true" data-show-search-clear-button="true">
-                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFilteredHorsContrat|length }} Équipements Hors contrat </CAPTION>
+                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFiltered|length }} Équipements Hors contrat </CAPTION>
                 <thead>
                     <tr class="sticky">
                         <th data-sortable="true" data-filter-control="select" data-field="visite">Visite</th>
@@ -180,8 +182,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if clientSelectedEquipmentsFilteredHorsContrat is not empty %}
-                        {% for equipment in clientSelectedEquipmentsFilteredHorsContrat %}
+                    {% if clientSelectedEquipmentsFiltered is not empty %}
+                        {% for equipment in clientSelectedEquipmentsFiltered %}
                             <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                                 <td>{{ equipment.getVisite() }}</td>
                                 <td>{{ equipment.getNumeroEquipement() }}</td>
@@ -201,86 +203,83 @@
                                 {% else %}
                                     <td></td>
                                 {% endif %}
-                                {% if equipment.etat is not empty %}
-                                
-                                    {%if equipment.etat == "A" %}
-                                        <td>Bon état de fonctionnement le jour de la visite</td>
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>Vert</figcaption></figure></td>
-                                        {% elseif equipment.etat == "B" %}
-                                            <td>Travaux préventifs</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>Orange</figcaption></figure></td>
-                                        {% elseif equipment.etat == "C" %}
-                                            <td>Travaux curatifs</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "D" %}
-                                            <td>Equipement inaccessible le jour de la visite</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>Noir</figcaption></figure></td>
-                                        {% elseif equipment.etat == "E" %}
-                                            <td>Equipement à l'arrêt le jour de la visite</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "F" %}
-                                            <td>Equipement mis à l'arrêt lors de l'intervention</td>
-                                            <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
-                                        {% elseif equipment.etat == "G" %}
-                                            <td>Equipement non présent sur site</td>
-                                        {% else %}
-                                            <td>{{ equipment.getEtat() }}</td>
-                                    {% endif %}
-                                    
-
-                                    {%if equipment.statutDeMaintenance == "Vert" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Orange" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Rouge" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                        {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
-                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
-                                    {% endif %}
-                                    
-                                    <td>
-                                    {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
-                                        <button onclick="editEquipement(
-                                            '{{ equipment.getId() }}',
-                                            '{{ equipment.getLibelleEquipement() }}',
-                                            '{{ equipment.getVisite() }}',
-                                            '{{ equipment.getRaisonSociale() }}',
-                                            '{{ equipment.getModeleNacelle() }}',
-                                            '{{ equipment.getHauteurNacelle() }}',
-                                            '{{ equipment.getIfExistDB() }}',
-                                            '{{ equipment.getSignatureTech() }}',
-                                            '{{ equipment.getTrigrammeTech() }}',
-                                            '{{ equipment.getAnomalies() }}',
-                                            '{{ equipment.getIdContact() }}',
-                                            '{{ equipment.getCodeSociete() }}',
-                                            '{{ equipment.getCodeAgence() }}',
-                                            '{{ equipment.getNumeroEquipement() }}',
-                                            '{{ equipment.getModeFonctionnement() }}',
-                                            '{{ equipment.getRepereSiteClient() }}',
-                                            '{{ equipment.getMiseEnService() }}',
-                                            '{{ equipment.getNumeroDeSerie() }}',
-                                            '{{ equipment.getMarque() }}',
-                                            '{{ equipment.getHauteur() }}',
-                                            '{{ equipment.getLargeur() }}',
-                                            '{{ equipment.getLongueur() }}',
-                                            '{{ equipment.getPlaqueSignaletique() }}',
-                                            '{{ equipment.getEtat() }}',
-                                            '{{ equipment.getDerniereVisite() }}',
-                                            '{{ equipment.getStatutDeMaintenance() }}',
-                                            '{{ equipment.getPresenceCarnetEntretien() }}',
-                                            '{{ equipment.getStatutConformite() }}'
-                                        )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
-                                        </button>
-                                    {% endif %}
-                                    <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
-                                    {# <a style="margin-top:10px;" href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
-                                    class="btn btn-primary" target="_blank" title="PDF de cet équipement">
-                                        <i class="fa-solid fa-file-pdf"></i>PDF équipement
-                                    </a> #}
-                                    </td>
+                                {%if equipment.etat == "A" %}
+                                    <td>Bon état de fonctionnement le jour de la visite</td>
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>Vert</figcaption></figure></td>
+                                    {% elseif equipment.etat == "B" %}
+                                        <td>Travaux préventifs</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>Orange</figcaption></figure></td>
+                                    {% elseif equipment.etat == "C" %}
+                                        <td>Travaux curatifs</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "D" %}
+                                        <td>Equipement inaccessible le jour de la visite</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>Noir</figcaption></figure></td>
+                                    {% elseif equipment.etat == "E" %}
+                                        <td>Equipement à l'arrêt le jour de la visite</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "F" %}
+                                        <td>Equipement mis à l'arrêt lors de l'intervention</td>
+                                        <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>Rouge</figcaption></figure></td>
+                                    {% elseif equipment.etat == "G" %}
+                                        <td>Equipement non présent sur site</td>
+                                    {% else %}
+                                        <td>{{ equipment.getEtat() }}</td>
                                 {% endif %}
+                                
+
+                                {%if equipment.statutDeMaintenance == "Vert" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Orange" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Rouge" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "A l'arrêt" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                    {% elseif equipment.statutDeMaintenance == "Inaccessible" %}
+                                    <td><figure><img src=" {{ asset('https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png') }} " alt="etat-equipement" /><figcaption>{{ equipment.getStatutDeMaintenance() }}</figcaption></figure></td>
+                                {% endif %}
+                                
+                                <td>
+                                {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SOMAFI_EDIT') %}
+                                    <button onclick="editEquipement(
+                                        '{{ equipment.getId() }}',
+                                        '{{ equipment.getLibelleEquipement() }}',
+                                        '{{ equipment.getVisite() }}',
+                                        '{{ equipment.getRaisonSociale() }}',
+                                        '{{ equipment.getModeleNacelle() }}',
+                                        '{{ equipment.getHauteurNacelle() }}',
+                                        '{{ equipment.getIfExistDB() }}',
+                                        '{{ equipment.getSignatureTech() }}',
+                                        '{{ equipment.getTrigrammeTech() }}',
+                                        '{{ equipment.getAnomalies() }}',
+                                        '{{ equipment.getIdContact() }}',
+                                        '{{ equipment.getCodeSociete() }}',
+                                        '{{ equipment.getCodeAgence() }}',
+                                        '{{ equipment.getNumeroEquipement() }}',
+                                        '{{ equipment.getModeFonctionnement() }}',
+                                        '{{ equipment.getRepereSiteClient() }}',
+                                        '{{ equipment.getMiseEnService() }}',
+                                        '{{ equipment.getNumeroDeSerie() }}',
+                                        '{{ equipment.getMarque() }}',
+                                        '{{ equipment.getHauteur() }}',
+                                        '{{ equipment.getLargeur() }}',
+                                        '{{ equipment.getLongueur() }}',
+                                        '{{ equipment.getPlaqueSignaletique() }}',
+                                        '{{ equipment.getEtat() }}',
+                                        '{{ equipment.getDerniereVisite() }}',
+                                        '{{ equipment.getStatutDeMaintenance() }}',
+                                        '{{ equipment.getPresenceCarnetEntretien() }}',
+                                        '{{ equipment.getStatutConformite() }}'
+                                    )" type="button" class="btn btn-primary edit_equipement" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><i class=" fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                {% endif %}
+                                <a style="margin-top:10px;" class="btn btn-primary" href="{{ path('app_show_equipement_details_by_id', {'agence': equipment.getCodeAgence(), 'id': equipment.getId() }) }}" target="_blank"><i class=" fa-solid fa-magnifying-glass-plus"></i> Fiche équipement</a>
+                                {# <a style="margin-top:10px;" href="{{ path('equipement_pdf_single', {'agence': equipment.getCodeAgence(), 'id': equipment.getId()}) }}" 
+                                class="btn btn-primary" target="_blank" title="PDF de cet équipement">
+                                    <i class="fa-solid fa-file-pdf"></i>PDF équipement
+                                </a> #}
+                                </td>
                             </tr>
                         {% endfor %}
                     {% endif %}

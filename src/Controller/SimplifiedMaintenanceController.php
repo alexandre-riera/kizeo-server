@@ -2724,9 +2724,10 @@ class SimplifiedMaintenanceController extends AbstractController
             $form->setDataId($entryId);
             $form->setEquipmentId($equipmentCode);
             $form->setCodeEquipement($equipmentCode);
-            $form->setRaisonSocialeVisite(
-                ($equipmentData['nom_client']['value'] ?? '') . '\\' . ($equipmentData['visite']['value'] ?? '')
-            );
+            $raisonSociale = $fields['nom_client']['value'] ?? '';
+            $typeVisite = $this->extractVisitTypeFromPath($equipmentData['equipement']['path'] ?? '');
+
+            $form->setRaisonSocialeVisite($raisonSociale . '\\' . $typeVisite);
             $form->setUpdateTime(date('Y-m-d H:i:s'));
             
             // Photo étiquette SOMAFI

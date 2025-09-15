@@ -2412,7 +2412,7 @@ class FormRepository extends ServiceEntityRepository
             // 🔥 CORRECTION : Construction correcte du champ raison_sociale_visite
             $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
             
-            // Vérifier si une entrée Form existe déjà
+            // Vérifier si une entrée Form existe déjà 
             $existingForm = $this->findOneBy([
                 'code_equipement' => $codeEquipement,
                 'raison_sociale_visite' => $raisonSocialeVisite
@@ -2522,17 +2522,47 @@ class FormRepository extends ServiceEntityRepository
                     
                 } catch (\Exception $e) {
                     $results['errors']++;
-                    error_log("Erreur correction Form ID {$form->getId()}: " . $e->getMessage());
+                    error_log("Erreur correction raison_sociale_visite pour {$form->getCodeEquipement()}: " . $e->getMessage());
                 }
             }
             
+            // Sauvegarder tous les changements
             $this->getEntityManager()->flush();
             
         } catch (\Exception $e) {
+            $results['errors']++;
             error_log("Erreur globale correction raison_sociale_visite: " . $e->getMessage());
         }
         
         return $results;
+    }
+
+    /**
+     * Méthode helper pour récupérer le bon repository selon l'agence
+     */
+    private function getRepositoryForAgency($agencyCode, EntityManagerInterface $entityManager)
+    {
+        $repositoryMap = [
+            'S10' => 'App\Entity\EquipementS10',
+            'S40' => 'App\Entity\EquipementS40',
+            'S50' => 'App\Entity\EquipementS50',
+            'S60' => 'App\Entity\EquipementS60',
+            'S70' => 'App\Entity\EquipementS70',
+            'S80' => 'App\Entity\EquipementS80',
+            'S100' => 'App\Entity\EquipementS100',
+            'S120' => 'App\Entity\EquipementS120',
+            'S130' => 'App\Entity\EquipementS130',
+            'S140' => 'App\Entity\EquipementS140',
+            'S150' => 'App\Entity\EquipementS150',
+            'S160' => 'App\Entity\EquipementS160',
+            'S170' => 'App\Entity\EquipementS170',
+        ];
+        
+        if (!isset($repositoryMap[$agencyCode])) {
+            throw new \InvalidArgumentException("Agence inconnue: {$agencyCode}");
+        }
+        
+        return $entityManager->getRepository($repositoryMap[$agencyCode]);
     }
 
     /**
