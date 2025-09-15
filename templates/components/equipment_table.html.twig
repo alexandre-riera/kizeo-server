@@ -20,7 +20,7 @@
     {% block clientEquipements %}
         <div>
             <table id="table" class="table-equipement-client table-bordered" data-toggle="table" data-pagination="true" data-search="true" data-filter-control="true" data-show-search-clear-button="true">
-                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFiltered|length }} Équipements au contrat </CAPTION>
+                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFilteredAuContrat|length }} Équipements au contrat </CAPTION>
                 <thead>
                     <tr class="sticky">
                         <th data-sortable="true" data-filter-control="select" data-field="visite">Visite</th>
@@ -42,8 +42,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if clientSelectedEquipmentsFiltered is not empty %}
-                        {% for equipment in clientSelectedEquipmentsFiltered %}
+                    {% if clientSelectedEquipmentsFilteredAuContrat is not empty %}
+                        {% for equipment in clientSelectedEquipmentsFilteredAuContrat %}
                             <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                                 <td>{{ equipment.getVisite() }}</td>
                                 <td>{{ equipment.getNumeroEquipement() }}</td>
@@ -160,7 +160,7 @@
         </div>
         <div>
             <table id="tableHorsContrat" class="table-equipement-client table-bordered" data-toggle="table" data-pagination="true" data-search="true" data-filter-control="true" data-show-search-clear-button="true">
-                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFiltered|length }} Équipements Hors contrat </CAPTION>
+                <CAPTION ALIGN="TOP" style="font-size:24px; color:white;">{{ clientSelectedEquipmentsFilteredHorsContrat|length }} Équipements Hors contrat </CAPTION>
                 <thead>
                     <tr class="sticky">
                         <th data-sortable="true" data-filter-control="select" data-field="visite">Visite</th>
@@ -182,8 +182,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% if clientSelectedEquipmentsFiltered is not empty %}
-                        {% for equipment in clientSelectedEquipmentsFiltered %}
+                    {% if clientSelectedEquipmentsFilteredHorsContrat is not empty %}
+                        {% for equipment in clientSelectedEquipmentsFilteredHorsContrat %}
                             <tr class="bkg_row_visite_1" id="{{ equipment.getId() }}" data-visite="{{ equipment.getVisite() }}" data-libelle="{{ equipment.getLibelleEquipement() }}" data-statut="{{ equipment.getStatutDeMaintenance() }}">
                                 <td>{{ equipment.getVisite() }}</td>
                                 <td>{{ equipment.getNumeroEquipement() }}</td>
