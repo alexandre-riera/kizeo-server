@@ -451,6 +451,7 @@ class HomeController extends AbstractController
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
             $agenceSelected = $request->query->get('agenceSelected', '');
             $idClientSelected = $request->query->get('idClientSelected', '');
+            $clientSelected = $request->query->get('clientSelected', '');
             
             error_log("=== FILTRAGE AJAX ===");
             error_log("Agence: {$agenceSelected}, Client: {$idClientSelected}");
