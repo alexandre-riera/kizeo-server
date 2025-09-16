@@ -236,6 +236,14 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
+            $clientAnneeFilter = '';
+            $clientVisiteFilter = '';
+            // Nettoyage final avant rendu
+            if (!empty($request->query->get('clientAnneeFilter')) && !empty($request->query->get('clientVisiteFilter', ''))) {
+                $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+                $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+            }
+
             // 4. Génération finale du PDF avec les données optimisées
             $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
             
@@ -246,8 +254,8 @@ class EquipementPdfController extends AbstractController
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl,
-                'clientAnneeFilter' => $request->query->get('clientAnneeFilter', ''),
-                'clientVisiteFilter' => $request->query->get('clientVisiteFilter', ''),
+                'clientAnneeFilter' => $clientAnneeFilter,
+                'clientVisiteFilter' => $clientVisiteFilter,
                 'isOptimizedMode' => $totalEquipments > 100, // CORRIGÉ: seulement > 100
                 'totalEquipmentsFound' => $totalEquipments,
                 'maxEquipmentsProcessed' => count($allEquipmentsWithPictures),
