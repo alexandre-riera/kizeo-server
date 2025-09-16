@@ -290,10 +290,10 @@ class EquipementPdfController extends AbstractController
         return [
             'nom' => $client->getRaisonSociale() ?? 'Non renseigné',
             'adresse' => [
-                'ligne1' => $client->getAdresse1() ?? '',
-                'ligne2' => $client->getAdresse2() ?? '',
-                'codePostal' => $client->getCodePostal() ?? '',
-                'ville' => $client->getVille() ?? '',
+                'ligne1' => $client->getAdressep1() ?? '',
+                'ligne2' => $client->getAdressep2() ?? '',
+                'codePostal' => $client->getCodePostalp() ?? '',
+                'ville' => $client->getVillep() ?? '',
             ]
         ];
     }
