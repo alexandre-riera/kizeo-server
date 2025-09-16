@@ -148,26 +148,159 @@
     </style>
 </head>
 <body>
-    {# En-tête du document #}
-    <div class="header"></div>
+    {# Définition des mappings de statuts #}
+    {% set statusMapping = {
+        'A': 'Bon état',
+        'B': 'Travaux à prévoir', 
+        'C': 'Travaux curatifs urgents',
+        'D': 'Équipement inaccessible',
+        'E': 'Équipement à l\'arrêt',
+        'F': 'Équipement mis à l\'arrêt',
+        'G': 'Équipement non présent'
+    } %}
     
-    {# Message d'optimisation SEULEMENT si > 100 équipements #}
-    {% if isOptimizedMode is defined and isOptimizedMode %}
-        <div class="optimization-notice">
-            <strong>Mode optimisé activé :</strong> 
-            {{ optimizationMessage ?? 'PDF généré en mode optimisé pour éviter les erreurs mémoire.' }}
+    {% set statusColors = {
+        'A': 'vert',
+        'B': 'orange',
+        'C': 'rouge',
+        'D': 'noir',
+        'E': 'rouge',
+        'F': 'rouge',
+        'G': 'noir'
+    } %}
+    
+    {# PREMIÈRE PAGE - RÉSUMÉ #}
+    <div class="first-page">
+        <div class="page-content">
+            <h1 class="header-title">Compte rendu d'entretien</h1>
+            
+            <div class="visit-info">
+                <p><strong>Visite :</strong> {{ clientVisiteFilter }} - {{ clientAnneeFilter}}</p>
+                <p><strong>Date de visite :</strong> {{ dateDeDerniererVisite|date('d/m/Y') }}</p>
+            </div>
+            
+            <div class="client-info">
+                <h3>{{nomClient}}</h3>
+                <p>{{adressep1}}</p>
+                <p>{{adressep2}}</p>
+                <p>{{cpostalp}} {{villep}}</p>
+            </div>
+            
+            <div class="summary-section">
+                <h2 class="summary-title">Résumé</h2>
+                
+                <div class="summary-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements au contrat</div>
+                        <div class="stat-value">{{ statistiques.total}}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements inexistants</div>
+                        <div class="stat-value">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nombre d'équipements supplémentaires</div>
+                        {% set totalSupplementaires = 0 %}
+                        {% if statistiquesSupplementaires is defined and statistiquesSupplementaires is not empty %}
+                            {% if statistiquesSupplementaires.total is defined %}
+                                {% set totalSupplementaires = statistiquesSupplementaires.total %}
+                            {% endif %}
+                        {% endif %}
+                        <div class="stat-value">{{ totalSupplementaires }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            {# ÉQUIPEMENTS AU CONTRAT #}
+            {% if statistiques and statistiques|length > 0 %}
+                <div class="equipment-summary">
+                    <div class="section-title">Équipements visités</div>
+                    
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>État</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if statistiques.status_counts.green and statistiques.status_counts.green > 0 %}
+                                <tr>
+                                    <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/vert.png" alt="logo vert" /></td>
+                                    <td>Bon état</td>
+                                    <td>{{ statistiques.status_counts.green }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.red and statistiques.status_counts.red > 0 %}
+                                <tr>
+                                    <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/rouge.png" alt="logo rouge" /></td>
+                                    <td>Travaux curatifs urgents</td>
+                                    <td>{{ statistiques.status_counts.red }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.orange and statistiques.status_counts.orange > 0 %}
+                                <tr>
+                                    <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/orange.png" alt="logo orange" /></td>
+                                    <td>Travaux à prévoir</td>
+                                    <td>{{ statistiques.status_counts.orange }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if statistiques.status_counts.black and statistiques.status_counts.black > 0 %}
+                                <tr>
+                                    <td><img src="https://www.backend-kizeo.somafi-group.fr/public/img/logos/noir.png" alt="logo noir" /></td>
+                                    <td>Inaccessible le jour de la visite</td>
+                                    <td>{{ statistiques.status_counts.black }}</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            
+            {# ÉQUIPEMENTS SUPPLÉMENTAIRES #}
+            {% set hasRealSupplementaryEquipment = false %}
+            {% if statistiquesSupplementaires is defined and statistiquesSupplementaires is not empty %}
+                {% if statistiquesSupplementaires.status_counts is defined %}
+                    {% for status, count in statistiquesSupplementaires.status_counts %}
+                        {% if count > 0 %}
+                            {% set hasRealSupplementaryEquipment = true %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
+            
+            {# Afficher la section seulement s'il y a des équipements supplémentaires réels #}
+            {% if hasRealSupplementaryEquipment %}
+                <div class="equipment-summary">
+                    <div class="section-title">Équipements supplémentaires</div>
+                    
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>État</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in statistiquesSupplementaires.status_counts %}
+                                {% if count > 0 %}
+                                <tr>
+                                    <td><span class="status-icon {{ statusColors[status] ?? 'noir' }}"></span></td>
+                                    <td>{{ statusMapping[status] ?? status }}</td>
+                                    <td>{{ count }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
         </div>
-    {% endif %}
-    
-    {# Informations client #}
-    <div style="margin: 20px 0;">
-        <h2>Client : {{ clientId }} - Agence {{ agence }}</h2>
-        {% if totalEquipmentsFound is defined %}
-            <p><strong>{{ maxEquipmentsProcessed ?? 0 }}</strong> équipements traités{% if totalEquipmentsFound != maxEquipmentsProcessed %} sur <strong>{{ totalEquipmentsFound }}</strong> au total{% endif %}.</p>
-        {% endif %}
     </div>
     
-    {# Liste des équipements - VERSION QUI FONCTIONNE #}
+    {# PAGES ÉQUIPEMENTS AU CONTRAT - VERSION CORRIGÉE #}
     {% if equipmentsWithPictures is defined and equipmentsWithPictures|length > 0 %}
         {% set equipmentCount = 0 %}
         
@@ -176,9 +309,11 @@
             {% set pictures = equipmentData.pictures %}
             {% set equipmentCount = equipmentCount + 1 %}
             
-            {# Nouvelle page tous les 2 équipements #}
-            {% if equipmentCount > 1 and (equipmentCount - 1) % 2 == 0 %}
-                <div class="page-break"></div>
+            {# Ouvrir une nouvelle page pour le 1er équipement et tous les 2 équipements #}
+            {% if equipmentCount == 1 or (equipmentCount - 1) % 2 == 0 %}
+                <div class="equipment-page">
+                    <div class="page-content">
+                        <div class="equipment-container">
             {% endif %}
             
             {# Table principale avec photo à gauche et infos à droite #}
@@ -186,18 +321,11 @@
                 <tr>
                     {# Photo #}
                     <td class="equipment-photo-cell">
-                        {% if pictures is defined and pictures|length > 0 %}
-                            {% set firstPicture = pictures[0] %}
-                            {% if firstPicture.picture is defined %}
-                                <img src="data:image/jpeg;base64,{{ firstPicture.picture }}" class="equipment-photo" alt="Photo équipement">
-                            {% else %}
-                                <div class="no-photo">
-                                    Aucune photo<br>disponible
-                                </div>
-                            {% endif %}
+                        {% if pictures|length > 0 %}
+                            <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="equipment-photo" alt="Photo équipement">
                         {% else %}
                             <div class="no-photo">
-                                Aucune photo<br>disponible
+                                <em>Aucune photo<br>disponible</em>
                             </div>
                         {% endif %}
                     </td>
@@ -208,50 +336,80 @@
                             {# En-tête avec titre et logo d'état #}
                             <tr class="equipment-header-row">
                                 <td colspan="2" class="equipment-title">
-                                    Équipement {{ equipment.numeroEquipement }} - {{ equipment.type ?? equipment.libelleEquipement ?? 'Type non défini' }}
-                                    {% if equipment.etat %}
-                                        {% if equipment.etat == "Bon état" or equipment.etat == "Rien à signaler le jour de la visite." %}
-                                            <div class="status-logo status-green"></div>
-                                        {% elseif equipment.etat == "Travaux curatifs urgents" or equipment.etat == "Travaux urgent ou à l'arrêt" %}
-                                            <div class="status-logo status-red"></div>
+                                    Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}
+                                    <div class="status-logo {% if equipment.etat %}
+                                        {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                                            status-green
+                                        {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                                            status-orange
+                                        {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                                            status-red
                                         {% else %}
-                                            <div class="status-logo status-orange"></div>
+                                            status-grey
+                                        {% endif %}
+                                    {% endif %}"></div>
+                                </td>
+                            </tr>
+                            
+                            {# Numéro #}
+                            <tr class="info-row">
+                                <td class="info-key">Numéro</td>
+                                <td class="info-value">{{ equipment.numeroEquipement }}</td>
+                            </tr>
+                            
+                            {# Type #}
+                            <tr class="info-row">
+                                <td class="info-key">Type</td>
+                                <td class="info-value">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            {# Marque #}
+                            <tr class="info-row">
+                                <td class="info-key">Marque</td>
+                                <td class="info-value">{{ equipment.marque ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            {# Modèle #}
+                            <tr class="info-row">
+                                <td class="info-key">Modèle</td>
+                                <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            {# État #}
+                            <tr class="info-row">
+                                <td class="info-key">État</td>
+                                <td class="info-value">
+                                    {% if equipment.etat %}
+                                        {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                                            Bon état
+                                        {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                                            Travaux à prévoir
+                                        {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                                            Travaux urgent ou à l'arrêt
+                                        {% elseif equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" %}
+                                            Équipement non présent
+                                        {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "D" %}
+                                            Équipement inaccessible
+                                        {% else %}
+                                            {{ equipment.etat }}
                                         {% endif %}
                                     {% endif %}
                                 </td>
                             </tr>
                             
-                            {# Informations de l'équipement #}
-                            <tr class="info-row">
-                                <td class="info-key">Numéro</td>
-                                <td class="info-value">{{ equipment.numeroEquipement }}</td>
-                            </tr>
-                            <tr class="info-row">
-                                <td class="info-key">Type</td>
-                                <td class="info-value">{{ equipment.type ?? equipment.libelleEquipement ?? 'Type non défini' }}</td>
-                            </tr>
-                            <tr class="info-row">
-                                <td class="info-key">Marque</td>
-                                <td class="info-value">{{ equipment.marque ?? 'Non renseignée' }}</td>
-                            </tr>
-                            <tr class="info-row">
-                                <td class="info-key">Modèle</td>
-                                <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
-                            </tr>
-                            <tr class="info-row">
-                                <td class="info-key">État</td>
-                                <td class="info-value">{{ equipment.etat ?? 'Non défini' }}</td>
-                            </tr>
+                            {# Mise en service #}
                             <tr class="info-row">
                                 <td class="info-key">Mise en service</td>
-                                <td class="info-value">{{ equipment.miseEnService ?? 'Non renseignée' }}</td>
-                            </tr>
-                            <tr class="info-row">
-                                <td class="info-key">Repère site client</td>
-                                <td class="info-value">{{ equipment.repereSiteClient ?? 'Non repéré' }}</td>
+                                <td class="info-value">{{ equipment.miseEnService }}</td>
                             </tr>
                             
-                            {# Anomalies seulement si présentes #}
+                            {# Repère site client #}
+                            <tr class="info-row">
+                                <td class="info-key">Repère site client</td>
+                                <td class="info-value">{{ equipment.repereSiteClient }}</td>
+                            </tr>
+                            
+                            {# Anomalies (seulement si présentes) #}
                             {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
                             <tr class="info-row anomalies-row">
                                 <td class="info-key">Anomalies</td>
@@ -262,30 +420,133 @@
                     </td>
                 </tr>
             </table>
+            
+            {# Fermer la page SEULEMENT après 2 équipements OU si dernier #}
+            {% if equipmentCount % 2 == 0 or loop.last %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         {% endfor %}
+    {% endif %}
+    
+    {# PAGES ÉQUIPEMENTS SUPPLÉMENTAIRES - VERSION CORRIGÉE #}
+    {% if equipementsSupplementaires is defined and equipementsSupplementaires|length > 0 %}
+        {% set suppCount = 0 %}
         
-    {% else %}
-        <div style="text-align: center; padding: 50px; color: #666;">
-            <h3>Aucun équipement trouvé</h3>
-            <p>Aucun équipement n'a été trouvé pour ce client.</p>
-        </div>
+        {% for equipmentData in equipementsSupplementaires %}
+            {% set equipment = equipmentData.equipment %}
+            {% set pictures = equipmentData.pictures %}
+            {% set suppCount = suppCount + 1 %}
+            
+            {# Ouvrir page pour 1er équipement supplémentaire et tous les 2 #}
+            {% if suppCount == 1 or (suppCount - 1) % 2 == 0 %}
+                <div class="equipment-page">
+                    <div class="page-content">
+                        <div class="equipment-container">
+            {% endif %}
+            
+            {# Table principale avec photo à gauche et infos à droite #}
+            <table class="equipment-main-table">
+                <tr>
+                    <td class="equipment-photo-cell">
+                        {% if pictures|length > 0 %}
+                            <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" class="equipment-photo" alt="Photo équipement">
+                        {% else %}
+                            <div class="no-photo">
+                                <em>Aucune photo<br>disponible</em>
+                            </div>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="equipment-info-cell">
+                        <table class="equipment-info-table">
+                            <tr class="equipment-header-row">
+                                <td colspan="2" class="equipment-title">
+                                    Équipement {{ equipment.numeroEquipement }} - {{ equipment.libelleEquipement ?? 'Type non renseigné' }}
+                                    <div class="status-logo {% if equipment.etat %}
+                                        {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                                            status-green
+                                        {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                                            status-orange
+                                        {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                                            status-red
+                                        {% else %}
+                                            status-grey
+                                        {% endif %}
+                                    {% endif %}"></div>
+                                </td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Numéro</td>
+                                <td class="info-value">{{ equipment.numeroEquipement }}</td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Type</td>
+                                <td class="info-value">{{ equipment.libelleEquipement ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Marque</td>
+                                <td class="info-value">{{ equipment.marque ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Modèle</td>
+                                <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">État</td>
+                                <td class="info-value">
+                                    {% if equipment.etat %}
+                                        {% if equipment.etat == "Rien à signaler le jour de la visite. Fonctionnement ok" or equipment.etat == "A" %}
+                                            Bon état
+                                        {% elseif equipment.etat == "Travaux à prévoir" or equipment.etat == "B" %}
+                                            Travaux à prévoir
+                                        {% elseif equipment.etat == "Travaux curatifs" or equipment.etat == "Equipement à l'arrêt le jour de la visite" or equipment.etat == "Equipement mis à l'arrêt lors de l'intervention" or equipment.etat == "C" or equipment.etat == "E" or equipment.etat == "F" %}
+                                            Travaux urgent ou à l'arrêt
+                                        {% elseif equipment.etat == "Equipement non présent sur site" or equipment.etat == "G" %}
+                                            Équipement non présent
+                                        {% elseif equipment.etat == "Equipement inaccessible le jour de la visite" or equipment.etat == "D" %}
+                                            Équipement inaccessible
+                                        {% else %}
+                                            {{ equipment.etat }}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Mise en service</td>
+                                <td class="info-value">{{ equipment.dateEnregistrement|date('Y') }}</td>
+                            </tr>
+                            
+                            <tr class="info-row">
+                                <td class="info-key">Repère site client</td>
+                                <td class="info-value">{{ equipment.repereSiteClient }}</td>
+                            </tr>
+                            
+                            {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
+                            <tr class="info-row anomalies-row">
+                                <td class="info-key">Anomalies</td>
+                                <td class="info-value">{{ equipment.anomalies }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            
+            {# Fermer après 2 équipements OU si dernier #}
+            {% if suppCount % 2 == 0 or loop.last %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
     {% endif %}
-    
-    {# Mode erreur #}
-    {% if error_mode is defined and error_mode %}
-        <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; margin: 20px; border-radius: 5px;">
-            <h3 style="color: #721c24;">Erreur durant la génération</h3>
-            <p><strong>Message :</strong> {{ error_message ?? 'Erreur inconnue' }}</p>
-            <p><em>Ce PDF a été généré en mode dégradé.</em></p>
-        </div>
-    {% endif %}
-    
-    {# Footer #}
-    <div class="footer">
-        Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }}
-        {% if equipmentsWithPictures is defined %}
-            - {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}
-        {% endif %}
-    </div>
 </body>
 </html>
