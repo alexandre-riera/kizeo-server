@@ -38,6 +38,7 @@ class MigratePhotosFixedCommand extends Command
             ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'Simulation sans modification')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forcer le re-téléchargement des photos existantes')
             ->addOption('single', 's', InputOption::VALUE_OPTIONAL, 'Traiter un seul équipement')
+            ->addOption('raison_sociale_visite', 'r', InputOption::VALUE_OPTIONAL, 'Raison sociale et visite (ex: SOMAFI\\CE1)')
             ->setHelp('
 Version corrigée de la migration des photos avec debug intégré.
 
@@ -45,7 +46,10 @@ Exemples:
   php bin/console app:migrate-photos-fixed S140 --dry-run
   php bin/console app:migrate-photos-fixed S140 --batch-size=5
   php bin/console app:migrate-photos-fixed S140 --single=RAP01
-            ');
+  php bin/console app:migrate-photos-fixed S140 --force
+  php bin/console app:migrate-photos-fixed S140 --raison_sociale_visite=SOMAFI\\CE1
+            ')
+            ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -56,6 +60,7 @@ Exemples:
         $dryRun = $input->getOption('dry-run');
         $force = $input->getOption('force');
         $single = $input->getOption('single');
+        $raison_sociale_visite = $input->getOption('raison_sociale_visite');
 
         $io->title("🔧 Migration corrigée des photos pour l'agence {$agency}");
 
@@ -64,7 +69,7 @@ Exemples:
         }
 
         if ($single) {
-            return $this->processSingleEquipment($single, $agency, $dryRun, $force, $io);
+            return $this->processSingleEquipment($single, $agency, $dryRun, $force, $io, $raison_sociale_visite);
         }
 
         try {
@@ -127,14 +132,14 @@ Exemples:
         }
     }
 
-    private function processSingleEquipment(string $equipmentId, string $agency, bool $dryRun, bool $force, SymfonyStyle $io): int
+    private function processSingleEquipment(string $equipmentId, string $agency, bool $dryRun, bool $force, SymfonyStyle $io, string $raisonSocialeVisite): int
     {
         $io->section("🎯 Migration de l'équipement {$equipmentId}");
 
         try {
             $entityClass = "App\\Entity\\Equipement{$agency}";
             $repository = $this->entityManager->getRepository($entityClass);
-            $equipment = $repository->findOneBy(['numero_equipement' => $equipmentId]);
+            $equipment = $repository->findOneBy(['numero_equipement' => $equipmentId, 'raison_sociale_visite' => $raisonSocialeVisite]);
 
             if (!$equipment) {
                 $io->error("❌ Équipement {$equipmentId} non trouvé");
@@ -184,7 +189,8 @@ Exemples:
         try {
             // 1. Chercher les données Form
             $formData = $this->formRepository->findOneBy([
-                'equipment_id' => $equipmentId
+                'equipment_id' => $equipmentId,
+                'raison_sociale_visite' => $equipment->getRaisonSociale() . '\\' . $equipment->getVisite()
             ]);
 
             if (!$formData) {
@@ -210,7 +216,7 @@ Exemples:
             // 4. Calculer le chemin local
             $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
             $raisonSocialeClean = $this->cleanFileName($raisonSociale);
-            $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
+            $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
             $typeVisite = $equipment->getVisite();
 
             $result['local_path'] = "{$agency}/{$raisonSocialeClean}/{$anneeVisite}/{$typeVisite}";
@@ -258,7 +264,7 @@ Exemples:
 
         $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
         $raisonSocialeClean = $this->cleanFileName($raisonSociale);
-        $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
+        $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
 
