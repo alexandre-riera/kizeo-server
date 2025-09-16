@@ -458,6 +458,7 @@ class EquipementPdfController extends AbstractController
         $adressep1 = method_exists($equipments[0], 'getAdressep1') ? $equipments[0]->getAdressep1() : 'N/A';
         $adressep2 = method_exists($equipments[0], 'getAdressep2') ? $equipments[0]->getAdressep2() : 'N/A';
         $cpostalp = method_exists($equipments[0], 'getCpostalp') ? $equipments[0]->getCpostalp() : 'N/A';
+        $villep = method_exists($equipments[0], 'getVillep') ? $equipments[0]->getVillep() : 'N/A';
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $lightData,
             'equipementsSupplementaires' => [],
@@ -472,6 +473,7 @@ class EquipementPdfController extends AbstractController
             'adressep1' => $adressep1,
             'adressep2' => $adressep2,
             'cpostalp' => $cpostalp,
+            'villep' => $villep,
             'error_mode' => true,
             'error_message' => "PDF généré en mode dégradé suite à une erreur mémoire : {$errorMessage}",
             'isOptimizedMode' => true,
