@@ -3045,7 +3045,7 @@ class SimplifiedMaintenanceController extends AbstractController
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos);
+        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos, $raisonSociale, $visite);
         
         // Définir les anomalies
         $this->setSimpleEquipmentAnomalies($equipement, $equipmentContrat);
