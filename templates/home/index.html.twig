@@ -857,9 +857,9 @@
                 <div class="margin_top_30 col-sm-3">
                     <a id="pdf-button" href="{{ path('equipement_pdf_client_complete', {
                         'agence': agenceSelected,
-                        'id': clientSelectedInformations.getIdContact(),
-                        'clientAnneeFilter': clientAnneeFilter,
-                        'clientVisiteFilter': clientVisiteFilter
+                        'clientId': clientSelectedInformations.getIdContact(),
+                        'annee': clientAnneeFilter,
+                        'visite': clientVisiteFilter
                     }) }}" 
                     class="btn btn-success btn-lg" target="_blank">
                         <i class="fa-solid fa-file-pdf"></i> Générer PDF complet du client
