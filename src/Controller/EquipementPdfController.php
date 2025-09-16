@@ -350,7 +350,7 @@ class EquipementPdfController extends AbstractController
                 'adressep2' => $adressep2,
                 'cpostalp' => $cpostalp,
                 'villep' => $villep,
-                'stistiques' => [
+                'statistiques' => [
                     'total' => $totalEquipments,
                     'equipementsContrat' => count($lightData),
                     'equipementsHorsContrat' => $totalEquipments - count($lightData),
