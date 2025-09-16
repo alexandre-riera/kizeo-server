@@ -317,7 +317,13 @@ class EquipementPdfController extends AbstractController
                     }
                 }
             }
-
+            // RÃ©cupÃ©rer les informations client TOUT DE SUITE
+            $clientSelectedInformations = $entityManager->getRepository("App\\Entity\\Contact{$agence}")->findOneBy(['id_contact' => $id]);
+            $nomClient = trim($clientSelectedInformations->getRaisonSociale());
+            $adressep1 = trim($clientSelectedInformations->getAdressep1());
+            $adressep2 = trim($clientSelectedInformations->getAdressep2());
+            $cpostalp = trim($clientSelectedInformations->getCpostalp());
+            $villep = trim($clientSelectedInformations->getVillep());
 
             $templateVars = [
                 'equipmentsWithPictures' => $allEquipmentsWithPictures,
@@ -332,6 +338,11 @@ class EquipementPdfController extends AbstractController
                 'totalEquipmentsFound' => $totalEquipments,
                 'maxEquipmentsProcessed' => count($allEquipmentsWithPictures),
                 'dateDeDerniereVisite' => $dateDeDerniereVisite,
+                'nomClient' => $nomClient,
+                'adressep1' => $adressep1,
+                'adressep2' => $adressep2,
+                'cpostalp' => $cpostalp,
+                'villep' => $villep,
                 'optimizationMessage' => $totalEquipments > 100 
                     ? "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
                     count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
