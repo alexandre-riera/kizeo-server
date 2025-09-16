@@ -391,12 +391,12 @@ class EquipementPdfController extends AbstractController
     }
 
     /**
-     * MÉTHODE DE DEBUG TEMPORAIRE - Route de test pour les photos
-     */
+    * MÉTHODE DE DEBUG TEMPORAIRE - Route de test pour les photos
+    */
     #[Route('/debug/photos/{agence}/{id}', name: 'debug_photos')]
     public function debugPhotos(string $agence, string $id, EntityManagerInterface $entityManager): JsonResponse
     {
-        $this->customLog("=== DEBUG PHOTOS ===");
+        error_log("=== DEBUG PHOTOS START ===");
         
         // Récupérer quelques équipements du client
         $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
@@ -406,74 +406,125 @@ class EquipementPdfController extends AbstractController
         $formRepository = $entityManager->getRepository(Form::class);
         
         foreach ($testEquipments as $equipment) {
-            $equipmentId = $equipment->getNumeroEquipement();
-            $this->customLog("Testing equipment: {$equipmentId}");
+            // CORRECTION 1: Tester différentes propriétés pour l'ID
+            $equipmentId = null;
+            $possibleIds = ['numeroEquipement', 'numero_equipement', 'id', 'code_equipement'];
+            
+            foreach ($possibleIds as $prop) {
+                if (method_exists($equipment, 'get' . ucfirst($prop))) {
+                    $method = 'get' . ucfirst($prop);
+                    $equipmentId = $equipment->$method();
+                    if (!empty($equipmentId)) break;
+                }
+            }
+            
+            error_log("Testing equipment ID: " . ($equipmentId ?? 'NULL'));
             
             $debugInfo = [
                 'equipment_id' => $equipmentId,
-                'raison_sociale' => $equipment->getRaisonSociale(),
-                'code_agence' => $equipment->getCodeAgence(),
-                'visite' => $equipment->getVisite(),
+                'equipment_class' => get_class($equipment),
+                'equipment_methods' => array_filter(get_class_methods($equipment), function($method) {
+                    return strpos($method, 'get') === 0;
+                }),
+                'raison_sociale' => method_exists($equipment, 'getRaisonSociale') ? $equipment->getRaisonSociale() : 'N/A',
+                'code_agence' => method_exists($equipment, 'getCodeAgence') ? $equipment->getCodeAgence() : 'N/A',
+                'visite' => method_exists($equipment, 'getVisite') ? $equipment->getVisite() : 'N/A',
                 'photos_found' => 0,
                 'photos_detail' => [],
                 'error' => null
             ];
             
             try {
-                // Test 1: Méthode actuelle
-                $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
-                $debugInfo['photos_found'] = count($photos);
-                
-                // Analyser le format des photos
-                foreach ($photos as $index => $photo) {
-                    $photoDetail = [
-                        'index' => $index,
-                        'type' => gettype($photo),
-                        'is_object' => is_object($photo),
-                        'has_picture_property' => false,
-                        'picture_length' => 0
-                    ];
+                // CORRECTION 2: Appeler la méthode sur le repository, pas le contrôleur
+                if (!empty($equipmentId)) {
+                    $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                    $debugInfo['photos_found'] = count($photos);
                     
-                    if (is_object($photo)) {
-                        $photoDetail['class'] = get_class($photo);
-                        $photoDetail['has_picture_property'] = property_exists($photo, 'picture');
-                        if (property_exists($photo, 'picture')) {
-                            $photoDetail['picture_length'] = strlen($photo->picture);
+                    // Analyser le format des photos
+                    foreach ($photos as $index => $photo) {
+                        $photoDetail = [
+                            'index' => $index,
+                            'type' => gettype($photo),
+                            'is_object' => is_object($photo),
+                            'has_picture_property' => false,
+                            'picture_length' => 0
+                        ];
+                        
+                        if (is_object($photo)) {
+                            $photoDetail['class'] = get_class($photo);
+                            $photoDetail['has_picture_property'] = property_exists($photo, 'picture');
+                            if (property_exists($photo, 'picture')) {
+                                $photoDetail['picture_length'] = strlen($photo->picture);
+                            }
+                        } elseif (is_array($photo)) {
+                            $photoDetail['array_keys'] = array_keys($photo);
+                            $photoDetail['has_picture_property'] = isset($photo['picture']);
+                            if (isset($photo['picture'])) {
+                                $photoDetail['picture_length'] = strlen($photo['picture']);
+                            }
+                        } elseif (is_string($photo)) {
+                            $photoDetail['picture_length'] = strlen($photo);
                         }
-                    } elseif (is_array($photo)) {
-                        $photoDetail['array_keys'] = array_keys($photo);
-                        $photoDetail['has_picture_property'] = isset($photo['picture']);
-                        if (isset($photo['picture'])) {
-                            $photoDetail['picture_length'] = strlen($photo['picture']);
-                        }
-                    } elseif (is_string($photo)) {
-                        $photoDetail['picture_length'] = strlen($photo);
+                        
+                        $debugInfo['photos_detail'][] = $photoDetail;
                     }
-                    
-                    $debugInfo['photos_detail'][] = $photoDetail;
+                } else {
+                    $debugInfo['error'] = 'Equipment ID is null or empty';
                 }
                 
-                // Test 2: Vérifier la structure des chemins de photos
-                $expectedPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+                // CORRECTION 3: Test direct des chemins de photos pour GEODIS GENAY
+                $expectedPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/GEODIS_GENAY/2025/CE1/";
                 $debugInfo['photo_path_check'] = [
-                    'base_path' => $expectedPath,
-                    'base_path_exists' => is_dir($expectedPath),
-                    'readable' => is_readable($expectedPath)
+                    'expected_path' => $expectedPath,
+                    'path_exists' => is_dir($expectedPath),
+                    'readable' => is_readable($expectedPath),
+                    'files_found' => []
                 ];
                 
                 if (is_dir($expectedPath)) {
-                    $dirs = scandir($expectedPath);
-                    $debugInfo['photo_path_check']['subdirs'] = array_filter($dirs, function($item) use ($expectedPath) {
-                        return $item !== '.' && $item !== '..' && is_dir($expectedPath . $item);
+                    $files = scandir($expectedPath);
+                    $debugInfo['photo_path_check']['files_found'] = array_filter($files, function($file) {
+                        return $file !== '.' && $file !== '..' && (strpos($file, '.jpg') !== false || strpos($file, '.png') !== false);
                     });
                 }
                 
+                // Test chemin alternatif avec espaces
+                $alternativePath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/GEODIS GENAY/2025/CE1/";
+                $debugInfo['alternative_path_check'] = [
+                    'path' => $alternativePath,
+                    'exists' => is_dir($alternativePath)
+                ];
+                
             } catch (\Exception $e) {
                 $debugInfo['error'] = $e->getMessage();
-                $this->customLog("Error for equipment {$equipmentId}: " . $e->getMessage());
+                error_log("Error for equipment {$equipmentId}: " . $e->getMessage());
             }
             
             $debugResults[] = $debugInfo;
+        }
+        
+        // BONUS: Vérifier la structure complète des dossiers photos
+        $basePhotoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+        $globalCheck = [
+            'base_photo_path' => $basePhotoPath,
+            'base_exists' => is_dir($basePhotoPath),
+            'client_directories' => []
+        ];
+        
+        if (is_dir($basePhotoPath)) {
+            $clientDirs = scandir($basePhotoPath);
+            foreach ($clientDirs as $dir) {
+                if ($dir !== '.' && $dir !== '..' && is_dir($basePhotoPath . $dir)) {
+                    $yearPath = $basePhotoPath . $dir . '/2025/CE1/';
+                    $globalCheck['client_directories'][] = [
+                        'name' => $dir,
+                        'has_2025_ce1' => is_dir($yearPath),
+                        'photo_count' => is_dir($yearPath) ? count(array_filter(scandir($yearPath), function($f) { 
+                            return strpos($f, '.jpg') !== false || strpos($f, '.png') !== false; 
+                        })) : 0
+                    ];
+                }
+            }
         }
         
         return new JsonResponse([
@@ -481,6 +532,7 @@ class EquipementPdfController extends AbstractController
             'client_id' => $id,
             'total_equipments' => count($equipments),
             'debug_results' => $debugResults,
+            'global_photo_check' => $globalCheck,
             'timestamp' => date('Y-m-d H:i:s')
         ]);
     }
