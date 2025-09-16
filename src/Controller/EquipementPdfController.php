@@ -459,7 +459,11 @@ class EquipementPdfController extends AbstractController
         $adressep2 = method_exists($equipments[0], 'getAdressep2') ? $equipments[0]->getAdressep2() : 'N/A';
         $cpostalp = method_exists($equipments[0], 'getCpostalp') ? $equipments[0]->getCpostalp() : 'N/A';
         $villep = method_exists($equipments[0], 'getVillep') ? $equipments[0]->getVillep() : 'N/A';
-        $statistiques = null;
+        $statistiques = [
+            'total' => count($equipments),
+            'equipementsContrat' => count($lightData),
+            'equipementsHorsContrat' => count($equipments) - count($lightData)
+        ];
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $lightData,
             'equipementsSupplementaires' => [],
