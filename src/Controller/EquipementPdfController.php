@@ -251,6 +251,7 @@ class EquipementPdfController extends AbstractController
             $uniqueEquipments = [];
             $duplicatesRemoved = 0;
             foreach ($allEquipmentsWithPictures as $equipmentData) {
+                dd($equipmentData);
                 $numeroEquipement = $equipmentData['numeroEquipement'];
                 $equipment = $equipmentData['equipment'];
                 
