@@ -176,538 +176,205 @@ class EquipementPdfController extends AbstractController
     #[Route('/client/equipements/pdf/{agence}/{id}', name: 'client_equipements_pdf')]
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
-        // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION OPTIMISÉE
-        ini_set('memory_limit', '512M');
-        ini_set('max_execution_time', 180);
-        set_time_limit(180);
+        // CONFIGURATION MÉMOIRE URGENTE
+        ini_set('memory_limit', '2048M');
+        ini_set('max_execution_time', 600);
         
-        // Activer le garbage collector agressif
+        // Force le garbage collector agressif
         gc_enable();
+        gc_collect_cycles();
         
-        $startMemory = memory_get_usage(true);
-        $this->customLog("Mémoire initiale: " . $this->formatBytes($startMemory));
-
-        // 1. TOUJOURS initialiser imageUrl dès le début
-        $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
-        
-        // Initialiser les métriques de performance
         $startTime = microtime(true);
-        $photoSourceStats = ['direct_scan' => 0, 'local' => 0, 'api_fallback' => 0, 'none' => 0, 'error' => 0];
+        $this->customLog("=== GÉNÉRATION PDF CLIENT - MODE OPTIMISÉ ===");
         
         try {
-            // Configuration MySQL optimisée pour les gros volumes
-            $entityManager->getConnection()->executeStatement('SET SESSION wait_timeout = 300');
-            $entityManager->getConnection()->executeStatement('SET SESSION interactive_timeout = 300');
-            
-            // Récupérer les filtres depuis les paramètres de la requête
-            $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
-            $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
-            
-            $maxEquipments = (int) $request->query->get('maxEquipments', 500);
-            
-            $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
-            $this->customLog("Agence: {$agence}, Client: {$id}");
-            $this->customLog("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
-            $this->customLog("Limite d'équipements: {$maxEquipments}");
-            
-            // Récupérer les informations client TOUT DE SUITE
-            $clientSelectedInformations = $entityManager->getRepository("App\\Entity\\Contact{$agence}")->findOneBy(['id_contact' => $id]);
-            
-            // Récupérer les informations client (autre méthode)
-            $clientInfo = $this->getClientInfo($agence, $id, $entityManager);
-            $this->customLog("Client info récupérées: " . json_encode($clientInfo));
-            
-            // 2. RÉCUPÉRATION SIMPLIFIÉE ET SÉCURISÉE DES ÉQUIPEMENTS
+            // 1. Récupérer SEULEMENT les métadonnées d'équipements d'abord
             $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
-            $this->customLog("Équipements bruts trouvés: " . count($equipments));
+            $totalEquipments = count($equipments);
             
-            if (empty($equipments)) {
-                throw new \Exception("Aucun équipement trouvé pour le client {$id}");
-            }
+            $this->customLog("Total équipements trouvés: {$totalEquipments}");
             
-            // ✅ NOUVEAU : NETTOYAGE DES VALEURS "A COMPLETER" SUR TOUS LES ÉQUIPEMENTS
-            $this->customLog("=== DÉBUT NETTOYAGE DES VALEURS 'A COMPLETER' ===");
-            $cleanedCount = 0;
+            // 2. PAGINATION FORCÉE si > 100 équipements
+            $maxEquipmentsPerBatch = $totalEquipments > 200 ? 50 : 100;
+            $equipmentBatches = array_chunk($equipments, $maxEquipmentsPerBatch);
             
-            foreach ($equipments as $equipment) {
-                try {
-                    $this->cleanEquipmentValues($equipment);
-                    $cleanedCount++;
-                } catch (\Exception $e) {
-                    $this->customLog("Erreur nettoyage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+            $this->customLog("Division en " . count($equipmentBatches) . " batches de {$maxEquipmentsPerBatch} équipements max");
+            
+            // 3. Génération par batches avec nettoyage mémoire
+            $allEquipmentsWithPictures = [];
+            $batchNumber = 1;
+            
+            foreach ($equipmentBatches as $batch) {
+                $this->customLog("Traitement batch {$batchNumber}/" . count($equipmentBatches));
+                $memoryBefore = memory_get_usage(true);
+                
+                // Traiter ce batch
+                $batchResults = $this->processEquipmentBatchOptimized($batch, $entityManager);
+                $allEquipmentsWithPictures = array_merge($allEquipmentsWithPictures, $batchResults);
+                
+                // FORCE le nettoyage mémoire après chaque batch
+                unset($batch, $batchResults);
+                gc_collect_cycles();
+                
+                $memoryAfter = memory_get_usage(true);
+                $this->customLog("Batch {$batchNumber} terminé - Mémoire: " . 
+                    $this->formatBytes($memoryBefore) . " → " . $this->formatBytes($memoryAfter));
+                
+                $batchNumber++;
+                
+                // Sécurité : si on approche la limite mémoire, on s'arrête
+                if ($memoryAfter > (1536 * 1024 * 1024)) { // 1.5GB
+                    $this->customLog("SÉCURITÉ: Limite mémoire approchée, arrêt du traitement");
+                    break;
                 }
             }
             
-            $this->customLog("Nettoyage terminé sur {$cleanedCount} équipements");
-            $this->customLog("=== FIN NETTOYAGE DES VALEURS 'A COMPLETER' ===");
+            // 4. Génération finale du PDF avec les données optimisées
+            $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
             
-            // 3. LOGIQUE DE FILTRAGE CORRIGÉE SELON VOS SPÉCIFICATIONS
-            $equipmentsFiltered = [];
-            $filtreApplique = false;
-            
-            if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-                // CAS AVEC FILTRES : équipements de la visite sélectionnée avec année de dernière visite
-                $this->customLog("Application des filtres spécifiques...");
-                
-                foreach ($equipments as $equipment) {
-                    try {
-                        $matches = true;
-                        
-                        // Filtre par visite si défini
-                        if (!empty($clientVisiteFilter)) {
-                            $visiteEquipment = $equipment->getVisite();
-                            if ($visiteEquipment !== $clientVisiteFilter) {
-                                $matches = false;
-                            }
-                            $this->customLog("Équipement {$equipment->getNumeroEquipement()}: visite '{$visiteEquipment}' vs filtre '{$clientVisiteFilter}' = " . ($matches ? 'OUI' : 'NON'));
-                        }
-                        
-                        // Filtre par année de dernière visite si défini
-                        if ($matches && !empty($clientAnneeFilter)) {
-                            $derniereVisite = $equipment->getDerniereVisite();
-                            if ($derniereVisite) {
-                                $anneeEquipment = date("Y", strtotime($derniereVisite));
-                                if ($anneeEquipment !== $clientAnneeFilter) {
-                                    $matches = false;
-                                }
-                                $this->customLog("Équipement {$equipment->getNumeroEquipement()}: année dernière visite {$anneeEquipment} vs filtre {$clientAnneeFilter} = " . ($matches ? 'OUI' : 'NON'));
-                            } else {
-                                $matches = false;
-                                $this->customLog("Équipement {$equipment->getNumeroEquipement()}: pas de date de dernière visite");
-                            }
-                        }
-                        
-                        if ($matches) {
-                            $equipmentsFiltered[] = $equipment;
-                            $filtreApplique = true;
-                        }
-                        
-                    } catch (\Exception $e) {
-                        $this->customLog("Erreur filtrage équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
-                    }
-                }
-                
-                $this->customLog("Après filtrage: " . count($equipmentsFiltered) . " équipements");
-                
-            } else {
-                // CAS PAR DÉFAUT : équipements de la dernière visite uniquement
-                $this->customLog("Pas de filtres - récupération équipements de la dernière visite");
-                
-                // Trouver la date de dernière visite la plus récente
-                $derniereVisiteMax = null;
-                foreach ($equipments as $equipment) {
-                    $derniereVisite = $equipment->getDerniereVisite();
-                    if ($derniereVisite && (!$derniereVisiteMax || strtotime($derniereVisite) > strtotime($derniereVisiteMax))) {
-                        $derniereVisiteMax = $derniereVisite;
-                    }
-                }
-                
-                if ($derniereVisiteMax) {
-                    $anneeDerniereVisite = date("Y", strtotime($derniereVisiteMax));
-                    $this->customLog("Dernière visite trouvée: {$derniereVisiteMax} (année: {$anneeDerniereVisite})");
-                    
-                    // Filtrer les équipements de cette dernière visite (même année)
-                    foreach ($equipments as $equipment) {
-                        $derniereVisite = $equipment->getDerniereVisite();
-                        if ($derniereVisite && date("Y", strtotime($derniereVisite)) === $anneeDerniereVisite) {
-                            $equipmentsFiltered[] = $equipment;
-                        }
-                    }
-                } else {
-                    // Fallback : tous les équipements si aucune date trouvée
-                    $this->customLog("Aucune date de dernière visite trouvée - utilisation de tous les équipements");
-                    $equipmentsFiltered = $equipments;
-                }
-            }
-            
-            // 4. LIMITATION CRITIQUE : Ne traiter que les X premiers équipements
-            if (count($equipmentsFiltered) > $maxEquipments) {
-                $this->customLog("LIMITATION: Réduction de " . count($equipmentsFiltered) . " à {$maxEquipments} équipements");
-                $equipmentsFiltered = array_slice($equipmentsFiltered, 0, $maxEquipments);
-            }
-            
-            // 5. VÉRIFICATION APRÈS FILTRAGE
-            if (empty($equipmentsFiltered)) {
-                $this->customLog("ATTENTION: Aucun équipement après filtrage!");
-                
-                // Debug des équipements disponibles
-                $sampleEquipments = array_slice($equipments, 0, 5);
-                foreach ($sampleEquipments as $eq) {
-                    $this->customLog("Équipement échantillon - Num: {$eq->getNumeroEquipement()}, Visite: '{$eq->getVisite()}', Dernière visite: {$eq->getDerniereVisite()}");
-                }
-                
-                // Générer un PDF d'erreur informatif
-                return $this->generateErrorPdf($agence, $id, $imageUrl, $entityManager, 
-                    "Aucun équipement ne correspond aux filtres sélectionnés.", 
-                    [
-                        'filtre_annee' => $clientAnneeFilter,
-                        'filtre_visite' => $clientVisiteFilter,
-                        'total_equipements_bruts' => count($equipments)
-                    ]
-                );
-            }
-            
-            // 6. TRAITEMENT DES ÉQUIPEMENTS AVEC PHOTOS - VERSION SCAN DYNAMIQUE
-            $equipmentsWithPictures = [];
-            $dateDeDerniererVisite = null;
-            $processedCount = 0;
-            $formRepository = $entityManager->getRepository(Form::class);
-            
-            foreach ($equipmentsFiltered as $index => $equipment) {
-                try {
-                    $this->customLog("=== DÉBUT TRAITEMENT ÉQUIPEMENT {$index} ===");
-                    
-                    // Garbage collection plus fréquent
-                    if ($index > 0 && $index % 20 === 0) {
-                        gc_collect_cycles();
-                        $currentMemory = memory_get_usage(true);
-                        if ($currentMemory > 0) {
-                            $this->customLog("GC forcé #{$index} - Mémoire: " . $this->formatBytes($currentMemory));
-                        }
-                    }
-
-                    // PROTECTION contre les équipements avec numéro vide
-                    $numeroEquipement = $equipment->getNumeroEquipement();
-                    if (empty($numeroEquipement)) {
-                        $this->customLog("ATTENTION: Équipement avec numéro vide trouvé (ID: {$equipment->getId()})");
-                        continue; // Ignorer cet équipement
-                    }
-                    
-                    $this->customLog("Traitement équipement: {$numeroEquipement}");
-
-                    // Vérification isEnMaintenance
-                    $isInMaintenance = false;
-                    if (method_exists($equipment, 'isEnMaintenance')) {
-                        try {
-                            $isInMaintenance = $equipment->isEnMaintenance();
-                            $this->customLog("isEnMaintenance: " . ($isInMaintenance ? 'true' : 'false'));
-                        } catch (\Exception $e) {
-                            $this->customLog("Erreur isEnMaintenance: " . $e->getMessage());
-                        }
-                    }
-                    
-                    // Récupération raison sociale et visite
-                    try {
-                        $raisonSociale = $equipment->getRaisonSociale();
-                        $visite = $equipment->getVisite();
-                        $this->customLog("Raison sociale: " . substr($raisonSociale, 0, 50) . "...");
-                        $this->customLog("Visite: {$visite}");
-                    } catch (\Exception $e) {
-                        $this->customLog("Erreur récupération données base: " . $e->getMessage());
-                        continue;
-                    }
-
-                    // ✅ NOUVELLE RÉCUPÉRATION DES PHOTOS AVEC SCAN DYNAMIQUE
-                    $picturesData = [];
-                    try {
-                        $this->customLog("🔍 Tentative scan dynamique pour {$numeroEquipement}");
-                        
-                        // Utiliser la nouvelle fonction de scan dynamique
-                        $scanResult = $this->getPhotosForEquipmentOptimized($equipment);
-                        
-                        if (!empty($scanResult['photos'])) {
-                            // Adapter le format pour compatibilité avec le template
-                            $picturesData = $scanResult['photos'] ?? [];
-                            $photoSourceStats['direct_scan']++;
-                            $this->customLog("✅ Photos trouvées via scan dynamique: " . count($picturesData));
-                            $this->customLog("Dossier client détecté: " . ($scanResult['client_folder_found'] ?? 'N/A'));
-                        } else {
-                            $this->customLog("❌ Aucune photo trouvée via scan dynamique");
-                            
-                            // Fallback uniquement pour les équipements en maintenance
-                            if ($isInMaintenance) {
-                                $this->customLog("Tentative fallback API pour équipement en maintenance...");
-                                $picturesArray = $entityManager->getRepository(Form::class)->findBy([
-                                    'code_equipement' => $numeroEquipement,
-                                    'raison_sociale_visite' => $raisonSociale . "\\" . $visite
-                                ]);
-                                
-                                if (!empty($picturesArray)) {
-                                    $picturesData = $entityManager->getRepository(Form::class)
-                                        ->getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment);
-                                    if (!empty($picturesData)) {
-                                        $photoSourceStats['api_fallback']++;
-                                        $this->customLog("Photos API récupérées: " . count($picturesData));
-                                    } else {
-                                        $photoSourceStats['none']++;
-                                    }
-                                } else {
-                                    $photoSourceStats['none']++;
-                                }
-                            } else {
-                                $photoSourceStats['none']++;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        $this->customLog("ERREUR lors de la récupération des photos: " . $e->getMessage());
-                        $picturesData = [];
-                        $photoSourceStats['error']++;
-                    }
-
-                    // Construction des données d'équipement
-                    try {
-                        $equipmentData = [
-                            'equipment' => $equipment,
-                            'pictures' => $picturesData,
-                            'numeroEquipement' => $numeroEquipement,
-                            'isEnMaintenance' => $isInMaintenance
-                        ];
-                        
-                        $equipmentsWithPictures[] = $equipmentData;
-                        $processedCount++;
-                        
-                        $this->customLog("Équipement ajouté avec succès. Total traités: {$processedCount}");
-                        
-                    } catch (\Exception $e) {
-                        $this->customLog("Erreur construction données équipement: " . $e->getMessage());
-                    }
-
-                    $this->customLog("=== FIN TRAITEMENT ÉQUIPEMENT {$index} ===");
-
-                    // CONTRÔLE MÉMOIRE CRITIQUE
-                    $currentMemoryAfter = memory_get_usage(true);
-                    if ($currentMemoryAfter > 400 * 1024 * 1024) { // 400 MB
-                        $this->customLog("ATTENTION: Mémoire critique après équipement {$numeroEquipement}: " . 
-                                        $this->formatBytes($currentMemoryAfter));
-                        
-                        $this->customLog("Arrêt anticipé pour éviter OutOfMemory.");
-                        break;
-                    }
-                    
-                } catch (\Exception $e) {
-                    $this->customLog("EXCEPTION dans boucle équipement {$index}: " . $e->getMessage());
-                    $photoSourceStats['error']++;
-                    continue; // Continuer avec l'équipement suivant
-                }
-            }
-            
-            // DÉDUPLICATION DES ÉQUIPEMENTS PAR NUMÉRO ET DATE DE VISITE
-            $this->customLog("=== DÉBUT DÉDUPLICATION ===");
-            $this->customLog("Nombre d'équipements avant déduplication: " . count($equipmentsWithPictures));
-
-            $uniqueEquipments = [];
-            $duplicatesRemoved = 0;
-
-            foreach ($equipmentsWithPictures as $equipmentData) {
-                $numeroEquipement = $equipmentData['numeroEquipement'];
-                $equipment = $equipmentData['equipment'];
-                
-                try {
-                    // Récupération de la date de dernière visite
-                    $dateVisite = null;
-                    if (method_exists($equipment, 'getDerniereVisite')) {
-                        $derniereVisite = $equipment->getDerniereVisite();
-                        if ($derniereVisite instanceof \DateTime) {
-                            $dateVisite = $derniereVisite;
-                        } elseif (is_string($derniereVisite) && !empty($derniereVisite)) {
-                            try {
-                                $dateVisite = new \DateTime($derniereVisite);
-                            } catch (\Exception $e) {
-                                $this->customLog("Impossible de parser la date de dernière visite: {$derniereVisite}");
-                                $dateVisite = new \DateTime('1970-01-01'); // Date par défaut très ancienne
-                            }
-                        }
-                    }
-                    
-                    // Si aucune date trouvée, utiliser une date par défaut très ancienne
-                    if (!$dateVisite) {
-                        $dateVisite = new \DateTime('1970-01-01');
-                    }
-                    
-                    // Vérifier si cet équipement existe déjà
-                    if (!isset($uniqueEquipments[$numeroEquipement])) {
-                        // Premier équipement avec ce numéro
-                        $uniqueEquipments[$numeroEquipement] = [
-                            'data' => $equipmentData,
-                            'dateVisite' => $dateVisite
-                        ];
-                        $this->customLog("Nouvel équipement: {$numeroEquipement} - Date: " . $dateVisite->format('Y-m-d H:i:s'));
-                    } else {
-                        // Équipement déjà existant, comparer les dates
-                        $existingDate = $uniqueEquipments[$numeroEquipement]['dateVisite'];
-                        
-                        if ($dateVisite > $existingDate) {
-                            // L'équipement actuel est plus récent
-                            $this->customLog("Remplacement équipement {$numeroEquipement}: " . 
-                                        $existingDate->format('Y-m-d H:i:s') . " -> " . $dateVisite->format('Y-m-d H:i:s'));
-                            $uniqueEquipments[$numeroEquipement] = [
-                                'data' => $equipmentData,
-                                'dateVisite' => $dateVisite
-                            ];
-                            $duplicatesRemoved++;
-                        } else {
-                            // L'équipement existant est plus récent ou égal, on garde l'ancien
-                            $this->customLog("Conservation équipement {$numeroEquipement}: " . 
-                                        $existingDate->format('Y-m-d H:i:s') . " >= " . $dateVisite->format('Y-m-d H:i:s'));
-                            $duplicatesRemoved++;
-                        }
-                    }
-                    
-                } catch (\Exception $e) {
-                    $this->customLog("Erreur lors de la déduplication pour {$numeroEquipement}: " . $e->getMessage());
-                    
-                    // En cas d'erreur, garder l'équipement s'il n'existe pas déjà
-                    if (!isset($uniqueEquipments[$numeroEquipement])) {
-                        $uniqueEquipments[$numeroEquipement] = [
-                            'data' => $equipmentData,
-                            'dateVisite' => new \DateTime('1970-01-01')
-                        ];
-                    }
-                }
-            }
-
-            // Reconstruire le tableau final avec seulement les données d'équipement
-            $equipmentsWithPictures = [];
-            foreach ($uniqueEquipments as $uniqueEquipment) {
-                $equipmentsWithPictures[] = $uniqueEquipment['data'];
-            }
-
-            $this->customLog("Nombre d'équipements après déduplication: " . count($equipmentsWithPictures));
-            $this->customLog("Nombre de doublons supprimés: {$duplicatesRemoved}");
-            $this->customLog("=== FIN DÉDUPLICATION ===");
-
-            // Nettoyage mémoire après déduplication
-            unset($uniqueEquipments);
-            gc_collect_cycles();
-
-            // LOG MÉMOIRE AVANT GÉNÉRATION PDF
-            $beforePdfMemory = memory_get_usage(true);
-            if ($beforePdfMemory > 0) {
-                $this->customLog("Mémoire avant PDF: " . $this->formatBytes($beforePdfMemory));
-            }
-
-            // RÉSUMÉ PHOTOS
-            $this->customLog("📊 RÉSUMÉ PHOTOS:");
-            $this->customLog("- Photos scan dynamique: " . ($photoSourceStats['direct_scan'] ?? 0));
-            $this->customLog("- Photos locales: " . ($photoSourceStats['local'] ?? 0)); 
-            $this->customLog("- Photos API: " . ($photoSourceStats['api_fallback'] ?? 0));
-            $this->customLog("- Aucune photo: " . ($photoSourceStats['none'] ?? 0));
-            $this->customLog("- Erreurs: " . ($photoSourceStats['error'] ?? 0));
-            
-            $this->customLog("DEBUG - equipmentsWithPictures count: " . count($equipmentsWithPictures));
-            
-            // 7. SÉPARATION DES ÉQUIPEMENTS - VERSION SÉCURISÉE
-            $equipementsSupplementaires = [];
-            $equipementsNonPresents = [];
-            
-            foreach ($equipmentsWithPictures as $equipmentData) {
-                try {
-                    // Vérifier si la méthode isEnMaintenance existe avant de l'appeler
-                    if (method_exists($equipmentData['equipment'], 'isEnMaintenance')) {
-                        if ($equipmentData['equipment']->isEnMaintenance() === false) {
-                            $equipementsSupplementaires[] = $equipmentData;
-                        }
-                    }
-                    
-                    // Équipements non présents
-                    $etat = $equipmentData['equipment']->getEtat();
-                    if ($etat === "Equipement non présent sur site" || $etat === "G") {
-                        $equipementsNonPresents[] = $equipmentData;
-                    }
-                } catch (\Exception $e) {
-                    $this->customLog("Erreur séparation équipement: " . $e->getMessage());
-                }
-            }
-            
-            $this->customLog("DEBUG - equipementsSupplementaires count: " . count($equipementsSupplementaires));
-            
-            // 8. CALCUL DES STATISTIQUES
-            $statistiques = $this->calculateEquipmentStatisticsImproved($equipmentsFiltered);
-            
-            // 9. CALCUL DES STATISTIQUES SUPPLÉMENTAIRES
-            $statistiquesSupplementaires = [];
-            if (!empty($equipementsSupplementaires)) {
-                $equipmentsSupplementairesOnly = array_map(function($item) {
-                    return $item['equipment'];
-                }, $equipementsSupplementaires);
-                $statistiquesSupplementaires = $this->calculateEquipmentStatisticsImproved($equipmentsSupplementairesOnly);
-            }
-            
-            // 10. GÉNÉRATION DU PDF AVEC MESSAGE D'AVERTISSEMENT
-            $filename = "equipements_client_{$id}_{$agence}";
-            if (!empty($clientAnneeFilter) || !empty($clientVisiteFilter)) {
-                $filename .= '_filtered';
-                if (!empty($clientAnneeFilter)) $filename .= "_{$clientAnneeFilter}";
-                if (!empty($clientVisiteFilter)) $filename .= "_" . str_replace(' ', '_', $clientVisiteFilter);
-            }
-            $filename .= '.pdf';
-
-            $nomClient = trim($clientSelectedInformations->getRaisonSociale());
-            $adressep1 = trim($clientSelectedInformations->getAdressep1());
-            $adressep2 = trim($clientSelectedInformations->getAdressep2());
-            $cpostalp = trim($clientSelectedInformations->getCpostalp());
-            $villep = trim($clientSelectedInformations->getVillep());
-            $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
-
             $templateVars = [
-                'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
-                'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
-                'equipementsNonPresents' => $this->convertStdClassToArray($equipementsNonPresents ?? []),
+                'equipmentsWithPictures' => $allEquipmentsWithPictures,
+                'equipementsSupplementaires' => [],
+                'equipementsNonPresents' => [],
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl,
-                'clientAnneeFilter' => $clientAnneeFilter ?: '',
-                'clientVisiteFilter' => $clientVisiteFilter ?: '',
-                'statistiques' => $statistiques,
-                'statistiquesSupplementaires' => $statistiquesSupplementaires,
-                'photoSourceStats' => $photoSourceStats,
-                'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
-                'dateDeDerniererVisite' => $dateDeDerniererVisite,
-                'filtrage_success' => true,
-                'total_equipements_bruts' => count($equipments),
-                'total_equipements_filtres' => count($equipmentsFiltered),
-                'nomClient' => $nomClient,
-                'adressep1' => $adressep1,
-                'adressep2' => $adressep2,
-                'cpostalp' => $cpostalp,
-                'villep' => $villep,
-                // NOUVELLES VARIABLES POUR L'OPTIMISATION
-                'isOptimizedMode' => count($equipmentsFiltered) > $maxEquipments,
-                'maxEquipmentsProcessed' => min(count($equipmentsFiltered), $maxEquipments),
-                'totalEquipmentsFound' => count($equipmentsFiltered),
-                'optimizationMessage' => count($equipmentsFiltered) > $maxEquipments 
-                    ? "Mode optimisé : Affichage des photos générales uniquement - " . count($equipmentsWithPictures) . " équipement(s) traité(s) sur " . count($equipmentsFiltered) . " total(aux)"
-                    : null
+                'clientAnneeFilter' => $request->query->get('clientAnneeFilter', ''),
+                'clientVisiteFilter' => $request->query->get('clientVisiteFilter', ''),
+                'isOptimizedMode' => true,
+                'totalEquipmentsFound' => $totalEquipments,
+                'maxEquipmentsProcessed' => count($allEquipmentsWithPictures),
+                'optimizationMessage' => "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
+                                    count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
             ];
             
-            // Vérifier que imageUrl est bien définie
-            if (empty($templateVars['imageUrl'])) {
-                $templateVars['imageUrl'] = 'https://www.pdf.somafi-group.fr/background/group.jpg';
-                $this->customLog("WARNING: imageUrl était vide, fallback utilisé");
-            }
+            // Nettoyage avant rendu
+            gc_collect_cycles();
             
-            $this->customLog("Génération du template avec " . count($equipmentsWithPictures) . " équipements");
-            
-            // Débugger ce qui est passé au template
-            $this->customLog("=== TEMPLATE VARS DEBUG ===");
-            foreach ($templateVars as $key => $value) {
-                if (is_object($value)) {
-                    $this->customLog("WARNING: $key est toujours un objet: " . get_class($value));
-                } else {
-                    $this->customLog("OK: $key est de type: " . gettype($value));
-                }
-            }
-
             $html = $this->renderView('pdf/equipements.html.twig', $templateVars);
+            $filename = "equipements_client_{$id}_{$agence}_" . date('Y-m-d_H-i-s') . ".pdf";
             $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+            
+            $executionTime = round(microtime(true) - $startTime, 2);
+            $this->customLog("PDF généré avec succès en {$executionTime}s - " . count($allEquipmentsWithPictures) . " équipements");
             
             return new Response($pdfContent, Response::HTTP_OK, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => "inline; filename=\"$filename\"",
-                'X-Equipment-Count' => count($equipmentsFiltered),
-                'X-Equipment-Processed' => count($equipmentsWithPictures),
-                'X-Filter-Applied' => $filtreApplique ? 'yes' : 'no',
-                'X-Optimization-Applied' => count($equipmentsFiltered) > $maxEquipments ? 'yes' : 'no'
+                'X-Equipment-Total' => $totalEquipments,
+                'X-Equipment-Processed' => count($allEquipmentsWithPictures),
+                'X-Optimization-Mode' => 'batch-processing',
+                'X-Generation-Time' => $executionTime
             ]);
             
         } catch (\Exception $e) {
             $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
-            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipmentsFiltered);
+            
+            // En cas d'erreur, générer un PDF minimal
+            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipments ?? []);
         } finally {
             // Remettre les limites par défaut
             ini_restore('memory_limit');
             ini_restore('max_execution_time');
         }
+    }
+
+    /**
+     * NOUVELLE MÉTHODE : Traitement optimisé par batch
+     */
+    private function processEquipmentBatchOptimized(array $equipmentBatch, EntityManagerInterface $entityManager): array
+    {
+        $results = [];
+        $formRepository = $entityManager->getRepository(Form::class);
+        
+        foreach ($equipmentBatch as $equipment) {
+            try {
+                // Ne récupérer QUE la photo principale pour économiser la mémoire
+                $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                
+                // LIMITE STRICTE : max 1 photo par équipement en mode optimisé
+                $limitedPhotos = array_slice($photos, 0, 1);
+                
+                if (!empty($limitedPhotos)) {
+                    // Optimisation : réduire la qualité/taille des images base64 si possible
+                    foreach ($limitedPhotos as &$photo) {
+                        if (isset($photo['picture']) && strlen($photo['picture']) > 500000) {
+                            // Si l'image est très grosse (>500KB en base64), on la marque pour réduction
+                            $photo['oversized'] = true;
+                        }
+                    }
+                }
+                
+                $results[] = [
+                    'equipment' => $equipment,
+                    'pictures' => $limitedPhotos
+                ];
+                
+                // Nettoyage immédiat des variables temporaires
+                unset($photos, $limitedPhotos);
+                
+            } catch (\Exception $e) {
+                $this->customLog("Erreur traitement équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
+                
+                // En cas d'erreur, on ajoute l'équipement sans photo
+                $results[] = [
+                    'equipment' => $equipment,
+                    'pictures' => []
+                ];
+            }
+        }
+        
+        return $results;
+    }
+
+    /**
+     * MÉTHODE DE SECOURS : PDF minimal en cas d'erreur mémoire
+     */
+    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, array $equipments): Response
+    {
+        $this->customLog("Génération PDF de secours (sans photos)");
+        
+        // Créer un PDF ultra-léger avec juste les infos équipements
+        $lightData = [];
+        foreach (array_slice($equipments, 0, 50) as $equipment) {
+            $lightData[] = [
+                'equipment' => $equipment,
+                'pictures' => [] // Aucune photo
+            ];
+        }
+        
+        $html = $this->renderView('pdf/equipements.html.twig', [
+            'equipmentsWithPictures' => $lightData,
+            'equipementsSupplementaires' => [],
+            'equipementsNonPresents' => [],
+            'clientId' => $id,
+            'agence' => $agence,
+            'imageUrl' => 'https://www.pdf.somafi-group.fr/background/group.jpg',
+            'error_mode' => true,
+            'error_message' => "PDF généré en mode dégradé suite à une erreur mémoire : {$errorMessage}",
+            'isOptimizedMode' => true,
+            'optimizationMessage' => "Mode de secours activé - PDF sans photos pour éviter les erreurs mémoire"
+        ]);
+        
+        $filename = "equipements_client_{$id}_{$agence}_emergency.pdf";
+        $pdfContent = $this->pdfGenerator->generatePdf($html, $filename);
+        
+        return new Response($pdfContent, Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"$filename\"",
+            'X-Generation-Mode' => 'emergency',
+            'X-Error-Recovery' => 'memory-limit'
+        ]);
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        $bytes = max($bytes, 0);
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+        $pow = min($pow, count($units) - 1);
+        $bytes /= (1 << (10 * $pow));
+        return round($bytes, 2) . ' ' . $units[$pow];
     }
 
     private function getPhotosForEquipmentOptimized($equipment): array
@@ -903,95 +570,6 @@ class EquipementPdfController extends AbstractController
         }
         
         return file_get_contents($photoPath);
-    }
-
-    /**
-     * Version allégée du PDF d'erreur
-     */
-    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, $equipmentsFiltered): Response
-    {
-        // ✅ SÉCURISER l'appel à memory_get_peak_usage
-        // ✅ SÉCURISER l'appel à memory_get_peak_usage
-        $peakMemory = memory_get_peak_usage(true);
-        $memoryText = ($peakMemory > 0) ? $this->formatBytes($peakMemory) : 'N/A';
-        
-        // juste avant la génération du HTML/PDF
-
-        // Activer le rapport détaillé des erreurs PHP
-        set_error_handler(function($severity, $message, $file, $line) {
-            $this->customLog("PHP Warning/Error: $message in $file at line $line");
-            // Retourner false pour que PHP continue avec son gestionnaire normal
-            return false;
-        });
-
-        // Vérifier toutes les variables numériques avant utilisation
-        $this->customLog("=== VÉRIFICATION VARIABLES NUMÉRIQUES ===");
-        $this->customLog("Memory usage: " . var_export(memory_get_usage(true), true));
-        $this->customLog("Peak memory: " . var_export(memory_get_peak_usage(true), true));
-        $this->customLog("Equipments count: " . var_export(count($equipmentsFiltered), true));
-
-        // Vérifier les équipements pour des valeurs non-numériques
-        foreach ($equipmentsFiltered as $index => $equipment) {
-            if ($index < 3) { // Tester seulement les 3 premiers
-                $this->customLog("Equipment $index methods check:");
-                
-                // Tester les getters qui pourraient retourner des valeurs numériques
-                $numericMethods = ['getId', 'getNumeroEquipement'];
-                foreach ($numericMethods as $method) {
-                    if (method_exists($equipment, $method)) {
-                        $value = $equipment->$method();
-                        $this->customLog("  $method(): " . var_export($value, true) . " (type: " . gettype($value) . ")");
-                    }
-                }
-            }
-        }
-
-        // Restaurer le gestionnaire d'erreurs par défaut après les tests
-        restore_error_handler();
-
-        $html = "
-        <html><body style='font-family: Arial; padding: 20px;'>
-            <h1>Erreur de génération PDF</h1>
-            <p><strong>Client:</strong> {$id}</p>
-            <p><strong>Agence:</strong> {$agence}</p>
-            <p><strong>Erreur:</strong> {$errorMessage}</p>
-            <p><strong>Mémoire pic:</strong> {$memoryText}</p>
-            <p>Veuillez contacter le support technique.</p>
-        </body></html>
-        ";
-        
-        try {
-            $pdfContent = $this->pdfGenerator->generatePdf($html, "erreur_{$agence}_{$id}.pdf");
-            return new Response($pdfContent, Response::HTTP_OK, [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => "inline; filename=\"erreur_{$agence}_{$id}.pdf\""
-            ]);
-        } catch (\Exception $e) {
-            return new Response("Erreur critique de génération PDF", Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    
-    /**
-     * Formatage des tailles mémoire - VERSION CORRIGÉE
-     */
-    private function formatBytes(int $size, int $precision = 2): string
-    {
-        // ✅ PROTECTION contre les valeurs problématiques
-        if ($size <= 0) {
-            return '0 B';
-        }
-        
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
-        // ✅ Utilisation de la méthode sécurisée sans log()
-        $i = 0;
-        while ($size > 1024 && $i < count($units) - 1) {
-            $size /= 1024;
-            $i++;
-        }
-        
-        return round($size, $precision) . ' ' . $units[$i];
     }
 
     private function getLocalPhotosForEquipment($equipment): array
