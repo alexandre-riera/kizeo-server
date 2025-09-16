@@ -236,8 +236,8 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            $clientAnneeFilter = '';
-            $clientVisiteFilter = '';
+            $clientAnneeFilter = '2025';
+            $clientVisiteFilter = 'CE1';
             // Nettoyage final avant rendu
             if (!empty($request->query->get('clientAnneeFilter')) && !empty($request->query->get('clientVisiteFilter', ''))) {
                 $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
