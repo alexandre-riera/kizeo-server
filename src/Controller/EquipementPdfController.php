@@ -292,7 +292,7 @@ class EquipementPdfController extends AbstractController
             'adresse' => [
                 'ligne1' => $client->getAdressep1() ?? '',
                 'ligne2' => $client->getAdressep2() ?? '',
-                'codePostal' => $client->getCodePostalp() ?? '',
+                'codePostal' => $client->getCpostalp() ?? '',
                 'ville' => $client->getVillep() ?? '',
             ]
         ];
