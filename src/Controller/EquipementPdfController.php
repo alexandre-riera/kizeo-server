@@ -462,7 +462,15 @@ class EquipementPdfController extends AbstractController
         $statistiques = [
             'total' => count($equipments),
             'equipementsContrat' => count($lightData),
-            'equipementsHorsContrat' => count($equipments) - count($lightData)
+            'equipementsHorsContrat' => count($equipments) - count($lightData),
+            'status_counts' => [
+                'green' => 0,
+                'orange' => 0,
+                'red' => 0,
+                'black' => 0,
+                'grey' => 0,
+                'N/A' => 0
+            ]
         ];
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $lightData,
