@@ -324,6 +324,13 @@ class EquipementPdfController extends AbstractController
             $adressep2 = trim($clientSelectedInformations->getAdressep2());
             $cpostalp = trim($clientSelectedInformations->getCpostalp());
             $villep = trim($clientSelectedInformations->getVillep());
+            $lightData = [];
+            foreach (array_slice($equipments, 0, 50) as $equipment) {
+                $lightData[] = [
+                    'equipment' => $equipment,
+                    'pictures' => [] // Aucune photo
+                ];
+            }
 
             $templateVars = [
                 'equipmentsWithPictures' => $allEquipmentsWithPictures,
@@ -343,6 +350,19 @@ class EquipementPdfController extends AbstractController
                 'adressep2' => $adressep2,
                 'cpostalp' => $cpostalp,
                 'villep' => $villep,
+                'stistiques' => [
+                    'total' => $totalEquipments,
+                    'equipementsContrat' => count($lightData),
+                    'equipementsHorsContrat' => $totalEquipments - count($lightData),
+                    'status_counts' => [
+                        'green' => 0,
+                        'orange' => 0,
+                        'red' => 0,
+                        'black' => 0,
+                        'grey' => 0,
+                        'N/A' => 0
+                    ]
+                ],
                 'optimizationMessage' => $totalEquipments > 100 
                     ? "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
                     count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
