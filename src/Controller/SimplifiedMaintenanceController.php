@@ -3496,7 +3496,7 @@ class SimplifiedMaintenanceController extends AbstractController
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentHorsContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos);
+        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentHorsContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos, $raisonSociale, $visite);
         
         // dump("Équipement hors contrat traité avec photos locales: " . $numeroEquipement);
         return true;
@@ -3512,7 +3512,9 @@ class SimplifiedMaintenanceController extends AbstractController
         string $entryId, 
         string $equipmentCode, 
         EntityManagerInterface $entityManager,
-        array $savedPhotos = []
+        array $savedPhotos = [],
+        string $raisonSociale,
+        string $visite
     ): void {
         
         try {
@@ -3531,6 +3533,7 @@ class SimplifiedMaintenanceController extends AbstractController
                 $form->setFormId($formId);
                 $form->setDataId($entryId);
                 $form->setEquipmentId($equipmentCode);
+                $form->setRaisonSocialeVisite($raisonSociale . '\\' . $visite);
             }
             
             // Définir les métadonnées de base
@@ -3598,7 +3601,7 @@ class SimplifiedMaintenanceController extends AbstractController
             'photo_barriere' => 'setPhotoBarriere',
             'photo_tourniquet' => 'setPhotoTourniquet',
             'photo_sas' => 'setPhotoSas',
-            'photo_2' => 'setPhoto2'
+            'photo2' => 'setPhoto2'
         ];
         
         foreach ($photoMapping as $kizeoField => $formMethod) {
