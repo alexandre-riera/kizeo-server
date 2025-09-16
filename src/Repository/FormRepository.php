@@ -2807,56 +2807,75 @@ class FormRepository extends ServiceEntityRepository
             return [];
             
         } catch (\Exception $e) {
-            $this->customLog("Erreur récupération photo: " . $e->getMessage());
+            error_log("Erreur récupération photo: " . $e->getMessage()); // CORRIGÉ: error_log au lieu de customLog
             return [];
         }
     }
 
     
+    /**
+     * Trouve une photo avec la méthode traditionnelle (raison sociale)
+     */
     private function findPhotoTraditionalWay($equipment): ?string
     {
-        // Méthode existante avec raison sociale
-        $agence = $equipment->getCodeAgence();
-        $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
-        $raisonSociale = str_replace(' ', '_', $raisonSociale);
-        $equipmentCode = $equipment->getNumeroEquipement();
-        
-        $photoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$raisonSociale}/2025/CE1/{$equipmentCode}_generale.jpg";
-        
-        return file_exists($photoPath) ? $photoPath : null;
-    }
-
-    private function findPhotoWithDynamicScan($equipment, string $photoType = 'generale'): ?string
-    {
-        $agence = $equipment->getCodeAgence(); // Ex: S40
-        $equipmentCode = $equipment->getNumeroEquipement();
-        
-        // Chemin de base de l'agence
-        $baseAgencyPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
-        
-        if (!is_dir($baseAgencyPath)) {
-            return null;
-        }
-        
-        // Scanner tous les dossiers clients de l'agence
-        $clientDirs = array_filter(scandir($baseAgencyPath), function($item) use ($baseAgencyPath) {
-            return is_dir($baseAgencyPath . $item) && !in_array($item, ['.', '..']);
-        });
-        
-        // Chercher dans chaque dossier client
-        foreach ($clientDirs as $clientDir) {
-            $photoPath = $baseAgencyPath . $clientDir . "/2025/CE1/{$equipmentCode}_{$photoType}.jpg";
+        try {
+            $agence = $equipment->getCodeAgence();
+            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
+            $anneeVisite = '2025';
+            $typeVisite = 'CE1';
+            $numeroEquipement = $equipment->getNumeroEquipement();
             
-            if (file_exists($photoPath) && is_readable($photoPath)) {
-                $this->customLog("Photo trouvée: {$photoPath}");
+            // Construction du chemin traditionnel
+            $photoPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$raisonSociale}/{$anneeVisite}/{$typeVisite}/{$numeroEquipement}_generale.jpg";
+            
+            if (file_exists($photoPath)) {
                 return $photoPath;
             }
+            
+            return null;
+        } catch (\Exception $e) {
+            error_log("Erreur findPhotoTraditionalWay: " . $e->getMessage());
+            return null;
         }
-        
-        $this->customLog("Aucune photo trouvée pour {$equipmentCode} dans {$agence}");
-        return null;
     }
 
+    /**
+     * Scan dynamique pour trouver la photo
+     */
+    private function findPhotoWithDynamicScan($equipment, string $photoType = 'generale'): ?string
+    {
+        try {
+            $agence = $equipment->getCodeAgence();
+            $numeroEquipement = $equipment->getNumeroEquipement();
+            
+            // Scanner tous les dossiers clients pour trouver les photos
+            $baseAgencePath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+            
+            if (!is_dir($baseAgencePath)) {
+                return null;
+            }
+            
+            $clientDirs = scandir($baseAgencePath);
+            foreach ($clientDirs as $clientDir) {
+                if ($clientDir === '.' || $clientDir === '..') continue;
+                
+                $clientPath = $baseAgencePath . $clientDir . "/2025/CE1/";
+                if (!is_dir($clientPath)) continue;
+                
+                // Chercher le fichier photo
+                $photoPath = $clientPath . $numeroEquipement . "_{$photoType}.jpg";
+                
+                if (file_exists($photoPath)) {
+                    return $photoPath;
+                }
+            }
+            
+            return null;
+        } catch (\Exception $e) {
+            error_log("Erreur findPhotoWithDynamicScan: " . $e->getMessage());
+            return null;
+        }
+    }
     /**
      * Méthode de scan alternatif pour trouver la photo générale
      * Utile si la structure exacte varie légèrement
