@@ -247,6 +247,78 @@ class EquipementPdfController extends AbstractController
             // 4. Génération finale du PDF avec les données optimisées
             $imageUrl = $this->getImageUrlForAgency($agence) ?: 'https://www.pdf.somafi-group.fr/background/group.jpg';
             
+            $dateDeDerniereVisite = null;
+            $uniqueEquipments = [];
+            $duplicatesRemoved = 0;
+            foreach ($allEquipmentsWithPictures as $equipmentData) {
+                $numeroEquipement = $equipmentData['numeroEquipement'];
+                $equipment = $equipmentData['equipment'];
+                
+                try {
+                    // RÃ©cupÃ©ration de la date de derniÃ¨re visite
+                    $dateDeDerniereVisite = null;
+                    if (method_exists($equipment, 'getDerniereVisite')) {
+                        $derniereVisite = $equipment->getDerniereVisite();
+                        if ($derniereVisite instanceof \DateTime) {
+                            $dateDeDerniereVisite = $derniereVisite;
+                        } elseif (is_string($derniereVisite) && !empty($derniereVisite)) {
+                            try {
+                                $dateDeDerniereVisite = new \DateTime($derniereVisite);
+                            } catch (\Exception $e) {
+                                $this->customLog("Impossible de parser la date de derniÃ¨re visite: {$derniereVisite}");
+                                $dateDeDerniereVisite = new \DateTime('1970-01-01'); // Date par dÃ©faut trÃ¨s ancienne
+                            }
+                        }
+                    }
+                    
+                    // Si aucune date trouvÃ©e, utiliser une date par dÃ©faut trÃ¨s ancienne
+                    if (!$dateDeDerniereVisite) {
+                        $dateDeDerniereVisite = new \DateTime('1970-01-01');
+                    }
+                    
+                    // VÃ©rifier si cet Ã©quipement existe dÃ©jÃ 
+                    if (!isset($uniqueEquipments[$numeroEquipement])) {
+                        // Premier Ã©quipement avec ce numÃ©ro
+                        $uniqueEquipments[$numeroEquipement] = [
+                            'data' => $equipmentData,
+                            'dateDeDerniereVisite' => $dateDeDerniereVisite
+                        ];
+                        $this->customLog("Nouvel Ã©quipement: {$numeroEquipement} - Date: " . $dateDeDerniereVisite->format('Y-m-d H:i:s'));
+                    } else {
+                        // Ã‰quipement dÃ©jÃ  existant, comparer les dates
+                        $existingDate = $uniqueEquipments[$numeroEquipement]['dateDeDerniereVisite'];
+                        
+                        if ($dateDeDerniereVisite > $existingDate) {
+                            // L'Ã©quipement actuel est plus rÃ©cent
+                            $this->customLog("Remplacement Ã©quipement {$numeroEquipement}: " . 
+                                        $existingDate->format('Y-m-d H:i:s') . " -> " . $dateDeDerniereVisite->format('Y-m-d H:i:s'));
+                            $uniqueEquipments[$numeroEquipement] = [
+                                'data' => $equipmentData,
+                                'dateDeDerniereVisite' => $dateDeDerniereVisite
+                            ];
+                            $duplicatesRemoved++;
+                        } else {
+                            // L'Ã©quipement existant est plus rÃ©cent ou Ã©gal, on garde l'ancien
+                            $this->customLog("Conservation Ã©quipement {$numeroEquipement}: " . 
+                                        $existingDate->format('Y-m-d H:i:s') . " >= " . $dateDeDerniereVisite->format('Y-m-d H:i:s'));
+                            $duplicatesRemoved++;
+                        }
+                    }
+                    
+                } catch (\Exception $e) {
+                    $this->customLog("Erreur lors de la dÃ©duplication pour {$numeroEquipement}: " . $e->getMessage());
+                    
+                    // En cas d'erreur, garder l'Ã©quipement s'il n'existe pas dÃ©jÃ 
+                    if (!isset($uniqueEquipments[$numeroEquipement])) {
+                        $uniqueEquipments[$numeroEquipement] = [
+                            'data' => $equipmentData,
+                            'dateDeDerniereVisite' => new \DateTime('1970-01-01')
+                        ];
+                    }
+                }
+            }
+
+
             $templateVars = [
                 'equipmentsWithPictures' => $allEquipmentsWithPictures,
                 'equipementsSupplementaires' => [],
@@ -259,6 +331,7 @@ class EquipementPdfController extends AbstractController
                 'isOptimizedMode' => $totalEquipments > 100, // CORRIGÉ: seulement > 100
                 'totalEquipmentsFound' => $totalEquipments,
                 'maxEquipmentsProcessed' => count($allEquipmentsWithPictures),
+                'dateDeDerniereVisite' => $dateDeDerniereVisite,
                 'optimizationMessage' => $totalEquipments > 100 
                     ? "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
                     count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
