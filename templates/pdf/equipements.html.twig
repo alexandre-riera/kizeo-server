@@ -1,62 +1,55 @@
-{# templates/pdf/equipements.html.twig #}
+{# templates/pdf/equipements.html.twig - VERSION CORRIGÉE URGENTE #}
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Équipements Client {{ clientId }} - {{ agence }}</title>
     <style>
-        /* Style optimisé pour réduire la charge mémoire */
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        .page { page-break-after: always; }
-        .equipment-container { 
-            margin: 10px; 
-            border: 1px solid #ccc; 
-            padding: 10px; 
-            height: 350px; 
-            display: table; 
-            width: calc(50% - 20px); 
-            float: left; 
+        /* Style minimal et sûr */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .equipment-row { 
+            margin-bottom: 20px; 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            display: block;
+            width: 100%;
         }
         
         .equipment-image { 
-            width: 30%; 
-            vertical-align: top; 
+            width: 200px; 
+            height: 150px;
+            float: left;
+            margin-right: 15px;
             text-align: center; 
         }
         
         .main-photo { 
-            max-width: 150px; 
+            max-width: 200px; 
             max-height: 150px; 
-            object-fit: cover; 
+            border: 1px solid #ccc;
         }
         
         .no-image { 
-            width: 150px; 
+            width: 200px; 
             height: 150px; 
             border: 2px dashed #ccc; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             color: #666; 
+            font-style: italic;
         }
         
-        .equipment-info { width: 70%; vertical-align: top; }
+        .equipment-info { margin-left: 220px; }
         .info-table { width: 100%; border-collapse: collapse; }
-        .info-row td { padding: 5px; border-bottom: 1px solid #eee; }
-        .info-key { font-weight: bold; width: 40%; }
-        .info-value { width: 60%; }
+        .info-row td { padding: 8px; border-bottom: 1px solid #eee; }
+        .info-key { font-weight: bold; width: 150px; }
+        .info-value { }
         .anomalies-row .info-value { color: #d9534f; font-weight: bold; }
         
         .clear { clear: both; }
         .page-break { page-break-before: always; clear: both; }
-        
-        /* En-tête optimisé */
-        .header { 
-            background: url('{{ imageUrl }}') no-repeat center; 
-            background-size: cover; 
-            height: 100px; 
-            margin-bottom: 20px; 
-        }
         
         /* Message d'optimisation */
         .optimization-notice {
@@ -70,9 +63,6 @@
     </style>
 </head>
 <body>
-    {# En-tête du document #}
-    <div class="header"></div>
-    
     {# Message d'optimisation si nécessaire #}
     {% if isOptimizedMode is defined and isOptimizedMode %}
         <div class="optimization-notice">
@@ -89,90 +79,80 @@
         {% endif %}
     </div>
     
-    {# Liste des équipements - VERSION OPTIMISÉE #}
+    {# Liste des équipements - VERSION SIMPLIFIÉE ET SÛRE #}
     {% if equipmentsWithPictures is defined and equipmentsWithPictures|length > 0 %}
-        {% set equipmentCount = 0 %}
         
         {% for equipmentData in equipmentsWithPictures %}
             {% set equipment = equipmentData.equipment %}
             {% set pictures = equipmentData.pictures %}
-            {% set equipmentCount = equipmentCount + 1 %}
             
-            {# Nouvelle page tous les 4 équipements (2x2) #}
-            {% if (equipmentCount - 1) % 4 == 0 %}
-                {% if not loop.first %}<div class="page-break"></div>{% endif %}
+            {# Saut de page tous les 3 équipements #}
+            {% if loop.index > 1 and (loop.index - 1) % 3 == 0 %}
+                <div class="page-break"></div>
             {% endif %}
             
-            <div class="equipment-container">
-                <table style="width: 100%; height: 100%;">
-                    <tr>
-                        <td class="equipment-image">
-                            {% if pictures|length > 0 %}
-                                {# OPTIMISATION : Vérifier si l'image n'est pas trop lourde #}
-                                {% if pictures[0].oversized is defined and pictures[0].oversized %}
-                                    <div class="no-image">
-                                        <em>Image trop volumineuse<br>non affichée</em>
-                                    </div>
-                                {% else %}
-                                    <img src="data:image/jpeg;base64,{{ pictures[0].picture }}" 
-                                         class="main-photo" 
-                                         alt="Photo {{ equipment.numeroEquipement }}"
-                                         loading="lazy">
-                                {% endif %}
-                            {% else %}
-                                <div class="no-image">
-                                    <em>Aucune photo<br>disponible</em>
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td class="equipment-info">
-                            <h3 style="margin: 0 0 10px 0; color: #333;">
-                                {{ equipment.numeroEquipement }} - {{ equipment.type ?? 'Type non défini' }}
-                            </h3>
-                            
-                            <table class="info-table">
-                                <tr class="info-row">
-                                    <td class="info-key">Marque</td>
-                                    <td class="info-value">{{ equipment.marque ?? 'Non renseignée' }}</td>
-                                </tr>
-                                <tr class="info-row">
-                                    <td class="info-key">Modèle</td>
-                                    <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
-                                </tr>
-                                <tr class="info-row">
-                                    <td class="info-key">État</td>
-                                    <td class="info-value">{{ equipment.etat ?? 'Non défini' }}</td>
-                                </tr>
-                                <tr class="info-row">
-                                    <td class="info-key">Mise en service</td>
-                                    <td class="info-value">{{ equipment.miseEnService ?? 'Non renseignée' }}</td>
-                                </tr>
-                                <tr class="info-row">
-                                    <td class="info-key">Repère site</td>
-                                    <td class="info-value">{{ equipment.repereSiteClient ?? 'Non repéré' }}</td>
-                                </tr>
-                                
-                                {# Anomalies seulement si présentes #}
-                                {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
-                                <tr class="info-row anomalies-row">
-                                    <td class="info-key">Anomalies</td>
-                                    <td class="info-value">{{ equipment.anomalies }}</td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-            
-            {# Clear après chaque paire d'équipements #}
-            {% if equipmentCount % 2 == 0 %}
+            <div class="equipment-row">
+                {# Image de l'équipement #}
+                <div class="equipment-image">
+                    {% if pictures is defined and pictures|length > 0 %}
+                        {% set firstPicture = pictures[0] %}
+                        {% if firstPicture.picture is defined %}
+                            <img src="data:image/jpeg;base64,{{ firstPicture.picture }}" 
+                                 class="main-photo" 
+                                 alt="Photo {{ equipment.numeroEquipement }}">
+                        {% else %}
+                            <div class="no-image">
+                                Aucune photo<br>disponible
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="no-image">
+                            Aucune photo<br>disponible
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {# Informations de l'équipement #}
+                <div class="equipment-info">
+                    <h3 style="margin: 0 0 10px 0; color: #333;">
+                        Équipement {{ equipment.numeroEquipement }} - {{ equipment.type ?? 'Type non défini' }}
+                    </h3>
+                    
+                    <table class="info-table">
+                        <tr class="info-row">
+                            <td class="info-key">Marque :</td>
+                            <td class="info-value">{{ equipment.marque ?? 'Non renseignée' }}</td>
+                        </tr>
+                        <tr class="info-row">
+                            <td class="info-key">Modèle :</td>
+                            <td class="info-value">{{ equipment.modele ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr class="info-row">
+                            <td class="info-key">État :</td>
+                            <td class="info-value">{{ equipment.etat ?? 'Non défini' }}</td>
+                        </tr>
+                        <tr class="info-row">
+                            <td class="info-key">Mise en service :</td>
+                            <td class="info-value">{{ equipment.miseEnService ?? 'Non renseignée' }}</td>
+                        </tr>
+                        <tr class="info-row">
+                            <td class="info-key">Repère site :</td>
+                            <td class="info-value">{{ equipment.repereSiteClient ?? 'Non repéré' }}</td>
+                        </tr>
+                        
+                        {# Anomalies seulement si présentes #}
+                        {% if equipment.anomalies is defined and equipment.anomalies|trim is not empty %}
+                        <tr class="info-row anomalies-row">
+                            <td class="info-key">Anomalies :</td>
+                            <td class="info-value">{{ equipment.anomalies }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                
                 <div class="clear"></div>
-            {% endif %}
+            </div>
         {% endfor %}
-        
-        {# Clear final #}
-        <div class="clear"></div>
         
     {% else %}
         <div style="text-align: center; padding: 50px; color: #666;">
@@ -191,7 +171,7 @@
     {% endif %}
     
     {# Footer #}
-    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 12px; color: #666;">
+    <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 10px;">
         Document généré automatiquement le {{ "now"|date('d/m/Y à H:i') }}
         {% if equipmentsWithPictures is defined %}
             - {{ equipmentsWithPictures|length }} équipement{{ equipmentsWithPictures|length > 1 ? 's' : '' }} traité{{ equipmentsWithPictures|length > 1 ? 's' : '' }}

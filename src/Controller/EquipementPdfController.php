@@ -280,7 +280,7 @@ class EquipementPdfController extends AbstractController
     }
 
     /**
-     * NOUVELLE MÉTHODE : Traitement optimisé par batch
+     * NOUVELLE MÉTHODE : Traitement optimisé par batch - VERSION CORRIGÉE
      */
     private function processEquipmentBatchOptimized(array $equipmentBatch, EntityManagerInterface $entityManager): array
     {
@@ -289,21 +289,34 @@ class EquipementPdfController extends AbstractController
         
         foreach ($equipmentBatch as $equipment) {
             try {
-                // Ne récupérer QUE la photo principale pour économiser la mémoire
+                // CORRECTION : Utiliser la méthode existante dans ton code
                 $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
                 
-                // LIMITE STRICTE : max 1 photo par équipement en mode optimisé
-                $limitedPhotos = array_slice($photos, 0, 1);
+                $this->customLog("Equipment {$equipment->getNumeroEquipement()}: " . count($photos) . " photos trouvées");
                 
-                if (!empty($limitedPhotos)) {
-                    // Optimisation : réduire la qualité/taille des images base64 si possible
-                    foreach ($limitedPhotos as &$photo) {
-                        if (isset($photo['picture']) && strlen($photo['picture']) > 500000) {
-                            // Si l'image est très grosse (>500KB en base64), on la marque pour réduction
-                            $photo['oversized'] = true;
-                        }
+                // Convertir les photos au format attendu par le template
+                $picturesFormatted = [];
+                foreach ($photos as $photo) {
+                    if (is_object($photo) && method_exists($photo, 'picture')) {
+                        // Si c'est un objet avec propriété picture
+                        $picturesFormatted[] = [
+                            'picture' => $photo->picture,
+                            'update_time' => property_exists($photo, 'update_time') ? $photo->update_time : null
+                        ];
+                    } elseif (is_array($photo) && isset($photo['picture'])) {
+                        // Si c'est un tableau
+                        $picturesFormatted[] = $photo;
+                    } elseif (is_string($photo)) {
+                        // Si c'est directement la string base64
+                        $picturesFormatted[] = [
+                            'picture' => $photo,
+                            'update_time' => null
+                        ];
                     }
                 }
+                
+                // LIMITE STRICTE : max 1 photo par équipement en mode optimisé
+                $limitedPhotos = array_slice($picturesFormatted, 0, 1);
                 
                 $results[] = [
                     'equipment' => $equipment,
@@ -311,7 +324,7 @@ class EquipementPdfController extends AbstractController
                 ];
                 
                 // Nettoyage immédiat des variables temporaires
-                unset($photos, $limitedPhotos);
+                unset($photos, $picturesFormatted, $limitedPhotos);
                 
             } catch (\Exception $e) {
                 $this->customLog("Erreur traitement équipement {$equipment->getNumeroEquipement()}: " . $e->getMessage());
@@ -375,6 +388,101 @@ class EquipementPdfController extends AbstractController
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
         return round($bytes, 2) . ' ' . $units[$pow];
+    }
+
+    /**
+     * MÉTHODE DE DEBUG TEMPORAIRE - Route de test pour les photos
+     */
+    #[Route('/debug/photos/{agence}/{id}', name: 'debug_photos')]
+    public function debugPhotos(string $agence, string $id, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $this->customLog("=== DEBUG PHOTOS ===");
+        
+        // Récupérer quelques équipements du client
+        $equipments = $this->getEquipmentsByClientAndAgence($agence, $id, $entityManager);
+        $testEquipments = array_slice($equipments, 0, 3); // Prendre juste 3 équipements pour test
+        
+        $debugResults = [];
+        $formRepository = $entityManager->getRepository(Form::class);
+        
+        foreach ($testEquipments as $equipment) {
+            $equipmentId = $equipment->getNumeroEquipement();
+            $this->customLog("Testing equipment: {$equipmentId}");
+            
+            $debugInfo = [
+                'equipment_id' => $equipmentId,
+                'raison_sociale' => $equipment->getRaisonSociale(),
+                'code_agence' => $equipment->getCodeAgence(),
+                'visite' => $equipment->getVisite(),
+                'photos_found' => 0,
+                'photos_detail' => [],
+                'error' => null
+            ];
+            
+            try {
+                // Test 1: Méthode actuelle
+                $photos = $formRepository->getGeneralPhotoFromLocalStorage($equipment, $entityManager);
+                $debugInfo['photos_found'] = count($photos);
+                
+                // Analyser le format des photos
+                foreach ($photos as $index => $photo) {
+                    $photoDetail = [
+                        'index' => $index,
+                        'type' => gettype($photo),
+                        'is_object' => is_object($photo),
+                        'has_picture_property' => false,
+                        'picture_length' => 0
+                    ];
+                    
+                    if (is_object($photo)) {
+                        $photoDetail['class'] = get_class($photo);
+                        $photoDetail['has_picture_property'] = property_exists($photo, 'picture');
+                        if (property_exists($photo, 'picture')) {
+                            $photoDetail['picture_length'] = strlen($photo->picture);
+                        }
+                    } elseif (is_array($photo)) {
+                        $photoDetail['array_keys'] = array_keys($photo);
+                        $photoDetail['has_picture_property'] = isset($photo['picture']);
+                        if (isset($photo['picture'])) {
+                            $photoDetail['picture_length'] = strlen($photo['picture']);
+                        }
+                    } elseif (is_string($photo)) {
+                        $photoDetail['picture_length'] = strlen($photo);
+                    }
+                    
+                    $debugInfo['photos_detail'][] = $photoDetail;
+                }
+                
+                // Test 2: Vérifier la structure des chemins de photos
+                $expectedPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
+                $debugInfo['photo_path_check'] = [
+                    'base_path' => $expectedPath,
+                    'base_path_exists' => is_dir($expectedPath),
+                    'readable' => is_readable($expectedPath)
+                ];
+                
+                if (is_dir($expectedPath)) {
+                    $dirs = scandir($expectedPath);
+                    $debugInfo['photo_path_check']['subdirs'] = array_filter($dirs, function($item) use ($expectedPath) {
+                        return $item !== '.' && $item !== '..' && is_dir($expectedPath . $item);
+                    });
+                }
+                
+            } catch (\Exception $e) {
+                $debugInfo['error'] = $e->getMessage();
+                $this->customLog("Error for equipment {$equipmentId}: " . $e->getMessage());
+            }
+            
+            $debugResults[] = $debugInfo;
+        }
+        
+        return new JsonResponse([
+            'agence' => $agence,
+            'client_id' => $id,
+            'total_equipments' => count($equipments),
+            'debug_results' => $debugResults,
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
     }
 
     private function getPhotosForEquipmentOptimized($equipment): array
