@@ -855,7 +855,7 @@
                 </div>
                 <!-- Bouton pour générer le PDF de tous les équipements du client -->
                 <div class="margin_top_30 col-sm-3">
-                    <a id="pdf-button" href="{{ path('client_equipements_pdf', {
+                    <a id="pdf-button" href="{{ path('equipement_pdf_client_complete', {
                         'agence': agenceSelected,
                         'id': clientSelectedInformations.getIdContact(),
                         'clientAnneeFilter': clientAnneeFilter,
