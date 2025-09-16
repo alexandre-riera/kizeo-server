@@ -288,7 +288,7 @@ class EquipementPdfController extends AbstractController
             $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
             
             // En cas d'erreur, générer un PDF minimal
-            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipments ?? []);
+            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipments ?? [], $request);
         } finally {
             // Remettre les limites par défaut
             ini_restore('memory_limit');
@@ -360,7 +360,7 @@ class EquipementPdfController extends AbstractController
     /**
      * MÉTHODE DE SECOURS : PDF minimal en cas d'erreur mémoire
      */
-    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, array $equipments): Response
+    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, array $equipments, $request): Response
     {
         $this->customLog("Génération PDF de secours (sans photos)");
         
