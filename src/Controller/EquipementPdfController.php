@@ -452,6 +452,12 @@ class EquipementPdfController extends AbstractController
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
         }
+
+        // Récupérer les infos client pour l'en-tête
+        $nomClient = method_exists($equipments[0], 'getRaisonSociale') ? $equipments[0]->getRaisonSociale() : 'N/A';
+        $adressep1 = method_exists($equipments[0], 'getAdressep1') ? $equipments[0]->getAdressep1() : 'N/A';
+        $adressep2 = method_exists($equipments[0], 'getAdressep2') ? $equipments[0]->getAdressep2() : 'N/A';
+        $cpostalp = method_exists($equipments[0], 'getCpostalp') ? $equipments[0]->getCpostalp() : 'N/A';
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $lightData,
             'equipementsSupplementaires' => [],
@@ -462,6 +468,10 @@ class EquipementPdfController extends AbstractController
             'clientAnneeFilter' => $clientAnneeFilter,
             'clientVisiteFilter' => $clientVisiteFilter,
             'dateDeDerniereVisite' => $dateDeDerniereVisite,
+            'nomClient' => $nomClient,
+            'adressep1' => $adressep1,
+            'adressep2' => $adressep2,
+            'cpostalp' => $cpostalp,
             'error_mode' => true,
             'error_message' => "PDF généré en mode dégradé suite à une erreur mémoire : {$errorMessage}",
             'isOptimizedMode' => true,
