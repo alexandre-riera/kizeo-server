@@ -236,8 +236,8 @@ class EquipementPdfController extends AbstractController
                 }
             }
             
-            $clientAnneeFilter = '2025';
-            $clientVisiteFilter = 'CE1';
+            $clientAnneeFilter = '';
+            $clientVisiteFilter = '';
             // Nettoyage final avant rendu
             if (!empty($request->query->get('clientAnneeFilter')) && !empty($request->query->get('clientVisiteFilter', ''))) {
                 $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
@@ -372,7 +372,13 @@ class EquipementPdfController extends AbstractController
                 'pictures' => [] // Aucune photo
             ];
         }
-        
+        $clientAnneeFilter = '';
+        $clientVisiteFilter = '';
+        // Nettoyage final avant rendu
+        if (!empty($request->query->get('clientAnneeFilter')) && !empty($request->query->get('clientVisiteFilter', ''))) {
+            $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
+            $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+        }
         $html = $this->renderView('pdf/equipements.html.twig', [
             'equipmentsWithPictures' => $lightData,
             'equipementsSupplementaires' => [],
@@ -380,6 +386,8 @@ class EquipementPdfController extends AbstractController
             'clientId' => $id,
             'agence' => $agence,
             'imageUrl' => 'https://www.pdf.somafi-group.fr/background/group.jpg',
+            'clientAnneeFilter' => $clientAnneeFilter,
+            'clientVisiteFilter' => $clientVisiteFilter,
             'error_mode' => true,
             'error_message' => "PDF généré en mode dégradé suite à une erreur mémoire : {$errorMessage}",
             'isOptimizedMode' => true,
