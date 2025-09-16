@@ -311,16 +311,16 @@ class EquipementPdfController extends AbstractController
                 'code_equipement' => $equipment->getNumeroEquipement(),
                 'raison_sociale_visite' => $equipment->getRaisonSociale()
             ]);
-
+            dd($photos);
             $formattedEquipements[] = [
                 'numero' => $equipment->getNumeroEquipement() ?? 'N/A',
-                'type' => ['libelle' => $equipment->getTypeEquipement() ?? 'Non renseigné'],
+                'type' => ['libelle' => $equipment->getLibelleEquipement() ?? 'Non renseigné'],
                 'marque' => $equipment->getMarque() ?? 'Non renseigné',
                 'modele' => $equipment->getModele() ?? 'Non renseigné',
                 'statut' => $this->determineEquipmentStatus($equipment),
                 'statutLibelle' => $this->getStatusLabel($this->determineEquipmentStatus($equipment)),
-                'dateMiseEnService' => $equipment->getDateMiseEnService() ?? null,
-                'repereSite' => $equipment->getRepereClient() ?? '',
+                'dateMiseEnService' => $equipment->getMiseEnService() ?? null,
+                'repereSite' => $equipment->getRepereSiteClient() ?? '',
                 'anomalies' => $this->getEquipmentAnomalies($equipment),
                 'photosPrincipales' => array_slice($photos, 0, 1), // Première photo
                 'photosSecondaires' => array_slice($photos, 1),   // Autres photos
@@ -367,9 +367,9 @@ class EquipementPdfController extends AbstractController
     private function getEquipmentAnomalies($equipment): array
     {
         $anomalies = [];
-        
-        if (method_exists($equipment, 'getObservations') && $equipment->getObservations()) {
-            $anomalies[] = ['description' => $equipment->getObservations()];
+
+        if (method_exists($equipment, 'getAnomalies') && $equipment->getAnomalies()) {
+            $anomalies[] = ['description' => $equipment->getAnomalies()];
         }
         
         return $anomalies;
