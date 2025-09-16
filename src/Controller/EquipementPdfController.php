@@ -194,17 +194,23 @@ class EquipementPdfController extends AbstractController
             
             $this->customLog("Total équipements trouvés: {$totalEquipments}");
             
-            // 2. PAGINATION FORCÉE si > 100 équipements
-            $maxEquipmentsPerBatch = $totalEquipments > 200 ? 50 : 100;
-            $equipmentBatches = array_chunk($equipments, $maxEquipmentsPerBatch);
-            
-            $this->customLog("Division en " . count($equipmentBatches) . " batches de {$maxEquipmentsPerBatch} équipements max");
-            
-            // 3. Génération par batches avec nettoyage mémoire
-            $allEquipmentsWithPictures = [];
-            $batchNumber = 1;
-            
-            foreach ($equipmentBatches as $batch) {
+            // 2. PAGINATION FORCÉE SEULEMENT si > 100 équipements
+            if ($totalEquipments <= 100) {
+                // Mode normal pour les petits volumes
+                $this->customLog("Mode normal activé - {$totalEquipments} équipements");
+                $allEquipmentsWithPictures = $this->processEquipmentBatchOptimized($equipments, $entityManager);
+            } else {
+                // Mode batch pour les gros volumes
+                $maxEquipmentsPerBatch = $totalEquipments > 200 ? 50 : 100;
+                $equipmentBatches = array_chunk($equipments, $maxEquipmentsPerBatch);
+                
+                $this->customLog("Mode batch activé - Division en " . count($equipmentBatches) . " batches de {$maxEquipmentsPerBatch} équipements max");
+                
+                // 3. Génération par batches avec nettoyage mémoire
+                $allEquipmentsWithPictures = [];
+                $batchNumber = 1;
+                
+                foreach ($equipmentBatches as $batch) {
                 $this->customLog("Traitement batch {$batchNumber}/" . count($equipmentBatches));
                 $memoryBefore = memory_get_usage(true);
                 
@@ -225,7 +231,8 @@ class EquipementPdfController extends AbstractController
                 // Sécurité : si on approche la limite mémoire, on s'arrête
                 if ($memoryAfter > (1536 * 1024 * 1024)) { // 1.5GB
                     $this->customLog("SÉCURITÉ: Limite mémoire approchée, arrêt du traitement");
-                    break;
+                        break;
+                    }
                 }
             }
             
@@ -241,11 +248,13 @@ class EquipementPdfController extends AbstractController
                 'imageUrl' => $imageUrl,
                 'clientAnneeFilter' => $request->query->get('clientAnneeFilter', ''),
                 'clientVisiteFilter' => $request->query->get('clientVisiteFilter', ''),
-                'isOptimizedMode' => true,
+                'isOptimizedMode' => $totalEquipments > 100, // CORRIGÉ: seulement > 100
                 'totalEquipmentsFound' => $totalEquipments,
                 'maxEquipmentsProcessed' => count($allEquipmentsWithPictures),
-                'optimizationMessage' => "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
-                                    count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
+                'optimizationMessage' => $totalEquipments > 100 
+                    ? "Mode optimisé activé - {$totalEquipments} équipements trouvés, " . 
+                    count($allEquipmentsWithPictures) . " traités pour éviter les erreurs mémoire"
+                    : null
             ];
             
             // Nettoyage avant rendu
