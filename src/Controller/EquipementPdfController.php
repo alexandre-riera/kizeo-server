@@ -361,7 +361,7 @@ class EquipementPdfController extends AbstractController
             $this->customLog("ERREUR GÉNÉRATION PDF: " . $e->getMessage());
             
             // En cas d'erreur, générer un PDF minimal
-            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipments ?? [], $request);
+            return $this->generateLightErrorPdf($agence, $id, $e->getMessage(), $equipments ?? [], $request, $dateDeDerniereVisite);
         } finally {
             // Remettre les limites par défaut
             ini_restore('memory_limit');
@@ -433,7 +433,7 @@ class EquipementPdfController extends AbstractController
     /**
      * MÉTHODE DE SECOURS : PDF minimal en cas d'erreur mémoire
      */
-    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, array $equipments, $request): Response
+    private function generateLightErrorPdf(string $agence, string $id, string $errorMessage, array $equipments, $request, $dateDeDerniereVisite): Response
     {
         $this->customLog("Génération PDF de secours (sans photos)");
         
@@ -461,6 +461,7 @@ class EquipementPdfController extends AbstractController
             'imageUrl' => 'https://www.pdf.somafi-group.fr/background/group.jpg',
             'clientAnneeFilter' => $clientAnneeFilter,
             'clientVisiteFilter' => $clientVisiteFilter,
+            'dateDeDerniereVisite' => $dateDeDerniereVisite,
             'error_mode' => true,
             'error_message' => "PDF généré en mode dégradé suite à une erreur mémoire : {$errorMessage}",
             'isOptimizedMode' => true,
