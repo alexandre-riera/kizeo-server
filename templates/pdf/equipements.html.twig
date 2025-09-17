@@ -63,33 +63,20 @@
                                     <td class="info-label">Repère site client</td>
                                     <td class="info-value">{{ equipement.repereSite ?? '' }}</td>
                                 </tr>
+                                {% if equipement.anomalies is defined and equipement.anomalies|length > 0 %}
+                                <tr>
+                                    <td class="info-label">Anomalies</td>
+                                    {% for anomalie in equipement.anomalies %}
+                                        <td class="info-value">{{ anomalie.description ?? anomalie }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endif %}
                             </table>
                         </td>
                     </tr>
                 </table>
                 
-                {% if equipement.anomalies is defined and equipement.anomalies|length > 0 %}
-                <div class="anomalies-section">
-                    <div class="anomalies-title">Anomalies</div>
-                    {% for anomalie in equipement.anomalies %}
-                        <div>{{ anomalie.description ?? anomalie }}</div>
-                    {% endfor %}
-                </div>
-                {% endif %}
                 
-                {% if equipement.photosSecondaires is defined and equipement.photosSecondaires|length > 0 %}
-                <div class="additional-photos">
-                    <div class="photos-grid">
-                        {% for photo in equipement.photosSecondaires %}
-                        <div class="photo-container">
-                            <img src="{{ asset('uploads/equipements/' ~ photo.filename) }}" 
-                                 alt="Photo {{ photo.description ?? '' }}" class="photo-thumbnail">
-                            <div class="photo-caption">{{ photo.description ?? '' }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
                 
                 {% if not loop.last %}
                     <div class="page-break"></div>
