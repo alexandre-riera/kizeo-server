@@ -73,15 +73,12 @@ class EquipementPdfController extends AbstractController
             // Préparer les données pour le template
             $clientData = $this->formatClientData($client);
             $equipementsData = $this->formatEquipementsData($equipements, $entityManager);
-            dump($equipementsData);
-            $visiteData = $equipementsData['dateMiseEnService'];
             $stats = $this->calculateStats($equipementsData);
             // Générer le PDF
             $html = $this->renderView('pdf/equipements.html.twig', [
                 'titre' => 'COMPTE RENDU D\'ENTRETIEN',
                 'client' => $clientData,
                 'equipements' => $equipementsData,
-                'visite' => $visiteData,
                 'stats' => $stats,
                 'agence' => $this->getAgenceNameFromCode($agence)
             ]);
