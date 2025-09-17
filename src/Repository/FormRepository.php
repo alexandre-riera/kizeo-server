@@ -29,6 +29,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use stdClass;
 use App\Service\ImageStorageService;
+use App\Service\PhotoManagementService;
 
 /**
  * @extends ServiceEntityRepository<ApiForm>
@@ -37,15 +38,17 @@ class FormRepository extends ServiceEntityRepository
 {
     private ImageStorageService $imageStorageService;
     private HttpClientInterface $client;
+    private PhotoManagementService $photoManagementService;
 
     public function __construct(
         ManagerRegistry $registry,
         HttpClientInterface $client,
-        ImageStorageService $imageStorageService
+        ImageStorageService $imageStorageService,
+        PhotoManagementService $photoManagementService
     ) {
         parent::__construct($registry, Form::class);
         $this->client = $client;
-        $this->imageStorageService = $imageStorageService;
+        $this->photoManagementService = $photoManagementService;
     }
 
     /**
@@ -1861,23 +1864,9 @@ class FormRepository extends ServiceEntityRepository
     }
 
     public function getPictureArrayByIdEquipment($picturesArray, $entityManager, $equipment){
-        $picturesdata = [];
-        $photoJpg ="";
-        foreach ($picturesArray as $key => $value) {
-            // if ($equipment->getRaisonSociale() . "\\" . $equipment->getVisite() === $value->raison_sociale_visite) {
-                // On récupère la photo du compte rendu uniquement au lieu de toutes les photos
-                // Changer dans le tableau des photos à récupérer de function getJpgPictureFromStringName() pour toutes les avoir
-                $photoJpg = $entityManager->getRepository(Form::class)->getJpgPictureFromStringName($value, $entityManager); // It's an array now
-                foreach ($photoJpg as $photo) {
-                    $pictureEncoded = base64_encode($photo);
-                    $picturesdataObject = new stdClass;
-                    $picturesdataObject->picture = $pictureEncoded;
-                    $picturesdataObject->update_time = $value->update_time;
-                    array_push($picturesdata, $picturesdataObject);
-                }
-            // }
-        }
-        return $picturesdata;
+            $photoManagementService = $this->container->get(PhotoManagementService::class);
+            $photos = $photoManagementService->getEquipmentPhotos($equipment);
+        return $photos;
     }
 
     // Nouvelle fonction dans FormRepository.php pour récupérer spécifiquement les photos des équipements supplémentaires
@@ -1887,33 +1876,8 @@ class FormRepository extends ServiceEntityRepository
      * Les équipements supplémentaires utilisent le champ photo_compte_rendu
      */
     public function getPictureArrayByIdSupplementaryEquipment($entityManager, $equipment) {
-        $picturesdata = [];
-        
-        // Pour les équipements supplémentaires, on utilise la même logique de filtrage
-        // que les équipements au contrat pour garantir l'unicité et le respect du tri par visite
-        $picturesArray = $entityManager->getRepository(Form::class)->findBy([
-            'code_equipement' => $equipment->getNumeroEquipement(),
-            'raison_sociale_visite' => $equipment->getRaisonSociale() . "\\" . $equipment->getVisite()
-        ]);
-        
-        foreach ($picturesArray as $value) {
-            // Vérifier si c'est bien le bon équipement et qu'il y a une photo_compte_rendu
-            if ($value->getPhotoCompteRendu() && $value->getPhotoCompteRendu() !== '') {
-                $photoJpg = $this->getJpgPictureFromPhotoCompteRendu($value, $entityManager);
-                
-                if (!empty($photoJpg)) {
-                    foreach ($photoJpg as $photo) {
-                        $pictureEncoded = base64_encode($photo);
-                        $picturesdataObject = new stdClass;
-                        $picturesdataObject->picture = $pictureEncoded;
-                        $picturesdataObject->update_time = $value->getUpdateTime();
-                        $picturesdata[] = $picturesdataObject;
-                    }
-                }
-            }
-        }
-        
-        return $picturesdata;
+        $photoManagementService = $this->container->get(PhotoManagementService::class);
+        return $photoManagementService->getEquipmentPhotos($equipment);
     }
 
     

@@ -85,3 +85,10 @@ services:
     App\Service\EmailService:
         arguments:
             $mailer: '@mailer'
+
+    App\Service\PhotoManagementService:
+        arguments:
+            $imageStorageService: '@App\Service\ImageStorageService'
+            $client: '@http_client'
+            $logger: '@logger'
+            $entityManager: '@doctrine.orm.entity_manager'
