@@ -75,7 +75,7 @@ class EquipementPdfController extends AbstractController
             $equipementsData = $this->formatEquipementsData($equipements, $entityManager);
             $visiteData = $this->getVisiteData($annee, $visite);
             $stats = $this->calculateStats($equipementsData);
-
+            dump($equipementsData);
             // Générer le PDF
             $html = $this->renderView('pdf/equipements.html.twig', [
                 'titre' => 'COMPTE RENDU D\'ENTRETIEN',
@@ -311,7 +311,6 @@ class EquipementPdfController extends AbstractController
                 'code_equipement' => $equipment->getNumeroEquipement(),
                 'raison_sociale_visite' => $equipment->getRaisonSociale() . '\\' . $equipment->getVisite()
             ]);
-            dump($equipment->getMiseEnService());
             $formattedEquipements[] = [
                 'numero' => $equipment->getNumeroEquipement() ?? 'N/A',
                 'type' => ['libelle' => $equipment->getLibelleEquipement() ?? 'Non renseigné'],
