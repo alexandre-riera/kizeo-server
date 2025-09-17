@@ -11,10 +11,6 @@ body {
     page-break-after: always;
 }
 
-.content {
-    padding: 0;
-}
-
 .equipement {
     margin-bottom: 150px;
     border: 1px solid #ddd;
@@ -33,7 +29,7 @@ body {
 .info-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin-bottom: 150px;
 }
 
 .info-table th, 
