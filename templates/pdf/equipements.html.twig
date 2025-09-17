@@ -6,7 +6,7 @@
     <title>Équipements du client - {{ client.nom ?? 'Client' }}</title>
     <link rel="stylesheet" href="{{ asset('css/pdf-equipements.css') }}">
 </head>
-<body{% if agence is defined and agence %} style='background-image: url("https://www.backend-kizeo.somafi-group.fr/public/img/background/{{ agence|lower }}.jpg");'{% endif %}>
+<body{% if agence is defined and agence %} style='background-image: url("https://www.backend-kizeo.somafi-group.fr/public/img/background/{{ agence|lower }}.jpg"); background-size: cover;'{% endif %}>
     <div class="content">
         {% if equipements is defined and equipements|length > 0 %}
             {% for equipement in equipements %}
