@@ -322,8 +322,9 @@ class EquipementPdfController extends AbstractController
                 'dateMiseEnService' => $equipment->getMiseEnService() ?? null,
                 'repereSite' => $equipment->getRepereSiteClient() ?? '',
                 'anomalies' => $this->getEquipmentAnomalies($equipment),
-                'photosPrincipales' => array_slice($photos, 0, 1), // Première photo
-                'photosSecondaires' => array_slice($photos, 1),   // Autres photos
+                // 'photosPrincipales' => array_slice($photos, 0, 1), // Première photo
+                'photosPrincipales' => $photos[0]['photo_2'],
+                'photosSecondaires' =>  $photos[0]['photo_compte_rendu'],   // Autres photos
             ];
         }
 
