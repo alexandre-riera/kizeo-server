@@ -113,7 +113,7 @@ class EquipementPdfController extends AbstractController
      * Cette route correspond à celle utilisée dans le template home/index.html.twig
      * Accepte les paramètres via GET (liens directs depuis le template)
      */
-    #[Route('/client/equipements/pdf', name: 'client_equipements_pdf', methods: ['GET'])]
+    #[Route('/equipements/pdf', name: 'client_equipements_pdf', methods: ['GET'])]
     public function generateClientEquipementsPdf(Request $request, EntityManagerInterface $entityManager): Response
     {
         try {
