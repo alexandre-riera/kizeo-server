@@ -13,8 +13,8 @@
                 <table class="equipment-main-table">
                     <tr>
                         <td class="equipment-photo-cell">
-                            {% if equipement.photosPrincipale is defined and equipement.photosPrincipale|length > 0 %}
-                                <img src="data:image/png;base64, {{ equipement.photosPrincipale }}" 
+                            {% if equipement.photoEquipement is defined and equipement.photoEquipement is not null %}
+                                <img src="data:image/png;base64, {{ equipement.photoEquipement }}" 
                                      alt="Photo {{ equipement.numero }}" class="equipment-photo">
                             {% else %}
                                 <img src="data:image/png;base64, {{ equipement.photosSecondaire }}" 

@@ -308,7 +308,8 @@ class EquipementPdfController extends AbstractController
                 'code_equipement' => $equipment->getNumeroEquipement(),
                 'raison_sociale_visite' => $equipment->getRaisonSociale() . '\\' . $equipment->getVisite()
             ]);
-            dump($photos);
+            $photoEquipement = $photos[0]->getPhoto2() ?? null;
+            $photoEquipementSupplementaire = $photos[0]->getPhotoCompteRendu() ?? null;
             $formattedEquipements[] = [
                 'numero' => $equipment->getNumeroEquipement() ?? 'N/A',
                 'type' => ['libelle' => $equipment->getLibelleEquipement() ?? 'Non renseigné'],
@@ -319,8 +320,8 @@ class EquipementPdfController extends AbstractController
                 'dateMiseEnService' => $equipment->getMiseEnService() ?? null,
                 'repereSite' => $equipment->getRepereSiteClient() ?? '',
                 'anomalies' => $this->getEquipmentAnomalies($equipment),
-                'photosPrincipale' => $photos[0]->getPhoto2(),
-                'photosSecondaire' =>  $photos[0]->getPhotoCompteRendu()
+                'photoEquipement' => $photoEquipement,
+                'photoEquipementSupplementaire' =>  $photoEquipementSupplementaire
             ];
         }
 

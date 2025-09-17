@@ -352,14 +352,14 @@ Exemples:
 
         $photoMappings = [
             'compte_rendu' => $formData->getPhotoCompteRendu(),
-            // 'environnement' => $formData->getPhotoEnvironnementEquipement1(),
-            // 'plaque' => $formData->getPhotoPlaque(),
-            // 'etiquette_somafi' => $formData->getPhotoEtiquetteSomafi(),
-            'generale' => $formData->getPhoto2()
-            // 'moteur' => $formData->getPhotoMoteur(),
-            // 'carte' => $formData->getPhotoCarte(),
-            // 'choc' => $formData->getPhotoChoc(),
-            // 'rail' => $formData->getPhotoRail()
+            'environnement' => $formData->getPhotoEnvironnementEquipement1(),
+            'plaque' => $formData->getPhotoPlaque(),
+            'etiquette_somafi' => $formData->getPhotoEtiquetteSomafi(),
+            'generale' => $formData->getPhoto2(),
+            'moteur' => $formData->getPhotoMoteur(),
+            'carte' => $formData->getPhotoCarte(),
+            'choc' => $formData->getPhotoChoc(),
+            'rail' => $formData->getPhotoRail()
         ];
 
         foreach ($photoMappings as $type => $photoName) {
