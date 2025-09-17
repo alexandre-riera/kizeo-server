@@ -73,7 +73,7 @@ class EquipementPdfController extends AbstractController
             // Préparer les données pour le template
             $clientData = $this->formatClientData($client);
             $equipementsData = $this->formatEquipementsData($equipements, $entityManager);
-            $visiteData = $this->getVisiteData($annee, $visite);
+            $visiteData = $equipementsData['dateMiseEnService'];
             $stats = $this->calculateStats($equipementsData);
             // Générer le PDF
             $html = $this->renderView('pdf/equipements.html.twig', [
@@ -371,18 +371,6 @@ class EquipementPdfController extends AbstractController
         }
         
         return $anomalies;
-    }
-
-    /**
-     * Prépare les données de visite
-     */
-    private function getVisiteData(string $annee, string $visite): array
-    {
-        return [
-            'type' => $visite,
-            'annee' => $annee,
-            'date' => new \DateTime()
-        ];
     }
 
     /**
