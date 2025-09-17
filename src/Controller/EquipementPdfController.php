@@ -235,19 +235,19 @@ class EquipementPdfController extends AbstractController
     private function getClientByAgence(string $agence, string $clientId, EntityManagerInterface $entityManager)
     {
         return match ($agence) {
-            'S10' => $entityManager->getRepository(ContactS10::class)->findOneBy(['id' => $clientId]),
-            'S40' => $entityManager->getRepository(ContactS40::class)->findOneBy(['id' => $clientId]),
-            'S50' => $entityManager->getRepository(ContactS50::class)->findOneBy(['id' => $clientId]),
-            'S60' => $entityManager->getRepository(ContactS60::class)->findOneBy(['id' => $clientId]),
-            'S70' => $entityManager->getRepository(ContactS70::class)->findOneBy(['id' => $clientId]),
-            'S80' => $entityManager->getRepository(ContactS80::class)->findOneBy(['id' => $clientId]),
-            'S100' => $entityManager->getRepository(ContactS100::class)->findOneBy(['id' => $clientId]),
-            'S120' => $entityManager->getRepository(ContactS120::class)->findOneBy(['id' => $clientId]),
-            'S130' => $entityManager->getRepository(ContactS130::class)->findOneBy(['id' => $clientId]),
-            'S140' => $entityManager->getRepository(ContactS140::class)->findOneBy(['id' => $clientId]),
-            'S150' => $entityManager->getRepository(ContactS150::class)->findOneBy(['id' => $clientId]),
-            'S160' => $entityManager->getRepository(ContactS160::class)->findOneBy(['id' => $clientId]),
-            'S170' => $entityManager->getRepository(ContactS170::class)->findOneBy(['id' => $clientId]),
+            'S10' => $entityManager->getRepository(ContactS10::class)->findOneBy(['id_contact' => $clientId]),
+            'S40' => $entityManager->getRepository(ContactS40::class)->findOneBy(['id_contact' => $clientId]),
+            'S50' => $entityManager->getRepository(ContactS50::class)->findOneBy(['id_contact' => $clientId]),
+            'S60' => $entityManager->getRepository(ContactS60::class)->findOneBy(['id_contact' => $clientId]),
+            'S70' => $entityManager->getRepository(ContactS70::class)->findOneBy(['id_contact' => $clientId]),
+            'S80' => $entityManager->getRepository(ContactS80::class)->findOneBy(['id_contact' => $clientId]),
+            'S100' => $entityManager->getRepository(ContactS100::class)->findOneBy(['id_contact' => $clientId]),
+            'S120' => $entityManager->getRepository(ContactS120::class)->findOneBy(['id_contact' => $clientId]),
+            'S130' => $entityManager->getRepository(ContactS130::class)->findOneBy(['id_contact' => $clientId]),
+            'S140' => $entityManager->getRepository(ContactS140::class)->findOneBy(['id_contact' => $clientId]),
+            'S150' => $entityManager->getRepository(ContactS150::class)->findOneBy(['id_contact' => $clientId]),
+            'S160' => $entityManager->getRepository(ContactS160::class)->findOneBy(['id_contact' => $clientId]),
+            'S170' => $entityManager->getRepository(ContactS170::class)->findOneBy(['id_contact' => $clientId]),
             default => null,
         };
     }
