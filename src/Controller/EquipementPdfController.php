@@ -73,6 +73,7 @@ class EquipementPdfController extends AbstractController
             // Préparer les données pour le template
             $clientData = $this->formatClientData($client);
             $equipementsData = $this->formatEquipementsData($equipements, $entityManager);
+            dump($equipementsData);
             $visiteData = $equipementsData['dateMiseEnService'];
             $stats = $this->calculateStats($equipementsData);
             // Générer le PDF
