@@ -5,6 +5,7 @@ body {
     font-size: 12px;
     height: 100vh;
     width: 100vw;
+    background-size: cover;
 }
 
 .page-break {
