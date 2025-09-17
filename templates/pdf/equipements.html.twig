@@ -14,7 +14,7 @@
                     <tr>
                         <td class="equipment-photo-cell">
                             {% if equipement.photosPrincipales is defined and equipement.photosPrincipales|length > 0 %}
-                                <img src="{{ asset('uploads/equipements/' ~ equipement.photosPrincipales[0].filename) }}" 
+                                <img src="data:image/png;base64, {{ equipement.photosPrincipales }}" 
                                      alt="Photo {{ equipement.numero }}" class="equipment-photo">
                             {% else %}
                                 <div class="no-photo">Aucune photo disponible</div>
