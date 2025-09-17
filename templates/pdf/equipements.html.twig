@@ -51,14 +51,14 @@
                                         {{ equipement.statutLibelle ?? 'Non défini' }}
                                     </td>
                                 </tr>
-                                <tr>
+                                {# <tr>
                                     <td class="info-label">Mise en service</td>
                                     <td class="info-value">
                                         {% if equipement.dateMiseEnService %}
                                             {{ equipement.dateMiseEnService|date('d/m/Y') }}
                                         {% endif %}
                                     </td>
-                                </tr>
+                                </tr> #}
                                 <tr>
                                     <td class="info-label">Repère site client</td>
                                     <td class="info-value">{{ equipement.repereSite ?? '' }}</td>
