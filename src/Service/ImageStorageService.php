@@ -175,13 +175,13 @@ class ImageStorageService
      */
     public function getAllImagesForEquipment(
         string $agence,
-        string $raisonSociale,
+        string $idContact,
         string $annee,
         string $typeVisite,
         string $codeEquipement
     ): array {
         $images = [];
-        $directory = $this->buildDirectoryPath($agence, $this->cleanFileName($raisonSociale), $annee, $typeVisite);
+        $directory = $this->buildDirectoryPath($agence, $idContact, $annee, $typeVisite);
         
         if (!is_dir($directory)) {
             return $images;
@@ -198,7 +198,7 @@ class ImageStorageService
                 $images[$photoType] = [
                     'filename' => $file,
                     'path' => $fullPath,
-                    'url' => $this->getImageUrl($agence, $raisonSociale, $annee, $typeVisite, pathinfo($file, PATHINFO_FILENAME)),
+                    'url' => $this->getImageUrl($agence, $idContact, $annee, $typeVisite, pathinfo($file, PATHINFO_FILENAME)),
                     'size' => filesize($fullPath),
                     'modified' => filemtime($fullPath)
                 ];
@@ -358,9 +358,9 @@ class ImageStorageService
     /**
      * Construit le chemin du répertoire
      */
-    private function buildDirectoryPath(string $agence, string $raisonSociale, string $annee, string $typeVisite): string
+    private function buildDirectoryPath(string $agence, string $idContact, string $annee, string $typeVisite): string
     {
-        return $this->baseImagePath . $agence . '/' . $raisonSociale . '/' . $annee . '/' . $typeVisite;
+        return $this->baseImagePath . $agence . '/' . $idContact . '/' . $annee . '/' . $typeVisite;
     }
 
     /**
