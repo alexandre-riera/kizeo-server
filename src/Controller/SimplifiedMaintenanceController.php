@@ -3141,7 +3141,7 @@ class SimplifiedMaintenanceController extends AbstractController
             $detailData = $detailResponse->toArray();
             $fields = $detailData['data']['fields'];
             $idSociete =  $fields['id_societe']['value'] ?? '';
-            $idContact =  $fields['id_contact']['value'] ?? '';
+            $idContact =  $fields['id_client']['value'] ?? '';
             $dateDerniereVisite =  $fields['date_et_heure1']['value'] ?? '';
 
             // Récupérer les équipements sous contrat et hors contrat
@@ -4188,7 +4188,7 @@ class SimplifiedMaintenanceController extends AbstractController
     {
         // Données communes selon l'agence
         $equipement->setCodeAgence($agencyCode);
-        $equipement->setIdContact($fields['id_client_']['value'] ?? $fields['id_contact']['value'] ?? '');
+        $equipement->setIdContact($fields['id_client_']['value'] ?? $fields['id_client']['value'] ?? '');
         
         // Le nom du client peut varier selon les formulaires
         $clientName = $fields['nom_client']['value'] ?? 
