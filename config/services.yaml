@@ -92,3 +92,21 @@ services:
             $client: '@http_client'
             $logger: '@logger'
             $entityManager: '@doctrine.orm.entity_manager'
+
+    # Configuration de la commande MigratePhotosFixedCommand
+    App\Command\MigratePhotosFixedCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $formRepository: '@App\Repository\FormRepository'
+            $imageStorageService: '@App\Service\ImageStorageService'
+            $client: '@http_client'  # AJOUT CRUCIAL pour corriger l'erreur
+        tags:
+            - { name: 'console.command' }
+            
+    # Configuration de la commande FixFormIdContactCommand
+    App\Command\FixFormIdContactCommand:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $formRepository: '@App\Repository\FormRepository'
+        tags:
+            - { name: 'console.command' }

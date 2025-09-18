@@ -3009,33 +3009,21 @@ class SimplifiedMaintenanceController extends AbstractController
     /**
      * Sauvegarder les photos avec vérification de doublons
      */
-    private function savePhotosToFormEntityWithDeduplication(
+    private function savePhotosFromFormSubmission(
         string $equipementPath,
         array $equipmentData,
         string $formId, 
         string $entryId, 
         string $equipmentCode, 
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        string $idContact,    // AJOUT DU PARAMÈTRE
+        string $idSociete     // AJOUT DU PARAMÈTRE
     ): void {
-        
-      // dump("=== DÉBUT DEBUG PHOTOS HORS CONTRAT ===");
-      // dump("Equipment Code: " . $equipmentCode);
-      // dump("Form ID: " . $formId);
-      // dump("Entry ID: " . $entryId);
-        
-        // Log des données photo disponibles
-      // dump("Photo3 présente: " . (isset($equipmentData['photo3']) ? 'OUI' : 'NON'));
-        if (isset($equipmentData['photo3'])) {
-          // dump("Photo3 value: " . ($equipmentData['photo3']['value'] ?? 'VIDE'));
-          // dump("Photo3 empty check: " . (empty($equipmentData['photo3']['value']) ? 'VIDE' : 'PAS VIDE'));
-        }
 
-        // Vérifier si l'entrée Form existe déjà
+        // Vérifier si l'entrée Form existe déjà 
         $existsAlready = $this->formEntryExists($formId, $entryId, $equipmentCode, $entityManager);
-      // dump("Entry existe déjà: " . ($existsAlready ? 'OUI - SKIP' : 'NON - PROCEED'));
         
         if ($existsAlready) {
-          // dump("ATTENTION: Entry ignorée car déjà existante!");
             return; 
         }
         
@@ -3051,67 +3039,50 @@ class SimplifiedMaintenanceController extends AbstractController
             $form->setRaisonSocialeVisite($equipementPath);
             $form->setUpdateTime(date('Y-m-d H:i:s'));
             
-            // DEBUG: Photos avant assignation
-          // dump("=== ASSIGNATION PHOTOS ===");
+            // CORRECTION CRITIQUE: Enregistrer id_contact et id_societe
+            if (!empty($idContact)) {
+                $form->setIdContact($idContact);
+            }
+            if (!empty($idSociete)) {
+                $form->setIdSociete($idSociete);
+            }
             
+            // Assigner les photos
             if (!empty($equipmentData['photo_etiquette_somafi']['value'])) {
                 $form->setPhotoEtiquetteSomafi($equipmentData['photo_etiquette_somafi']['value']);
-              // dump("Photo étiquette assignée: " . $equipmentData['photo_etiquette_somafi']['value']);
             }
             
             if (!empty($equipmentData['photo2']['value'])) {
                 $form->setPhoto2($equipmentData['photo2']['value']);
-              // dump("Photo2 assignée: " . $equipmentData['photo2']['value']);
             }
             
             // POINT CRITIQUE: Photo compte rendu
             if (!empty($equipmentData['photo3']['value'])) {
                 $photoValue = $equipmentData['photo3']['value'];
                 $form->setPhotoCompteRendu($photoValue);
-              // dump("PHOTO COMPTE RENDU assignée: " . $photoValue);
-                
-                // Vérification immédiate
-                $verification = $form->getPhotoCompteRendu();
-              // dump("Vérification getter après set: " . ($verification ?? 'NULL'));
-            } else {
-              // dump("ATTENTION: photo3 est vide ou n'existe pas!");
-              // dump("Structure equipmentData: " . print_r(array_keys($equipmentData), true));
             }
             
             if (!empty($equipmentData['photo_complementaire_equipeme']['value'])) {
                 $form->setPhotoEnvironnementEquipement1($equipmentData['photo_complementaire_equipeme']['value']);
-              // dump("Photo environnement assignée: " . $equipmentData['photo_complementaire_equipeme']['value']);
             }
             
             // Autres photos...
             $this->setAllPhotosToForm($form, $equipmentData);
             
-            // DEBUG: État de l'entité avant persist
-          // dump("=== AVANT PERSIST ===");
-          // dump("Form ID: " . $form->getFormId());
-          // dump("Equipment ID: " . $form->getEquipmentId());
-          // dump("Photo compte rendu final: " . ($form->getPhotoCompteRendu() ?? 'NULL'));
-            
             // Sauvegarder l'entité Form
             $entityManager->persist($form);
-          // dump("Entity form persistée avec succès");
-            
-            // IMPORTANT: Ajouter un flush immédiat pour tester
             $entityManager->flush();
-          // dump("Entity form flushée avec succès");
+            
         } catch (\Exception $e) {
-          // dump("ERREUR sauvegarde photos Form: " . $e->getMessage());
-          // dump("Stack trace: " . $e->getTraceAsString());
+            $this->logger->error("Erreur sauvegarde photos Form: " . $e->getMessage());
             throw $e;
         }
-        
-      // dump("=== FIN DEBUG PHOTOS HORS CONTRAT ===");
     }
 
     /**
      * Traiter une soumission avec déduplication
      */
-        private function processSingleSubmissionWithDeduplication(
+    private function processSingleSubmissionWithDeduplication(
         array $submission, 
         string $agencyCode, 
         string $entityClass, 
@@ -3149,11 +3120,11 @@ class SimplifiedMaintenanceController extends AbstractController
             
             // VALIDATION : Vérifier que les champs critiques sont présents
             if (empty($idContact)) {
-                throw new \Exception("id_contact manquant dans les données Kizeo");
+                $this->logger->warning("id_contact manquant dans les données Kizeo pour submission {$submission['entry_id']}");
             }
             
             if (empty($idSociete)) {
-                throw new \Exception("id_societe manquant dans les données Kizeo");
+                $this->logger->warning("id_societe manquant dans les données Kizeo pour submission {$submission['entry_id']}");
             }
 
             // Récupérer les équipements sous contrat et hors contrat
@@ -3550,8 +3521,12 @@ class SimplifiedMaintenanceController extends AbstractController
             }
             
             // AJOUT CRITIQUE : Enregistrer l'id_contact et id_societe
-            $form->setIdContact($idContact);
-            $form->setIdSociete($idSociete);
+            if (!empty($idContact)) {
+                $form->setIdContact($idContact);
+            }
+            if (!empty($idSociete)) {
+                $form->setIdSociete($idSociete);
+            }
             
             // Définir les métadonnées de base
             $form->setCodeEquipement($equipmentCode);
@@ -4949,7 +4924,7 @@ class SimplifiedMaintenanceController extends AbstractController
         array $equipmentData,
         string $formId,
         string $entryId,
-        string $codeAgence,  // Renommé pour clarifier
+        string $codeAgence,
         string $raisonSociale,
         string $anneeVisite,
         string $typeVisite,

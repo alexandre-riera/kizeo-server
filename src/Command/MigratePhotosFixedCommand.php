@@ -236,7 +236,7 @@ Exemples:
 
             // 6. Migration des photos
             if (!$dryRun) {
-                $downloadResult = $this->downloadPhotosDetailed($equipment, $formData, $agency, $availablePhotos, $formId = $formData->getFormId(), $dataId = $formData->getDataId());
+                $downloadResult = $this->downloadPhotosDetailed($equipment, $formData, $agency, $availablePhotos);
                 $result['photos_downloaded'] = $downloadResult['downloaded'];
                 $result['errors'] = $downloadResult['errors'];
                 
@@ -262,7 +262,7 @@ Exemples:
         return $result;
     }
 
-    private function downloadPhotosDetailed($equipment, $formData, string $agency, array $availablePhotos, string $formId, string $dataId): array
+    private function downloadPhotosDetailed($equipment, $formData, string $agency, array $availablePhotos): array
     {
         $result = [
             'downloaded' => 0,
@@ -299,7 +299,8 @@ Exemples:
                         continue; // Photo déjà existante
                     }
 
-                    $imageContent = $this->downloadFromKizeoApi($formId, $dataId, $singlePhotoName);
+                    // CORRECTION : Utiliser la méthode correcte pour télécharger
+                    $imageContent = $this->downloadImageFromKizeoFixed($formData, $singlePhotoName);
                     if ($imageContent) {
                         // MODIFICATION CRITIQUE: Utiliser id_contact dans storeImage
                         $this->imageStorageService->storeImage(
@@ -321,12 +322,13 @@ Exemples:
         return $result;
     }
 
-    private function downloadFromKizeoApi(string $formId, string $dataId, string $photoName): ?string
+    // CORRECTION 2: Ajouter la méthode downloadImageFromKizeoFixed qui était manquante
+    private function downloadImageFromKizeoFixed($formData, string $photoName): ?string
     {
         try {
             $response = $this->client->request(
                 'GET',
-                "https://forms.kizeo.com/rest/v3/forms/{$formId}/data/{$dataId}/medias/{$photoName}",
+                'https://forms.kizeo.com/rest/v3/forms/' . $formData->getFormId() . '/data/' . $formData->getDataId() . '/medias/' . $photoName,
                 [
                     'headers' => [
                         'Accept' => 'application/json',
@@ -336,14 +338,10 @@ Exemples:
                 ]
             );
 
-            if ($response->getStatusCode() !== 200) {
-                return null;
-            }
-
-            $imageContent = $response->getContent();
-            return !empty($imageContent) ? $imageContent : null;
+            return $response->getContent();
 
         } catch (\Exception $e) {
+            error_log("Erreur téléchargement photo {$photoName}: " . $e->getMessage());
             return null;
         }
     }
@@ -397,6 +395,7 @@ Exemples:
 
         return false;
     }
+
 
     private function cleanFileName(string $name): string
     {
