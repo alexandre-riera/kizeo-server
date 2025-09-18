@@ -1867,12 +1867,12 @@ class FormRepository extends ServiceEntityRepository
         $picturesdata = [];
         
         foreach ($picturesArray as $key => $value) {
-            // Récupérer les photos avec la nouvelle architecture
+            // MODIFICATION: Utiliser la nouvelle architecture pour récupérer les photos
             $photoJpg = $this->getJpgPictureFromStringNameNewArchitecture(
                 $value, 
                 $entityManager, 
                 $equipment->getCodeAgence(),
-                $equipment->getIdContact(),  // AJOUT CRUCIAL
+                $equipment->getIdContact(),  // AJOUT CRUCIAL: Utiliser id_contact
                 date('Y', strtotime($equipment->getDateEnregistrement())),
                 $equipment->getVisite()
             );
@@ -1888,7 +1888,7 @@ class FormRepository extends ServiceEntityRepository
         return $picturesdata;
     }
 
-    // NOUVELLE MÉTHODE dans FormRepository.php
+    // NOUVELLE MÉTHODE: Récupération des photos avec nouvelle architecture
     public function getJpgPictureFromStringNameNewArchitecture(
         $formEntity, 
         $entityManager, 
@@ -1899,26 +1899,119 @@ class FormRepository extends ServiceEntityRepository
     ) {
         $the_picture = [];
         
-        // Récupérer le service ImageStorageService
-        $imageStorageService = $this->container->get('App\Service\ImageStorageService');
-        
-        // Récupérer toutes les images locales pour cet équipement
-        $localImages = $imageStorageService->getAllImagesForEquipment(
-            $codeAgence,
-            $idContact,
-            $anneeVisite,
-            $typeVisite,
-            $formEntity->getCodeEquipement()
-        );
-        
-        // Convertir en contenu binaire pour compatibility
-        foreach ($localImages as $photoType => $imageInfo) {
-            if (file_exists($imageInfo['path'])) {
-                $the_picture[] = file_get_contents($imageInfo['path']);
+        try {
+            // Récupérer le service ImageStorageService
+            $imageStorageService = $this->container->get('App\Service\ImageStorageService');
+            
+            // Récupérer toutes les images locales pour cet équipement avec la nouvelle architecture
+            $localImages = $imageStorageService->getAllImagesForEquipment(
+                $codeAgence,
+                $idContact,   // MODIFICATION: Utiliser id_contact au lieu de raison_sociale
+                $anneeVisite,
+                $typeVisite,
+                $formEntity->getCodeEquipement()
+            );
+            
+            // Convertir en contenu binaire pour compatibilité
+            foreach ($localImages as $photoType => $imageInfo) {
+                if (file_exists($imageInfo['path'])) {
+                    $the_picture[] = file_get_contents($imageInfo['path']);
+                }
             }
+            
+            // Si pas de photos locales, essayer l'ancienne méthode comme fallback
+            if (empty($the_picture)) {
+                $the_picture = $this->getJpgPictureFromStringName($formEntity, $entityManager);
+            }
+            
+        } catch (\Exception $e) {
+            error_log("Erreur récupération photos avec nouvelle architecture: " . $e->getMessage());
+            // Fallback vers ancienne méthode
+            $the_picture = $this->getJpgPictureFromStringName($formEntity, $entityManager);
         }
         
         return $the_picture;
+    }
+
+    /**
+     * MÉTHODE DE CORRECTION GLOBALE: Corriger tous les enregistrements Form existants
+     */
+    public function fixAllFormsWithMissingIdContact(EntityManager $entityManager): array
+    {
+        $results = ['fixed' => 0, 'errors' => 0, 'skipped' => 0];
+        
+        try {
+            // Récupérer toutes les entrées Form sans id_contact
+            $qb = $this->createQueryBuilder('f')
+                ->where('f.id_contact IS NULL OR f.id_contact = :empty')
+                ->andWhere('f.code_equipement IS NOT NULL')
+                ->andWhere('f.raison_sociale_visite IS NOT NULL')
+                ->setParameter('empty', '');
+            
+            $formsToFix = $qb->getQuery()->getResult();
+            
+            foreach ($formsToFix as $form) {
+                try {
+                    $codeEquipement = $form->getCodeEquipement();
+                    $raisonSocialeVisite = $form->getRaisonSocialeVisite();
+                    
+                    // Extraire le nom de la société et la visite
+                    $parts = explode('\\', $raisonSocialeVisite);
+                    $raisonSociale = $parts[0] ?? '';
+                    $visite = $parts[1] ?? '';
+                    
+                    if (empty($raisonSociale) || empty($visite)) {
+                        $results['skipped']++;
+                        continue;
+                    }
+                    
+                    // CHERCHER L'ÉQUIPEMENT CORRESPONDANT pour récupérer id_contact et id_societe
+                    $equipment = null;
+                    
+                    // Déterminer l'agence depuis le code équipement ou d'autres indices
+                    $agences = ['S10', 'S40', 'S50', 'S60', 'S70', 'S80', 'S100', 'S120', 'S130', 'S140', 'S150', 'S160', 'S170'];
+                    
+                    foreach ($agences as $agence) {
+                        $entityClass = 'App\\Entity\\Equipement' . $agence;
+                        if (class_exists($entityClass)) {
+                            $repository = $entityManager->getRepository($entityClass);
+                            $equipment = $repository->findOneBy([
+                                'numero_equipement' => $codeEquipement,
+                                'raison_sociale' => $raisonSociale . '\\' . $visite
+                            ]);
+                            
+                            if ($equipment) {
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if ($equipment) {
+                        // CORRECTION: Mettre à jour les champs manquants
+                        $form->setIdContact($equipment->getIdContact());
+                        $form->setIdSociete($equipment->getCodeSociete());
+                        
+                        $this->getEntityManager()->persist($form);
+                        $results['fixed']++;
+                    } else {
+                        $results['skipped']++;
+                    }
+                    
+                } catch (\Exception $e) {
+                    $results['errors']++;
+                    error_log("Erreur correction Form ID {$form->getId()}: " . $e->getMessage());
+                }
+            }
+            
+            // Sauvegarder toutes les modifications
+            $this->getEntityManager()->flush();
+            
+        } catch (\Exception $e) {
+            $results['errors']++;
+            error_log("Erreur correction globale Forms: " . $e->getMessage());
+        }
+        
+        return $results;
     }
 
     // Nouvelle fonction dans FormRepository.php pour récupérer spécifiquement les photos des équipements supplémentaires
@@ -2420,8 +2513,16 @@ class FormRepository extends ServiceEntityRepository
             $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
             $typeVisite = $equipment->getVisite();
             $codeEquipement = $equipment->getNumeroEquipement();
-            $idContact = $equipment->getIdContact(); // AJOUT CRUCIAL
-            $idSociete = $equipment->getCodeSociete(); // Pour récupérer id_societe
+            
+            // CORRECTION CRITIQUE: Récupérer id_contact et id_societe
+            $idContact = $equipment->getIdContact();
+            $idSociete = $equipment->getCodeSociete();
+            
+            // VALIDATION: Vérifier que les champs critiques sont présents
+            if (empty($idContact)) {
+                error_log("ERREUR: id_contact manquant pour équipement {$codeEquipement}");
+                return false;
+            }
             
             // Construction correcte du champ raison_sociale_visite
             $raisonSocialeVisite = $equipment->getRaisonSociale() . "\\" . $equipment->getVisite();
@@ -2440,10 +2541,10 @@ class FormRepository extends ServiceEntityRepository
                 $existingForm->setDataId($formData->getDataId());
             }
             
-            // MODIFICATION CRITIQUE : Assigner tous les champs requis
+            // CORRECTION CRITIQUE: Assigner tous les champs requis
             $existingForm->setRaisonSocialeVisite($raisonSocialeVisite);
-            $existingForm->setIdContact($idContact);  // AJOUT CRUCIAL
-            $existingForm->setIdSociete($idSociete);  // AJOUT CRUCIAL
+            $existingForm->setIdContact($idContact);    // AJOUT CRUCIAL
+            $existingForm->setIdSociete($idSociete);    // AJOUT CRUCIAL
             
             // Mapping des photos à migrer
             $photosToMigrate = [
@@ -2458,7 +2559,7 @@ class FormRepository extends ServiceEntityRepository
             
             foreach ($photosToMigrate as $photoType => $photoName) {
                 if (!empty($photoName)) {
-                    // MODIFICATION : Utiliser la nouvelle architecture de stockage
+                    // MODIFICATION : Utiliser la nouvelle architecture de stockage avec id_contact
                     if ($this->downloadAndStorePhotoFromKizeoNewArchitecture(
                         $photoName,
                         $formData->getFormId(),
@@ -2506,14 +2607,14 @@ class FormRepository extends ServiceEntityRepository
     }
 
     /**
-     * NOUVELLE MÉTHODE : Téléchargement avec la nouvelle architecture
+     * NOUVELLE MÉTHODE : Téléchargement avec la nouvelle architecture utilisant id_contact
      */
     private function downloadAndStorePhotoFromKizeoNewArchitecture(
         string $photoName,
         string $formId,
         string $dataId,
         string $codeAgence,
-        string $idContact,
+        string $idContact,      // MODIFICATION: Utiliser id_contact au lieu de raisonSociale
         string $anneeVisite,
         string $typeVisite,
         string $filename
@@ -2539,7 +2640,7 @@ class FormRepository extends ServiceEntityRepository
             
             $filepath = $imageStorageService->storeImage(
                 $codeAgence,
-                $idContact,   // Utiliser id_contact au lieu de raison_sociale  
+                $idContact,   // MODIFICATION: Utiliser id_contact au lieu de raison_sociale  
                 $anneeVisite,
                 $typeVisite,
                 $filename,

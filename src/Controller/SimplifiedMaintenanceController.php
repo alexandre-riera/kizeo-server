@@ -3111,7 +3111,7 @@ class SimplifiedMaintenanceController extends AbstractController
     /**
      * Traiter une soumission avec déduplication
      */
-    private function processSingleSubmissionWithDeduplication(
+        private function processSingleSubmissionWithDeduplication(
         array $submission, 
         string $agencyCode, 
         string $entityClass, 
@@ -3140,9 +3140,21 @@ class SimplifiedMaintenanceController extends AbstractController
 
             $detailData = $detailResponse->toArray();
             $fields = $detailData['data']['fields'];
-            $idSociete =  $fields['id_societe']['value'] ?? '';
-            $idContact =  $fields['id_client']['value'] ?? '';
-            $dateDerniereVisite =  $fields['date_et_heure1']['value'] ?? '';
+            
+            // CORRECTION CRITIQUE: Utiliser 'id_client_' au lieu de 'id_client' selon le JSON
+            $idSociete = $fields['id_societe']['value'] ?? '';
+            $idContact = $fields['id_client_']['value'] ?? '';  // CHANGEMENT CRUCIAL ICI
+            $dateDerniereVisite = $fields['date_et_heure1']['value'] ?? '';
+            $codeAgence = $fields['code_agence']['value'] ?? $agencyCode;
+            
+            // VALIDATION : Vérifier que les champs critiques sont présents
+            if (empty($idContact)) {
+                throw new \Exception("id_contact manquant dans les données Kizeo");
+            }
+            
+            if (empty($idSociete)) {
+                throw new \Exception("id_societe manquant dans les données Kizeo");
+            }
 
             // Récupérer les équipements sous contrat et hors contrat
             $contractEquipments = $fields['contrat_de_maintenance']['value'] ?? [];
@@ -3292,8 +3304,8 @@ class SimplifiedMaintenanceController extends AbstractController
             
             // dump("===== FIN TRAITEMENT SOUMISSION " . $submission['entry_id'] . " =====");
         } catch (\Exception $e) {
-            $errors++;
-            // dump("Erreur traitement soumission {$submission['entry_id']}: " . $e->getMessage());
+            $this->logger->error("Erreur traitement submission: " . $e->getMessage());
+            return ['errors' => 1, 'processed' => 0];
         }
         
         return [
@@ -3364,6 +3376,142 @@ class SimplifiedMaintenanceController extends AbstractController
         
         // dump("Équipement hors contrat traité avec photos locales: " . $numeroEquipement);
         return true;
+    }
+
+    private function downloadAndSavePhotosLocallyNew(
+        array $equipmentData,
+        string $formId,
+        string $entryId,
+        string $codeAgence,
+        string $idContact,     // Utiliser id_contact au lieu de raisonSociale
+        string $anneeVisite,
+        string $typeVisite,
+        string $codeEquipement,
+        string $idSociete,
+        string $idContact2     // Paramètre pour cohérence avec la signature existante
+    ): array {
+        $savedPhotos = [];
+        
+        // Mapping des types de photos depuis Kizeo
+        $photoMapping = [
+            'photo3' => 'compte_rendu',
+            'photo_complementaire_equipeme' => 'environnement',
+            'photo_plaque' => 'plaque',
+            'photo_etiquette_somafi' => 'etiquette_somafi',
+            'photo_moteur' => 'moteur',
+            'photo2' => 'generale'
+        ];
+        
+        foreach ($photoMapping as $kizeoField => $photoType) {
+            if (isset($equipmentData[$kizeoField]['value']) && !empty($equipmentData[$kizeoField]['value'])) {
+                $photoValue = $equipmentData[$kizeoField]['value'];
+                
+                // Gérer les photos multiples séparées par des virgules
+                if (str_contains($photoValue, ', ')) {
+                    $photos = explode(', ', $photoValue);
+                    foreach ($photos as $index => $photo) {
+                        if (!empty(trim($photo))) {
+                            $localPath = $this->downloadSinglePhotoLocallyNew(
+                                trim($photo),
+                                $formId,
+                                $entryId,
+                                $codeAgence,
+                                $idContact,     // MODIFICATION: Utiliser id_contact
+                                $anneeVisite,
+                                $typeVisite,
+                                $codeEquipement,
+                                $photoType . '_' . ($index + 1),
+                                $idSociete
+                            );
+                            if ($localPath) {
+                                $savedPhotos[$photoType][] = $localPath;
+                            }
+                        }
+                    }
+                } else {
+                    // Photo unique
+                    $localPath = $this->downloadSinglePhotoLocallyNew(
+                        $photoValue,
+                        $formId,
+                        $entryId,
+                        $codeAgence,
+                        $idContact,     // MODIFICATION: Utiliser id_contact
+                        $anneeVisite,
+                        $typeVisite,
+                        $codeEquipement,
+                        $photoType,
+                        $idSociete
+                    );
+                    if ($localPath) {
+                        $savedPhotos[$photoType] = $localPath;
+                    }
+                }
+            }
+        }
+        
+        return $savedPhotos;
+    }
+
+    // CORRECTION 5: Nouvelle méthode downloadSinglePhotoLocallyNew avec architecture corrigée
+    private function downloadSinglePhotoLocallyNew(
+        string $photoName,
+        string $formId,
+        string $entryId,
+        string $codeAgence,
+        string $idContact,     // MODIFICATION: Utiliser id_contact au lieu de raisonSociale
+        string $anneeVisite,
+        string $typeVisite,
+        string $codeEquipement,
+        string $photoType,
+        string $idSociete
+    ): ?string {
+        try {
+            // Construire le nom du fichier avec le type de photo
+            $filename = $codeEquipement . '_' . $photoType;
+            
+            // MODIFICATION CRITIQUE: Utiliser la nouvelle architecture avec id_contact
+            // Vérifier si la photo existe déjà localement
+            if ($this->imageStorageService->imageExists($codeAgence, $idContact, $anneeVisite, $typeVisite, $filename)) {
+                $this->logger->info("Photo déjà existante localement: {$filename}");
+                return $this->imageStorageService->getImagePath($codeAgence, $idContact, $anneeVisite, $typeVisite, $filename);
+            }
+
+            // Télécharger la photo depuis l'API Kizeo
+            $response = $this->client->request(
+                'GET',
+                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/' . $entryId . '/medias/' . $photoName,
+                [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'timeout' => 30
+                ]
+            );
+
+            $photoContent = $response->getContent();
+            
+            // MODIFICATION CRITIQUE: Sauvegarder avec la nouvelle architecture
+            return $this->imageStorageService->storeImage(
+                $codeAgence,
+                $idContact,  // Utiliser id_contact au lieu de raison_sociale
+                $anneeVisite,
+                $typeVisite,
+                $filename,
+                $photoContent
+            );
+
+        } catch (\Exception $e) {
+            $this->logger->warning("Impossible de télécharger la photo {$photoName}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // CORRECTION 6: Méthode utilitaire pour extraire la visite du chemin
+    private function extractVisiteFromPath(string $equipementPath): string {
+        // $equipementPath format: "RAISON_SOCIALE\\VISITE"
+        $parts = explode('\\', $equipementPath);
+        return $parts[1] ?? 'CE1'; // Par défaut CE1 si pas trouvé
     }
 
     /**

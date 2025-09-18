@@ -213,13 +213,20 @@ Exemples:
                 return $result;
             }
 
-            // 4. Calculer le chemin local
-            $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
-            $raisonSocialeClean = $this->cleanFileName($raisonSociale);
+            // 4. MODIFICATION CRITIQUE: Calculer le chemin local avec id_contact
+            $idContact = $equipment->getIdContact();
             $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
             $typeVisite = $equipment->getVisite();
 
-            $result['local_path'] = "{$agency}/{$raisonSocialeClean}/{$anneeVisite}/{$typeVisite}";
+            // VALIDATION: Vérifier que id_contact existe
+            if (empty($idContact)) {
+                $result['message'] = 'id_contact manquant pour cet équipement';
+                $result['errors'][] = 'id_contact manquant';
+                return $result;
+            }
+
+            // MODIFICATION CRITIQUE: Nouveau format de chemin local
+            $result['local_path'] = "{$agency}/{$idContact}/{$anneeVisite}/{$typeVisite}";
 
             // 5. Vérifier si déjà migré
             if (!$force && $this->isAlreadyMigrated($equipment, $agency, $availablePhotos)) {
@@ -229,7 +236,7 @@ Exemples:
 
             // 6. Migration des photos
             if (!$dryRun) {
-                $downloadResult = $this->downloadPhotosDetailed($equipment, $formData, $agency, $availablePhotos);
+                $downloadResult = $this->downloadPhotosDetailed($equipment, $formData, $agency, $availablePhotos, $formId = $formData->getFormId(), $dataId = $formData->getDataId());
                 $result['photos_downloaded'] = $downloadResult['downloaded'];
                 $result['errors'] = $downloadResult['errors'];
                 
@@ -255,18 +262,24 @@ Exemples:
         return $result;
     }
 
-    private function downloadPhotosDetailed($equipment, $formData, string $agency, array $availablePhotos): array
+    private function downloadPhotosDetailed($equipment, $formData, string $agency, array $availablePhotos, string $formId, string $dataId): array
     {
         $result = [
             'downloaded' => 0,
             'errors' => []
         ];
 
-        $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
-        $raisonSocialeClean = $this->cleanFileName($raisonSociale);
+        // MODIFICATION CRITIQUE: Utiliser id_contact au lieu de raison_sociale
+        $idContact = $equipment->getIdContact();
         $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
+
+        // VALIDATION: Vérifier que id_contact existe
+        if (empty($idContact)) {
+            $result['errors'][] = "id_contact manquant pour équipement {$codeEquipement}";
+            return $result;
+        }
 
         foreach ($availablePhotos as $photoType => $photoName) {
             try {
@@ -281,38 +294,27 @@ Exemples:
                         ? $codeEquipement . '_' . $photoType . '_' . ($index + 1)
                         : $codeEquipement . '_' . $photoType;
 
-                    // Vérifier si existe déjà
-                    if ($this->imageStorageService->imageExists($agency, $raisonSocialeClean, $anneeVisite, $typeVisite, $filename)) {
-                        continue; // Déjà présente
+                    // MODIFICATION CRITIQUE: Utiliser id_contact dans imageExists
+                    if ($this->imageStorageService->imageExists($agency, $idContact, $anneeVisite, $typeVisite, $filename)) {
+                        continue; // Photo déjà existante
                     }
 
-                    // Télécharger depuis l'API Kizeo
-                    $imageContent = $this->downloadFromKizeoApi($formData->getFormId(), $formData->getDataId(), $singlePhotoName);
-                    
+                    $imageContent = $this->downloadFromKizeoApi($formId, $dataId, $singlePhotoName);
                     if ($imageContent) {
-                        try {
-                            // Sauvegarder localement
-                            $savedPath = $this->imageStorageService->storeImage(
-                                $agency,
-                                $raisonSocialeClean,
-                                $anneeVisite,
-                                $typeVisite,
-                                $filename,
-                                $imageContent
-                            );
-                            
-                            $result['downloaded']++;
-                            
-                        } catch (\Exception $e) {
-                            $result['errors'][] = "Erreur sauvegarde {$filename}: " . $e->getMessage();
-                        }
-                    } else {
-                        $result['errors'][] = "Erreur téléchargement {$singlePhotoName}";
+                        // MODIFICATION CRITIQUE: Utiliser id_contact dans storeImage
+                        $this->imageStorageService->storeImage(
+                            $agency,
+                            $idContact,      // Utiliser id_contact au lieu de raisonSocialeClean
+                            $anneeVisite,
+                            $typeVisite,
+                            $filename,
+                            $imageContent
+                        );
+                        $result['downloaded']++;
                     }
                 }
-
             } catch (\Exception $e) {
-                $result['errors'][] = "Erreur traitement {$photoType}: " . $e->getMessage();
+                $result['errors'][] = "Erreur photo {$photoType}: " . $e->getMessage();
             }
         }
 
@@ -373,16 +375,22 @@ Exemples:
 
     private function isAlreadyMigrated($equipment, string $agency, array $availablePhotos): bool
     {
-        $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
-        $raisonSocialeClean = $this->cleanFileName($raisonSociale);
+        // MODIFICATION CRITIQUE: Utiliser id_contact au lieu de raison_sociale
+        $idContact = $equipment->getIdContact();
         $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
 
+        // VALIDATION: Vérifier que id_contact existe
+        if (empty($idContact)) {
+            return false;
+        }
+
         // Vérifier si au moins une photo existe localement
         foreach (array_keys($availablePhotos) as $photoType) {
             $filename = $codeEquipement . '_' . $photoType;
-            if ($this->imageStorageService->imageExists($agency, $raisonSocialeClean, $anneeVisite, $typeVisite, $filename)) {
+            // MODIFICATION CRITIQUE: Utiliser id_contact dans imageExists
+            if ($this->imageStorageService->imageExists($agency, $idContact, $anneeVisite, $typeVisite, $filename)) {
                 return true;
             }
         }
