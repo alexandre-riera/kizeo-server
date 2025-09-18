@@ -33,6 +33,7 @@ use App\Service\EmailService;
 use App\Service\PdfGenerator;
 use App\Service\ShortLinkService;
 use App\Service\PdfStorageService;
+use App\Service\ImageStorageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,7 +47,8 @@ class EquipementPdfController extends AbstractController
         private PdfGenerator $pdfGenerator,
         private PdfStorageService $pdfStorageService,
         private ShortLinkService $shortLinkService,
-        private EmailService $emailService
+        private EmailService $emailService,
+        private ImageStorageService $imageStorageService
     ) {}
 
     /**
@@ -308,21 +310,34 @@ class EquipementPdfController extends AbstractController
                 'code_equipement' => $equipment->getNumeroEquipement(),
                 'id_contact' => $equipment->getIdContact()
             ]);
-            // dump($photos);
-            $photoEquipement = $photos->getPhoto2() ?? null;
-            $photoEquipementSupplementaire = $photos->getPhotoCompteRendu() ?? null;
+            
+            // MODIFICATION : Utiliser la nouvelle architecture pour récupérer les images
+            $photoEquipement = null;
+            if (!empty($photos)) {
+                $form = $photos[0];
+                $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
+                $typeVisite = $equipment->getVisite();
+                
+                // Récupérer l'image avec la nouvelle architecture
+                $photoEquipement = $this->imageStorageService->getGeneralImageUrl(
+                    $equipment->getCodeAgence(),
+                    $equipment->getIdContact(),  // Utiliser id_contact
+                    $anneeVisite,
+                    $typeVisite,
+                    $equipment->getNumeroEquipement()
+                );
+            }
+            
             $formattedEquipements[] = [
                 'numero' => $equipment->getNumeroEquipement() ?? 'N/A',
-                'type' => ['libelle' => $equipment->getLibelleEquipement() ?? 'Non renseigné'],
+                'type' => $equipment->getTypeEquipement() ?? 'N/A',
                 'marque' => $equipment->getMarque() ?? 'Non renseigné',
-                'modele' => $equipment->getModeleNacelle() ?? 'Non renseigné',
-                'statut' => $this->determineEquipmentStatus($equipment),
-                'statutLibelle' => $this->getStatusLabel($this->determineEquipmentStatus($equipment)),
-                'dateMiseEnService' => $equipment->getMiseEnService() ?? null,
-                'repereSite' => $equipment->getRepereSiteClient() ?? '',
-                'anomalies' => $this->getEquipmentAnomalies($equipment),
-                'photoEquipement' => $photoEquipement,
-                'photoEquipementSupplementaire' =>  $photoEquipementSupplementaire
+                'modele' => $equipment->getModele() ?? 'Non renseigné',
+                'etat' => $equipment->getEtat() ?? 'Non renseigné',
+                'anomalies' => $equipment->getAnomalies() ?? '',
+                'photo' => $photoEquipement,
+                'mise_en_service' => $equipment->getMiseEnService() ?? '',
+                'repere_site_client' => $equipment->getRepereSiteClient() ?? ''
             ];
         }
 

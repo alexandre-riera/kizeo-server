@@ -3384,7 +3384,7 @@ class SimplifiedMaintenanceController extends AbstractController
     ): void {
         
         try {
-            // Vérifier si l'entité Form existe déjà
+            // Vérifier si l'entité Form existe déjà 
             $existingForm = $entityManager->getRepository(Form::class)->findOneBy([
                 'form_id' => $formId,
                 'data_id' => $entryId,
@@ -3392,7 +3392,6 @@ class SimplifiedMaintenanceController extends AbstractController
             ]);
             
             if ($existingForm) {
-              // dump("Entité Form existante trouvée pour {$equipmentCode} - mise à jour");
                 $form = $existingForm;
             } else {
                 $form = new Form();
@@ -3400,9 +3399,11 @@ class SimplifiedMaintenanceController extends AbstractController
                 $form->setDataId($entryId);
                 $form->setEquipmentId($equipmentCode);
                 $form->setRaisonSocialeVisite($raisonSociale . '\\' . $visite);
-                $form->setIdContact($idContact);
-                $form->setIdSociete($idSociete);
             }
+            
+            // AJOUT CRITIQUE : Enregistrer l'id_contact et id_societe
+            $form->setIdContact($idContact);
+            $form->setIdSociete($idSociete);
             
             // Définir les métadonnées de base
             $form->setCodeEquipement($equipmentCode);
@@ -3413,7 +3414,6 @@ class SimplifiedMaintenanceController extends AbstractController
             
             // Persister l'entité
             $entityManager->persist($form);
-            // dump("Entité Form mise à jour avec chemins locaux pour équipement: " . $equipmentCode);
             
         } catch (\Exception $e) {
             $this->logger->error("Erreur sauvegarde Form avec chemins locaux: " . $e->getMessage());
@@ -3489,26 +3489,29 @@ class SimplifiedMaintenanceController extends AbstractController
      * À utiliser lors de la génération des PDFs pour éviter les appels API
      */
     public function getLocalPhotosForEquipment(
-        string $agence,
-        string $raisonSociale,
+        string $codeAgence,
+        string $idContact,    // MODIFIÉ : Utiliser id_contact au lieu de raisonSociale
         string $anneeVisite,
         string $typeVisite,
-        string $codeEquipement,
-        string $idContact
+        string $codeEquipement
     ): array {
         $localPhotos = [];
         $photoTypes = ['compte_rendu', 'environnement', 'plaque', 'etiquette_somafi', 'moteur', 'generale'];
         
         foreach ($photoTypes as $photoType) {
             $filename = $codeEquipement . '_' . $photoType;
-            $imagePath = $this->imageStorageService->getImagePath($agence, $idContact, $anneeVisite, $typeVisite, $filename);
             
-            if ($imagePath && file_exists($imagePath)) {
-                $localPhotos[$photoType] = [
-                    'path' => $imagePath,
-                    'url' => $this->imageStorageService->getImageUrl($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename),
-                    'base64' => base64_encode(file_get_contents($imagePath))
-                ];
+            // MODIFICATION : Utiliser la nouvelle architecture
+            $imagePath = $this->imageStorageService->getImagePath(
+                $codeAgence, 
+                $idContact,     // Utiliser id_contact
+                $anneeVisite, 
+                $typeVisite, 
+                $filename
+            );
+            
+            if ($imagePath) {
+                $localPhotos[$photoType] = $imagePath;
             }
         }
         
@@ -4798,7 +4801,7 @@ class SimplifiedMaintenanceController extends AbstractController
         array $equipmentData,
         string $formId,
         string $entryId,
-        string $agence,
+        string $codeAgence,  // Renommé pour clarifier
         string $raisonSociale,
         string $anneeVisite,
         string $typeVisite,
@@ -4807,23 +4810,31 @@ class SimplifiedMaintenanceController extends AbstractController
         string $idContact
     ): array {
         $savedPhotos = [];
-        $photoFields = $this->getPhotoFieldsMapping();
         
-        foreach ($photoFields as $fieldKey => $photoType) {
-            if (isset($equipmentData[$fieldKey]['value']) && !empty($equipmentData[$fieldKey]['value'])) {
-                $photoValue = $equipmentData[$fieldKey]['value'];
+        // Mapping des types de photos depuis Kizeo
+        $photoMapping = [
+            'photo3' => 'compte_rendu',
+            'photo_complementaire_equipeme' => 'environnement',
+            'photo_plaque' => 'plaque',
+            'photo_etiquette_somafi' => 'etiquette_somafi',
+            'photo_moteur' => 'moteur',
+            'photo2' => 'generale'
+        ];
+        
+        foreach ($photoMapping as $kizeoField => $photoType) {
+            if (isset($equipmentData[$kizeoField]['value']) && !empty($equipmentData[$kizeoField]['value'])) {
+                $photoValue = $equipmentData[$kizeoField]['value'];
                 
                 // Gérer les photos multiples séparées par des virgules
                 if (str_contains($photoValue, ', ')) {
-                    $photoNames = explode(', ', $photoValue);
-                    foreach ($photoNames as $index => $photoName) {
-                        $photoName = trim($photoName);
-                        if (!empty($photoName)) {
+                    $photos = explode(', ', $photoValue);
+                    foreach ($photos as $index => $photo) {
+                        if (!empty(trim($photo))) {
                             $localPath = $this->downloadSinglePhotoLocally(
-                                $photoName,
+                                trim($photo),
                                 $formId,
                                 $entryId,
-                                $agence,
+                                $codeAgence,
                                 $raisonSociale,
                                 $anneeVisite,
                                 $typeVisite,
@@ -4843,7 +4854,7 @@ class SimplifiedMaintenanceController extends AbstractController
                         $photoValue,
                         $formId,
                         $entryId,
-                        $agence,
+                        $codeAgence,
                         $raisonSociale,
                         $anneeVisite,
                         $typeVisite,
@@ -4869,7 +4880,7 @@ class SimplifiedMaintenanceController extends AbstractController
         string $photoName,
         string $formId,
         string $entryId,
-        string $agence,
+        string $codeAgence,  // Renommé de $agence vers $codeAgence pour clarifier
         string $raisonSociale,
         string $anneeVisite,
         string $typeVisite,
@@ -4882,10 +4893,11 @@ class SimplifiedMaintenanceController extends AbstractController
             // Construire le nom du fichier avec le type de photo
             $filename = $codeEquipement . '_' . $photoType;
             
+            // MODIFICATION CRITIQUE : Utiliser la nouvelle architecture avec id_contact
             // Vérifier si la photo existe déjà localement
-            if ($this->imageStorageService->imageExists($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename)) {
+            if ($this->imageStorageService->imageExists($codeAgence, $idContact, $anneeVisite, $typeVisite, $filename)) {
                 $this->logger->info("Photo déjà existante localement: {$filename}");
-                return $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename, $idSociete, $idContact);
+                return $this->imageStorageService->getImagePath($codeAgence, $idContact, $anneeVisite, $typeVisite, $filename);
             }
 
             // Télécharger la photo depuis l'API Kizeo
@@ -4901,30 +4913,20 @@ class SimplifiedMaintenanceController extends AbstractController
                 ]
             );
 
-            $imageContent = $response->getContent();
+            $photoContent = $response->getContent();
             
-            if (empty($imageContent)) {
-                $this->logger->warning("Contenu de photo vide pour: {$photoName}");
-                return null;
-            }
-
-            // Sauvegarder la photo localement
-            $localPath = $this->imageStorageService->storeImage(
-                $agence,
-                $raisonSociale,
+            // MODIFICATION CRITIQUE : Sauvegarder avec la nouvelle architecture
+            return $this->imageStorageService->storeImage(
+                $codeAgence,
+                $idContact,  // Utiliser id_contact au lieu de raison_sociale
                 $anneeVisite,
                 $typeVisite,
                 $filename,
-                $imageContent,
-                $idSociete,
-                $idContact
+                $photoContent
             );
 
-            $this->logger->info("Photo téléchargée et sauvegardée: {$localPath}");
-            return $localPath;
-
         } catch (\Exception $e) {
-            $this->logger->error("Erreur téléchargement photo {$photoName}: " . $e->getMessage());
+            $this->logger->warning("Impossible de télécharger la photo {$photoName}: " . $e->getMessage());
             return null;
         }
     }

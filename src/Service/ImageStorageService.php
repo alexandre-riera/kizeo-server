@@ -153,7 +153,7 @@ class ImageStorageService
     public function deleteImage(
         string $agence, 
         string $idContact, 
-        string $annee, 
+        string $annee,
         string $typeVisite, 
         string $filename
     ): bool {
@@ -174,14 +174,14 @@ class ImageStorageService
      * Récupère toutes les images d'un équipement
      */
     public function getAllImagesForEquipment(
-        string $agence,
+        string $codeAgence,
         string $idContact,
-        string $annee,
-        string $typeVisite,
+        string $anneeVisite,
+        string $visite,
         string $codeEquipement
     ): array {
         $images = [];
-        $directory = $this->buildDirectoryPath($agence, $idContact, $annee, $typeVisite);
+        $directory = $this->buildDirectoryPath($codeAgence, $idContact, $anneeVisite, $visite);
         
         if (!is_dir($directory)) {
             return $images;
@@ -198,7 +198,7 @@ class ImageStorageService
                 $images[$photoType] = [
                     'filename' => $file,
                     'path' => $fullPath,
-                    'url' => $this->getImageUrl($agence, $idContact, $annee, $typeVisite, pathinfo($file, PATHINFO_FILENAME)),
+                    'url' => $this->getImageUrl($codeAgence, $idContact, $anneeVisite, $visite, pathinfo($file, PATHINFO_FILENAME)),
                     'size' => filesize($fullPath),
                     'modified' => filemtime($fullPath)
                 ];
@@ -542,18 +542,18 @@ class ImageStorageService
      * Récupère l'URL de l'image générale d'un équipement
      */
     public function getGeneralImageUrl(
-        string $agence, 
+        string $codeAgence, 
         string $idContact, 
-        string $annee, 
-        string $typeVisite, 
+        string $anneeVisite, 
+        string $visite, 
         string $codeEquipement
     ): ?string {
         // Chercher l'image avec le suffixe _generale
         $generalImagePath = $this->getImagePath(
-            $agence,
+            $codeAgence,
             $idContact,
-            $annee,
-            $typeVisite,
+            $anneeVisite,
+            $visite,
             $codeEquipement . '_generale'
         );
         
@@ -570,17 +570,17 @@ class ImageStorageService
      * Récupère l'image générale en base64 pour PDF
      */
     public function getGeneralImageBase64(
-        string $agence, 
+        string $codeAgence, 
         string $idContact, 
-        string $annee, 
-        string $typeVisite, 
+        string $anneeVisite, 
+        string $visite, 
         string $codeEquipement
     ): ?string {
         $generalImagePath = $this->getImagePath(
-            $agence,
+            $codeAgence,
             $idContact,
-            $annee,
-            $typeVisite,
+            $anneeVisite,
+            $visite,
             $codeEquipement . '_generale'
         );
         
@@ -590,5 +590,4 @@ class ImageStorageService
         
         return null;
     }
-
 }
