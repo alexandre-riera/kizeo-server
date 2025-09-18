@@ -3378,6 +3378,8 @@ class SimplifiedMaintenanceController extends AbstractController
         EntityManagerInterface $entityManager,
         array $savedPhotos = [],
         string $raisonSociale,
+        string $idContact,
+        string $idSociete,
         string $visite
     ): void {
         
@@ -3398,6 +3400,8 @@ class SimplifiedMaintenanceController extends AbstractController
                 $form->setDataId($entryId);
                 $form->setEquipmentId($equipmentCode);
                 $form->setRaisonSocialeVisite($raisonSociale . '\\' . $visite);
+                $form->setIdContact($idContact);
+                $form->setIdSociete($idSociete);
             }
             
             // Définir les métadonnées de base
@@ -3489,14 +3493,15 @@ class SimplifiedMaintenanceController extends AbstractController
         string $raisonSociale,
         string $anneeVisite,
         string $typeVisite,
-        string $codeEquipement
+        string $codeEquipement,
+        string $idContact
     ): array {
         $localPhotos = [];
         $photoTypes = ['compte_rendu', 'environnement', 'plaque', 'etiquette_somafi', 'moteur', 'generale'];
         
         foreach ($photoTypes as $photoType) {
             $filename = $codeEquipement . '_' . $photoType;
-            $imagePath = $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename);
+            $imagePath = $this->imageStorageService->getImagePath($agence, $idContact, $anneeVisite, $typeVisite, $filename);
             
             if ($imagePath && file_exists($imagePath)) {
                 $localPhotos[$photoType] = [
