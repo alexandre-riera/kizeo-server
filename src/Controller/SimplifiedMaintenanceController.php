@@ -2921,7 +2921,9 @@ class SimplifiedMaintenanceController extends AbstractController
         string $formId, 
         string $entryId, 
         string $entityClass,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        string $idSociete,
+        string $idContact
     ): bool {
         
         // Données de base de l'équipement
@@ -2958,7 +2960,9 @@ class SimplifiedMaintenanceController extends AbstractController
             $raisonSociale,
             $anneeVisite,
             $visite,
-            $numeroEquipement
+            $numeroEquipement,
+            $idSociete,
+            $idContact
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
@@ -3137,11 +3141,12 @@ class SimplifiedMaintenanceController extends AbstractController
             $detailData = $detailResponse->toArray();
             $fields = $detailData['data']['fields'];
             $idSociete =  $fields['id_societe']['value'] ?? '';
+            $idContact =  $fields['id_contact']['value'] ?? '';
             $dateDerniereVisite =  $fields['date_et_heure1']['value'] ?? '';
 
             // Récupérer les équipements sous contrat et hors contrat
             $contractEquipments = $fields['contrat_de_maintenance']['value'] ?? [];
-            dd($contractEquipments);
+            
             $offContractEquipments = $fields['tableau2']['value'] ?? [];
             
             // dump("===== TRAITEMENT SOUMISSION " . $submission['entry_id'] . " =====");
@@ -3174,7 +3179,9 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $submission['form_id'], 
                                 $submission['entry_id'], 
                                 $entityClass,
-                                $entityManager
+                                $entityManager,
+                                $idSociete,
+                                $idContact
                             );
                             
                             if ($wasProcessed) {
@@ -3239,7 +3246,7 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $entityClass,
                                 $entityManager,
                                 $idSociete,
-                                $dateDerniereVisite
+                                $idContact
                             );
                             
                             if ($wasProcessed) {
@@ -3297,71 +3304,6 @@ class SimplifiedMaintenanceController extends AbstractController
         ];
     }
 
-    /**
-     * Version mise à jour de setOffContractDataWithFormPhotosAndDeduplication avec numérotation sécurisée
-     */
-    // private function setOffContractDataWithFormPhotosAndDeduplication(
-    //     $equipement, 
-    //     array $equipmentHorsContrat, 
-    //     array $fields, 
-    //     string $formId, 
-    //     string $entryId, 
-    //     string $entityClass,
-    //     EntityManagerInterface $entityManager,
-    //     string $idSociete,
-    //     string $dateDerniereVisite
-    // ): bool {
-        
-    //   // dump("=== DÉBUT TRAITEMENT HORS CONTRAT (DÉBOGAGE PPV) dans la fonction setOffContractDataWithFormPhotosAndDeduplication ===");
-    //   // dump("Entry ID: " . $entryId);
-    //   // dump("Entity class passée: " . $entityClass); // ✅ Log pour vérifier
-
-    //     // 1. Générer le numéro d'équipement
-    //     $typeLibelle = $equipmentHorsContrat['nature']['value'] ?? '';
-    //     $typeCode = $this->getTypeCodeFromLibelle($typeLibelle);
-    //     $idClient = $fields['id_client_']['value'] ?? '';
-        
-    //     // $nouveauNumero = $this->getNextEquipmentNumber($typeCode, $idClient, $entityClass, $entityManager);
-    //     // $numeroFormate = $typeCode . str_pad($nouveauNumero, 2, '0', STR_PAD_LEFT);
-    //     // ✅ APPEL AVEC TOUS LES PARAMÈTRES Y COMPRIS $entityClass
-    //     $numeroFormate = $this->generateUniqueEquipmentNumber($typeCode, $idClient, $entityClass, $entityManager);
-    //   // dump("Numéro formaté final: '" . $numeroFormate . "'");
-        
-    //     // 2. Vérifier si l'équipement existe déjà (même si c'est un nouveau numéro, vérifier par autres critères)
-    //     if ($this->offContractEquipmentExists($equipmentHorsContrat, $idClient, $entityClass, $entityManager)) {
-    //         return false; // Skip car déjà existe
-    //     }
-        
-    //     // 3. Définir les données de l'équipement hors contrat
-    //     $equipement->setNumeroEquipement($numeroFormate);
-    //     $equipement->setCodeSociete($idSociete);
-    //     $equipement->setDerniereVisite($dateDerniereVisite);
-    //     $equipement->setLibelleEquipement($typeLibelle);
-    //     $equipement->setModeFonctionnement($equipmentHorsContrat['mode_fonctionnement_']['value'] ?? '');
-    //     $equipement->setRepereSiteClient($equipmentHorsContrat['localisation_site_client1']['value'] ?? '');
-    //     $equipement->setMiseEnService($equipmentHorsContrat['annee']['value'] ?? '');
-    //     $equipement->setNumeroDeSerie($equipmentHorsContrat['n_de_serie']['value'] ?? '');
-    //     $equipement->setMarque($equipmentHorsContrat['marque']['value'] ?? '');
-    //     $equipement->setLargeur($equipmentHorsContrat['largeur']['value'] ?? '');
-    //     $equipement->setHauteur($equipmentHorsContrat['hauteur']['value'] ?? '');
-    //     $equipement->setPlaqueSignaletique($equipmentHorsContrat['plaque_signaletique1']['value'] ?? '');
-    //     $equipement->setEtat($equipmentHorsContrat['etat1']['value'] ?? '');
-        
-    //     $equipement->setVisite($this->getDefaultVisitType($fields));
-    //     $equipement->setStatutDeMaintenance($this->getMaintenanceStatusFromEtat($equipmentHorsContrat['etat1']['value'] ?? ''));
-        
-    //     // IMPORTANT: Équipements hors contrat ne sont PAS en maintenance
-    //     $equipement->setEnMaintenance(false);
-    //     $equipement->setIsArchive(false);
-        
-    //     // 4. Sauvegarder les photos SEULEMENT si pas de doublon
-    //     $this->savePhotosToFormEntityWithDeduplication($fields['contrat_de_maintenance']['value'][0]['equipement']['path'], $equipmentHorsContrat, $formId, $entryId, $numeroFormate, $entityManager);
-    //     // NOUVELLE PARTIE: Extraction et définition des anomalies
-    //   // dump("=== DÉBOGAGE PPV: Avant d'appeler setSimpleEquipmentAnomalies dans la fonction setOffContractDataWithFormPhotosAndDeduplication ===");
-    //     $this->setSimpleEquipmentAnomalies($equipement, $equipmentHorsContrat);
-
-
-
     //     return true; // Équipement traité avec succès
     // }
     /**
@@ -3374,7 +3316,9 @@ class SimplifiedMaintenanceController extends AbstractController
         string $formId, 
         string $entryId, 
         string $entityClass,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        string $idSociete,
+        string $idContact
     ): bool {
         
         // Données de base de l'équipement
@@ -3410,7 +3354,9 @@ class SimplifiedMaintenanceController extends AbstractController
             $raisonSociale,
             $anneeVisite,
             $visite,
-            $numeroEquipement
+            $numeroEquipement,
+            $idSociete,
+            $idContact
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
@@ -3609,7 +3555,9 @@ class SimplifiedMaintenanceController extends AbstractController
                             explode('\\', $equipment->getRaisonSociale())[0],
                             date('Y', strtotime($equipment->getDateEnregistrement())),
                             $equipment->getVisite(),
-                            $equipment->getNumeroEquipement()
+                            $equipment->getNumeroEquipement(),
+                            $equipment->getCodeSociete(),
+                            $equipment->getIdContact()
                         );
                         
                         if (!empty($savedPhotos)) {
@@ -4849,7 +4797,9 @@ class SimplifiedMaintenanceController extends AbstractController
         string $raisonSociale,
         string $anneeVisite,
         string $typeVisite,
-        string $codeEquipement
+        string $codeEquipement,
+        string $idSociete,
+        string $idContact
     ): array {
         $savedPhotos = [];
         $photoFields = $this->getPhotoFieldsMapping();
@@ -4873,7 +4823,9 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $anneeVisite,
                                 $typeVisite,
                                 $codeEquipement,
-                                $photoType . '_' . ($index + 1)
+                                $photoType . '_' . ($index + 1),
+                                $idSociete,
+                                $idContact
                             );
                             if ($localPath) {
                                 $savedPhotos[$photoType][] = $localPath;
@@ -4891,7 +4843,9 @@ class SimplifiedMaintenanceController extends AbstractController
                         $anneeVisite,
                         $typeVisite,
                         $codeEquipement,
-                        $photoType
+                        $photoType,
+                        $idSociete,
+                        $idContact
                     );
                     if ($localPath) {
                         $savedPhotos[$photoType] = $localPath;
@@ -4915,7 +4869,9 @@ class SimplifiedMaintenanceController extends AbstractController
         string $anneeVisite,
         string $typeVisite,
         string $codeEquipement,
-        string $photoType
+        string $photoType,
+        string $idSociete,
+        string $idContact
     ): ?string {
         try {
             // Construire le nom du fichier avec le type de photo
@@ -4924,7 +4880,7 @@ class SimplifiedMaintenanceController extends AbstractController
             // Vérifier si la photo existe déjà localement
             if ($this->imageStorageService->imageExists($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename)) {
                 $this->logger->info("Photo déjà existante localement: {$filename}");
-                return $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename);
+                return $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename, $idSociete, $idContact);
             }
 
             // Télécharger la photo depuis l'API Kizeo
@@ -4954,7 +4910,9 @@ class SimplifiedMaintenanceController extends AbstractController
                 $anneeVisite,
                 $typeVisite,
                 $filename,
-                $imageContent
+                $imageContent,
+                $idSociete,
+                $idContact
             );
 
             $this->logger->info("Photo téléchargée et sauvegardée: {$localPath}");
@@ -5184,7 +5142,9 @@ public function migrateEquipmentPhotos(
     
     try {
         $repository = $this->getRepositoryForAgency($agencyCode, $entityManager);
-        $equipment = $repository->findOneBy(['numeroEquipement' => $equipmentId]);
+        $equipment = $repository->findOneBy([
+            'numeroEquipement' => $equipmentId
+        ]);
         
         if (!$equipment) {
             return new JsonResponse(['error' => 'Équipement non trouvé'], 404);
@@ -5205,7 +5165,7 @@ public function migrateEquipmentPhotos(
         // Récupérer les données Form
         $formData = $entityManager->getRepository(Form::class)->findOneBy([
             'equipment_id' => $equipmentId,
-            'raison_sociale_visite' => $equipment->getRaisonSociale() . '\\' . $equipment->getVisite()
+            'id_contact' => $equipment->getIdContact()
         ]);
         
         if (!$formData) {
@@ -5519,7 +5479,8 @@ private function migratePhotosForSingleEquipment($equipment, Form $formData): bo
         }
         
         $agence = $equipment->getCodeAgence();
-        $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
+        $idContact = $equipment->getIdContact();
+        // $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
         $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
@@ -5544,7 +5505,7 @@ private function migratePhotosForSingleEquipment($equipment, Form $formData): bo
                     $formData->getFormId(),
                     $formData->getDataId(),
                     $agence,
-                    $raisonSociale,
+                    $idContact,
                     $anneeVisite,
                     $typeVisite,
                     $codeEquipement . '_' . $photoType
@@ -5737,14 +5698,14 @@ private function downloadAndStorePhotoFromKizeo(
     string $formId,
     string $dataId,
     string $agence,
-    string $raisonSociale,
+    string $idContact,
     string $anneeVisite,
     string $typeVisite,
     string $filename
 ): bool {
     try {
         // Vérifier si la photo existe déjà localement
-        if ($this->imageStorageService->imageExists($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename)) {
+        if ($this->imageStorageService->imageExists($agence, $idContact, $anneeVisite, $typeVisite, $filename)) {
             return true; // Déjà présente
         }
         
@@ -5782,7 +5743,7 @@ private function downloadAndStorePhotoFromKizeo(
                 // Sauvegarder localement
                 $this->imageStorageService->storeImage(
                     $agence,
-                    $raisonSociale,
+                    $idContact,
                     $anneeVisite,
                     $typeVisite,
                     $finalFilename,

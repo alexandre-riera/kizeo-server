@@ -51,14 +51,14 @@ class ImageStorageService
 
     public function storeImage(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $filename, 
         string $imageContent
     ): string {
-        $cleanRaisonSociale = $this->cleanFileName($raisonSociale);
-        $directory = $this->buildDirectoryPath($agence, $cleanRaisonSociale, $annee, $typeVisite);
+        // $cleanRaisonSociale = $this->cleanFileName($raisonSociale);
+        $directory = $this->buildDirectoryPath($agence, $idContact, $annee, $typeVisite);
         
         // Création du répertoire si inexistant
         if (!is_dir($directory)) {
@@ -94,12 +94,12 @@ class ImageStorageService
      */
     public function getImagePath(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $filename
     ): ?string {
-        $cleanRaisonSociale = $this->cleanFileName($raisonSociale);
+        // $cleanRaisonSociale = $this->cleanFileName($raisonSociale);
         $cleanFilename = $this->cleanFileName($filename);
         
         // Ajouter l'extension .jpg si elle n'est pas présente
@@ -107,7 +107,7 @@ class ImageStorageService
             $cleanFilename .= '.jpg';
         }
         
-        $filepath = $this->buildDirectoryPath($agence, $cleanRaisonSociale, $annee, $typeVisite) 
+        $filepath = $this->buildDirectoryPath($agence, $idContact, $annee, $typeVisite) 
                    . '/' . $cleanFilename;
         
         return file_exists($filepath) ? $filepath : null;
@@ -118,12 +118,12 @@ class ImageStorageService
      */
     public function getImageUrl(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $filename
     ): ?string {
-        $imagePath = $this->getImagePath($agence, $raisonSociale, $annee, $typeVisite, $filename);
+        $imagePath = $this->getImagePath($agence, $idContact, $annee, $typeVisite, $filename);
         
         if (!$imagePath) {
             return null;
@@ -139,12 +139,12 @@ class ImageStorageService
      */
     public function imageExists(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $filename
     ): bool {
-        return $this->getImagePath($agence, $raisonSociale, $annee, $typeVisite, $filename) !== null;
+        return $this->getImagePath($agence, $idContact, $annee, $typeVisite, $filename) !== null;
     }
 
     /**
@@ -152,12 +152,12 @@ class ImageStorageService
      */
     public function deleteImage(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $filename
     ): bool {
-        $imagePath = $this->getImagePath($agence, $raisonSociale, $annee, $typeVisite, $filename);
+        $imagePath = $this->getImagePath($agence, $idContact, $annee, $typeVisite, $filename);
         
         if ($imagePath && file_exists($imagePath)) {
             $deleted = unlink($imagePath);
@@ -543,7 +543,7 @@ class ImageStorageService
      */
     public function getGeneralImageUrl(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $codeEquipement
@@ -551,7 +551,7 @@ class ImageStorageService
         // Chercher l'image avec le suffixe _generale
         $generalImagePath = $this->getImagePath(
             $agence,
-            $raisonSociale,
+            $idContact,
             $annee,
             $typeVisite,
             $codeEquipement . '_generale'
@@ -571,14 +571,14 @@ class ImageStorageService
      */
     public function getGeneralImageBase64(
         string $agence, 
-        string $raisonSociale, 
+        string $idContact, 
         string $annee, 
         string $typeVisite, 
         string $codeEquipement
     ): ?string {
         $generalImagePath = $this->getImagePath(
             $agence,
-            $raisonSociale,
+            $idContact,
             $annee,
             $typeVisite,
             $codeEquipement . '_generale'

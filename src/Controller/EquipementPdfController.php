@@ -306,7 +306,7 @@ class EquipementPdfController extends AbstractController
             // Récupérer les photos depuis les formulaires
             $photos = $entityManager->getRepository(Form::class)->findBy([
                 'code_equipement' => $equipment->getNumeroEquipement(),
-                'raison_sociale_visite' => $equipment->getRaisonSociale() . '\\' . $equipment->getVisite()
+                'id_contact' => $equipment->getIdContact()
             ]);
             $photoEquipement = $photos[0]->getPhoto2() ?? null;
             $photoEquipementSupplementaire = $photos[0]->getPhotoCompteRendu() ?? null;
