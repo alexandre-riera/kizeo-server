@@ -16,7 +16,7 @@
                             {% if equipement.photoEquipement is defined and equipement.photoEquipement is not null %}
                                 <img src="data:image/png;base64, {{ equipement.photoEquipement }}" 
                                      alt="Photo {{ equipement.numero }}" class="equipment-photo">
-                            {% else %}
+                            {% elseif equipement.photosSecondaire is defined and equipement.photosSecondaire is not null %}
                                 <img src="data:image/png;base64, {{ equipement.photosSecondaire }}" 
                                      alt="Photo {{ equipement.numero }}" class="equipment-photo">
                             {% endif %}
