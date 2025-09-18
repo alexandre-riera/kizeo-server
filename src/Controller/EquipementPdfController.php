@@ -308,8 +308,9 @@ class EquipementPdfController extends AbstractController
                 'code_equipement' => $equipment->getNumeroEquipement(),
                 'id_contact' => $equipment->getIdContact()
             ]);
-            $photoEquipement = $photos[0]->getPhoto2() ?? null;
-            $photoEquipementSupplementaire = $photos[0]->getPhotoCompteRendu() ?? null;
+            dd($photos);
+            $photoEquipement = $photos->getPhoto2() ?? null;
+            $photoEquipementSupplementaire = $photos->getPhotoCompteRendu() ?? null;
             $formattedEquipements[] = [
                 'numero' => $equipment->getNumeroEquipement() ?? 'N/A',
                 'type' => ['libelle' => $equipment->getLibelleEquipement() ?? 'Non renseigné'],
