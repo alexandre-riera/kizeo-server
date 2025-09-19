@@ -104,7 +104,7 @@ class DebugKizeoMatchingCommand extends Command
                 $output->writeln("Entry ID: " . ($submission['_id'] ?? 'N/A'));
                 
                 // Récupérer les détails de cette entrée
-                $entryId = $submission['_id'];
+                $entryId = $submission['id'];
                 $detailResponse = $client->request('GET', 
                     'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/' . $entryId, 
                     [
