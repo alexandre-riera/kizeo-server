@@ -71,10 +71,10 @@ class SimplifiedMaintenanceController extends AbstractController
         // Pour chaque formulaire MAINTENANCE, récupérer TOUTES les données (pas seulement les non lues)
         foreach ($formMaintenanceIds as $formId) {
             try {
-                // Utiliser l'endpoint /data/advanced pour récupérer TOUTES les données
+                // Utiliser l'endpoint /data pour récupérer TOUTES les données
                 $response = $this->client->request(
                     'POST',
-                    'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', 
+                    'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data', 
                     [
                         'headers' => [
                             'Accept' => 'application/json',
@@ -615,7 +615,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     // Récupérer toutes les données du formulaire
                     $dataResponse = $this->client->request(
                         'POST',
-                        'https://forms.kizeo.com/rest/v3/forms/' . $form['id'] . '/data/advanced',
+                        'https://forms.kizeo.com/rest/v3/forms/' . $form['id'] . '/data',
                         [
                             'headers' => [
                                 'Accept' => 'application/json',
@@ -738,7 +738,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     // Récupérer toutes les données (ignore le statut lu/non lu)
                     $dataResponse = $this->client->request(
                         'POST',
-                        'https://forms.kizeo.com/rest/v3/forms/' . $form['id'] . '/data/advanced',
+                        'https://forms.kizeo.com/rest/v3/forms/' . $form['id'] . '/data',
                         [
                             'headers' => [
                                 'Accept' => 'application/json',
