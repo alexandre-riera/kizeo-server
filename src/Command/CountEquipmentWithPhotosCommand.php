@@ -64,9 +64,9 @@ class CountEquipmentWithPhotosCommand extends Command
                 INNER JOIN form f ON f.code_equipement = e.numero_equipement 
                 WHERE f.id_contact = e.id_contact 
                 AND (
-                    f.photo_generale IS NOT NULL OR 
+                    f.photo_2 IS NOT NULL OR 
                     f.photo_etiquette_somafi IS NOT NULL OR 
-                    f.photo_environnement IS NOT NULL OR
+                    f.photo_environnement_equipement1 IS NOT NULL OR
                     f.photo_plaque IS NOT NULL OR
                     f.photo_compte_rendu IS NOT NULL
                 )
