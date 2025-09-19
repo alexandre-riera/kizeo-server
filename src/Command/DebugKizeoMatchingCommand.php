@@ -77,18 +77,17 @@ class DebugKizeoMatchingCommand extends Command
         try {
             $output->writeln("=== DEBUG CORRESPONDANCE KIZEO - AGENCE $agency ===");
             
-            // 1. Récupérer quelques submissions Kizeo
+            // 1. Récupérer quelques submissions Kizeo (méthode basique qui fonctionne)
             $client = HttpClient::create();
             $response = $client->request('GET', 
-                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/advanced', 
+                'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data', 
                 [
                     'headers' => [
                         'Accept' => 'application/json',
                         'Authorization' => $_ENV["KIZEO_API_TOKEN"],
                     ],
                     'query' => [
-                        'limit' => 5, // Seulement 5 pour debug
-                        'format' => 'json'
+                        'limit' => 5 // Seulement 5 pour debug
                     ]
                 ]
             );
@@ -102,9 +101,22 @@ class DebugKizeoMatchingCommand extends Command
             foreach ($submissions as $index => $submission) {
                 $output->writeln("");
                 $output->writeln("--- SUBMISSION " . ($index + 1) . " ---");
-                $output->writeln("Entry ID: " . ($submission['entry_id'] ?? 'N/A'));
+                $output->writeln("Entry ID: " . ($submission['_id'] ?? 'N/A'));
                 
-                $fields = $submission['fields'] ?? [];
+                // Récupérer les détails de cette entrée
+                $entryId = $submission['_id'];
+                $detailResponse = $client->request('GET', 
+                    'https://forms.kizeo.com/rest/v3/forms/' . $formId . '/data/' . $entryId, 
+                    [
+                        'headers' => [
+                            'Accept' => 'application/json',
+                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                        ]
+                    ]
+                );
+                
+                $detailData = $detailResponse->toArray();
+                $fields = $detailData['data']['fields'] ?? [];
                 
                 // Extraire les données cruciales
                 $idContact = $fields['id_client_']['value'] ?? '';
