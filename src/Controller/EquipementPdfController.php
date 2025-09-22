@@ -52,6 +52,40 @@ class EquipementPdfController extends AbstractController
     ) {}
 
     /**
+     * Route pour générer le PDF des équipements d'un client
+     * Cette route correspond à celle utilisée dans le template home/index.html.twig
+     * Accepte les paramètres via GET (liens directs depuis le template)
+     */
+    #[Route('/equipements/pdf', name: 'client_equipements_pdf', methods: ['GET'])]
+    public function generateClientEquipementsPdf(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        try {
+            // Récupérer les paramètres depuis la requête GET (lien direct)
+            $agence = $request->query->get('agence');
+            $clientId = $request->query->get('id');
+            $clientAnneeFilter = $request->query->get('clientAnneeFilter');
+            $clientVisiteFilter = $request->query->get('clientVisiteFilter');
+            
+            // Validation des paramètres obligatoires
+            if (!$agence || !$clientId) {
+                throw $this->createNotFoundException('Paramètres agence et id client requis');
+            }
+
+            // Utiliser les valeurs par défaut si les filtres ne sont pas fournis
+            $annee = $clientAnneeFilter ?: date('Y');
+            $visite = $clientVisiteFilter ?: 'CE1';
+
+            // Appeler directement la méthode de génération de PDF
+            return $this->generateClientCompletePdf($agence, $clientId, $annee, $visite, $entityManager);
+
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'error' => 'Erreur lors de la génération du PDF: ' . $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Génère un PDF pour un client complet avec première page et équipements
      */
     #[Route('/equipement/pdf/client/{agence}/{clientId}/{annee}/{visite}', name: 'equipement_pdf_client_complete')]
@@ -107,39 +141,6 @@ class EquipementPdfController extends AbstractController
         }
     }
 
-    /**
-     * Route pour générer le PDF des équipements d'un client
-     * Cette route correspond à celle utilisée dans le template home/index.html.twig
-     * Accepte les paramètres via GET (liens directs depuis le template)
-     */
-    #[Route('/equipements/pdf', name: 'client_equipements_pdf', methods: ['GET'])]
-    public function generateClientEquipementsPdf(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        try {
-            // Récupérer les paramètres depuis la requête GET (lien direct)
-            $agence = $request->query->get('agence');
-            $clientId = $request->query->get('id');
-            $clientAnneeFilter = $request->query->get('clientAnneeFilter');
-            $clientVisiteFilter = $request->query->get('clientVisiteFilter');
-            
-            // Validation des paramètres obligatoires
-            if (!$agence || !$clientId) {
-                throw $this->createNotFoundException('Paramètres agence et id client requis');
-            }
-
-            // Utiliser les valeurs par défaut si les filtres ne sont pas fournis
-            $annee = $clientAnneeFilter ?: date('Y');
-            $visite = $clientVisiteFilter ?: 'CE1';
-
-            // Appeler directement la méthode de génération de PDF
-            return $this->generateClientCompletePdf($agence, $clientId, $annee, $visite, $entityManager);
-
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'error' => 'Erreur lors de la génération du PDF: ' . $e->getMessage()
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-    }
 
     /**
      * Envoie le PDF par email et retourne un lien court
