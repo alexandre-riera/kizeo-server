@@ -29,6 +29,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Doctrine\Persistence\ManagerRegistry;
 
 class SimplifiedMaintenanceController extends AbstractController
 {
@@ -189,17 +190,25 @@ class SimplifiedMaintenanceController extends AbstractController
      */
     private function setCommonEquipmentData($equipement, array $fields): void
     {
+        // Accès direct aux valeurs dans fields[key]['value']
         $equipement->setCodeAgence($fields['code_agence']['value'] ?? '');
         $equipement->setIdContact($fields['id_client_']['value'] ?? '');
-        $equipement->setRaisonSociale($fields['nom_client']['value'] ?? '');
+        $equipement->setCodeSociete($fields['id_societe']['value'] ?? '');
+        
+        // Correction du nom du client
+        $nomClient = $fields['nom_client']['value'] ?? '';
+        $equipement->setRaisonSociale($nomClient);
+        
         $equipement->setTrigrammeTech($fields['trigramme']['value'] ?? '');
-
-        // Convertir la date au format string si nécessaire
+        
+        // Date d'intervention
         $dateIntervention = $fields['date_et_heure1']['value'] ?? '';
         $equipement->setDateEnregistrement($dateIntervention);
         
-        // Stocker les informations client dans des champs existants ou les ignorer
-        // Les champs adresse, ville, code postal n'existent pas dans l'entité actuelle
+        // Créer la raison sociale visite (nom client + type visite)
+        $visite = 'CE'; // Valeur par défaut, sera écrasée par setContractEquipmentData
+        $raisonSocialeVisite = $nomClient . '\\' . $visite;
+        $equipement->setRaisonSocialeVisite($raisonSocialeVisite);
         
         // Valeurs par défaut
         $equipement->setEtatDesLieuxFait(false);
@@ -211,30 +220,65 @@ class SimplifiedMaintenanceController extends AbstractController
      */
     private function setContractEquipmentData($equipement, array $equipmentContrat): void
     {
-        $equipementPath = $equipmentContrat['equipement']['path'] ?? '';
-        $equipementValue = $equipmentContrat['equipement']['value'] ?? '';
+        // DEBUG temporaire - à enlever après test
+        // dd(['equipmentContrat_structure' => array_keys($equipmentContrat)]);
         
+        // 1. Numéro d'équipement - accès direct
+        $numeroEquipement = $equipmentContrat['equipement'] ?? '';
+        $equipement->setNumeroEquipement($numeroEquipement);
+        
+        // 2. Localisation/Repère site client
+        $repere = $equipmentContrat['localisation_site_client'] ?? '';
+        $equipement->setRepereSiteClient($repere);
+        
+        // 3. Mode de fonctionnement
+        $mode = $equipmentContrat['mode_fonctionnement'] ?? '';
+        $equipement->setModeFonctionnement($mode);
+        
+        // 4. Libellé depuis reference7
+        $libelle = $equipmentContrat['reference7'] ?? '';
+        $equipement->setLibelleEquipement($libelle);
+        
+        // 5. Année mise en service depuis reference2
+        $miseEnService = $equipmentContrat['reference2'] ?? '';
+        $equipement->setMiseEnService($miseEnService);
+        
+        // 6. Numéro de série depuis reference6
+        $numeroSerie = $equipmentContrat['reference6'] ?? '';
+        $equipement->setNumeroDeSerie($numeroSerie);
+        
+        // 7. Marque depuis reference5
+        $marque = $equipmentContrat['reference5'] ?? '';
+        $equipement->setMarque($marque);
+        
+        // 8. Dimensions
+        $largeur = $equipmentContrat['largeur'] ?? '';
+        $equipement->setLargeur($largeur);
+        
+        $hauteur = $equipmentContrat['hauteur'] ?? '';
+        $equipement->setHauteur($hauteur);
+        
+        $longueur = $equipmentContrat['longueur'] ?? 'NC';
+        $equipement->setLongueur($longueur);
+        
+        // 9. État de l'équipement
+        $etat = $equipmentContrat['etat'] ?? '';
+        $equipement->setEtat($etat);
+        
+        // 10. Statut de maintenance basé sur l'état
+        $statutMaintenance = $this->getMaintenanceStatusFromEtat($etat);
+        $equipement->setStatutDeMaintenance($statutMaintenance);
+        
+        // 11. Plaque signalétique
+        $plaqueSignaletique = $equipmentContrat['plaque_signaletique'] ?? '';
+        $equipement->setPlaqueSignaletique($plaqueSignaletique);
+        
+        // 12. Type de visite depuis le path
+        $equipementPath = $equipmentContrat['equipement']['path'] ?? '';
         $visite = $this->extractVisitTypeFromPath($equipementPath);
         $equipement->setVisite($visite);
         
-        $equipmentInfo = $this->parseEquipmentInfo($equipementValue);
-        
-        $equipement->setNumeroEquipement($equipmentInfo['numero'] ?? '');
-        $equipement->setLibelleEquipement($equipmentInfo['libelle'] ?? '');
-        $equipement->setMiseEnService($equipmentInfo['mise_en_service'] ?? '');
-        $equipement->setNumeroDeSerie($equipmentInfo['numero_serie'] ?? '');
-        $equipement->setMarque($equipmentInfo['marque'] ?? '');
-        $equipement->setHauteur($equipmentInfo['hauteur'] ?? '');
-        $equipement->setLargeur($equipmentInfo['largeur'] ?? '');
-        $equipement->setRepereSiteClient($equipmentInfo['repere'] ?? '');
-        
-        $equipement->setModeFonctionnement($equipmentContrat['mode_fonctionnement']['value'] ?? '');
-        $equipement->setLongueur($equipmentContrat['longueur']['value'] ?? 'NC');
-        $equipement->setPlaqueSignaletique($equipmentContrat['plaque_signaletique']['value'] ?? '');
-        $equipement->setEtat($equipmentContrat['etat']['value'] ?? '');
-        
-        $equipement->setStatutDeMaintenance($this->getMaintenanceStatusFromEtat($equipmentContrat['etat']['value'] ?? ''));
-        
+        // 13. Flags par défaut
         $equipement->setEnMaintenance(true);
         $equipement->setIsArchive(false);
     }
@@ -308,13 +352,18 @@ class SimplifiedMaintenanceController extends AbstractController
 
     private function extractVisitTypeFromPath(string $path): string
     {
-        if (str_contains($path, 'CE1')) return 'CE1';
-        if (str_contains($path, 'CE2')) return 'CE2';
-        if (str_contains($path, 'CE3')) return 'CE3';
-        if (str_contains($path, 'CE4')) return 'CE4';
-        if (str_contains($path, 'CEA')) return 'CEA';
-        return 'CE1';
+        if (empty($path)) {
+            return 'CE'; // Défaut
+        }
+        
+        // Extraire le type depuis le path comme "list_417771_portail_CE1"
+        if (preg_match('/_([A-Z]+\d*)$/', $path, $matches)) {
+            return substr($matches[1], 0, -1); // Enlever le dernier chiffre
+        }
+        
+        return 'CE'; // Défaut
     }
+    
 
     private function parseEquipmentInfo(string $equipmentValue): array
     {
@@ -807,7 +856,7 @@ class SimplifiedMaintenanceController extends AbstractController
                             // Sauvegarder périodiquement
                             if ($processed % 10 === 0) {
                                 $entityManager->flush();
-                                $entityManager->clear();
+                                // $entityManager->clear();
                                 gc_collect_cycles();
                             }
 
@@ -1033,7 +1082,7 @@ class SimplifiedMaintenanceController extends AbstractController
 
                             // Sauvegarder et nettoyer la mémoire après chaque entrée
                             $entityManager->flush();
-                            $entityManager->clear();
+                            // $entityManager->clear();
                             
                             // Forcer le garbage collector
                             gc_collect_cycles();
@@ -2966,7 +3015,7 @@ class SimplifiedMaintenanceController extends AbstractController
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos, $raisonSociale, $idContact, $idSociete, $visite);
+        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager, $raisonSociale, $idContact, $idSociete, $visite, $savedPhotos);
         
         // Définir les anomalies
         $this->setSimpleEquipmentAnomalies($equipement, $equipmentContrat);
@@ -3186,7 +3235,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     // Sauvegarder après chaque chunk
                     try {
                         $entityManager->flush();
-                        $entityManager->clear();
+                        // $entityManager->clear();
                         gc_collect_cycles();
                       // dump("Chunk sous contrat " . ($chunkIndex + 1) . " sauvegardé");
                     } catch (\Exception $e) {
@@ -3262,7 +3311,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     try {
                         // dump("Sauvegarde chunk hors contrat " . ($chunkIndex + 1));
                         $entityManager->flush();
-                        $entityManager->clear();
+                        // $entityManager->clear();
                         gc_collect_cycles();
                         // dump("Chunk hors contrat " . ($chunkIndex + 1) . " sauvegardé");
                     } catch (\Exception $e) {
@@ -3343,7 +3392,7 @@ class SimplifiedMaintenanceController extends AbstractController
         );
         
         // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentHorsContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos, $raisonSociale, $idContact, $idSociete, $visite);
+        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentHorsContrat, $formId, $entryId, $numeroEquipement, $entityManager, $raisonSociale, $idContact, $idSociete, $visite, $savedPhotos);
         
         // dump("Équipement hors contrat traité avec photos locales: " . $numeroEquipement);
         return true;
@@ -3495,11 +3544,11 @@ class SimplifiedMaintenanceController extends AbstractController
         string $entryId, 
         string $equipmentCode, 
         EntityManagerInterface $entityManager,
-        array $savedPhotos = [],
         string $raisonSociale,
         string $idContact,
         string $idSociete,
-        string $visite
+        string $visite,
+        array $savedPhotos = []
     ): void {
         
         try {
@@ -3901,7 +3950,8 @@ class SimplifiedMaintenanceController extends AbstractController
         string $agencyCode,
         EntityManagerInterface $entityManager,
         Request $request,
-        MaintenanceCacheService $cacheService // Utilisation du service dédié 
+        MaintenanceCacheService $cacheService, // Utilisation du service dédié
+        ManagerRegistry $doctrine  
     ): JsonResponse {
         
         // Configuration conservative
@@ -4054,9 +4104,17 @@ class SimplifiedMaintenanceController extends AbstractController
                         
                         // Flush périodique pour libérer la mémoire
                         if ($processedCount % 3 == 0) {
-                            $entityManager->flush();
-                            $entityManager->clear();
-                            gc_collect_cycles();
+                            try {
+                                $entityManager->flush();
+                                // $entityManager->clear();
+                                gc_collect_cycles();
+                            } catch (\Exception $e) {
+                                // Vérifier si c'est une erreur d'EntityManager fermé
+                                if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                                    $entityManager = $doctrine->resetManager();
+                                }
+                                $errors[] = ['flush_error' => $e->getMessage()];
+                            }
                         }
                         
                     } catch (\Exception $e) {
@@ -4071,10 +4129,12 @@ class SimplifiedMaintenanceController extends AbstractController
                 // Sauvegarde après chaque chunk
                 try {
                     $entityManager->flush();
-                    $entityManager->clear();
+                    // $entityManager->clear();
                     gc_collect_cycles();
                 } catch (\Exception $e) {
-                  // dump("Erreur sauvegarde chunk {$chunkIndex}: " . $e->getMessage());
+                    if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                        $entityManager = $doctrine->resetManager();
+                    }
                 }
                 
                 // Pause entre chunks
@@ -4085,7 +4145,9 @@ class SimplifiedMaintenanceController extends AbstractController
             try {
                 $entityManager->flush();
             } catch (\Exception $e) {
-                // dump("Erreur sauvegarde finale: " . $e->getMessage());
+                if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
+                    $entityManager = $doctrine->resetManager();
+                }
             }
             
             $processingTime = time() - $startTime;
