@@ -215,7 +215,7 @@ Exemples:
 
             // 4. MODIFICATION CRITIQUE: Calculer le chemin local avec id_contact
             $idContact = $equipment->getIdContact();
-            $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
+            $anneeVisite = date('Y', strtotime($equipment->getDerniereVisite()));
             $typeVisite = $equipment->getVisite();
 
             // VALIDATION: Vérifier que id_contact existe
