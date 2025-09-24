@@ -3218,6 +3218,7 @@ class SimplifiedMaintenanceController extends AbstractController
                             
                             if ($wasProcessed) {
                                 $entityManager->persist($equipement);
+                                $entityManager->flush();
                                 $equipmentsProcessed++;
                                 $photosSaved++;
                                 // dump("Équipement sous contrat persisté");
@@ -3234,7 +3235,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     
                     // Sauvegarder après chaque chunk
                     try {
-                        $entityManager->flush();
+                        // $entityManager->flush();
                         // $entityManager->clear();
                         gc_collect_cycles();
                       // dump("Chunk sous contrat " . ($chunkIndex + 1) . " sauvegardé");
@@ -3310,7 +3311,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     // Sauvegarder après chaque chunk
                     try {
                         // dump("Sauvegarde chunk hors contrat " . ($chunkIndex + 1));
-                        $entityManager->flush();
+                        // $entityManager->flush();
                         // $entityManager->clear();
                         gc_collect_cycles();
                         // dump("Chunk hors contrat " . ($chunkIndex + 1) . " sauvegardé");
@@ -3335,9 +3336,7 @@ class SimplifiedMaintenanceController extends AbstractController
             'errors' => $errors
         ];
     }
-
-    //     return true; // Équipement traité avec succès
-    // }
+    
     /**
      * Modifiée: Sauvegarde des photos avec téléchargement local pour équipements hors contrat
      */
@@ -4087,10 +4086,10 @@ class SimplifiedMaintenanceController extends AbstractController
                                 'entity_class' => $entityClass
                             ];
                             
-                            // Sauvegarder le résultat en cache
-                            if ($useCache && $cacheService) {
-                                $cacheService->saveProcessedSubmission($agencyCode, $submissionId, $submissionData);
-                            }
+                            // // Sauvegarder le résultat en cache
+                            // if ($useCache && $cacheService) {
+                            //     $cacheService->saveProcessedSubmission($agencyCode, $submissionId, $submissionData);
+                            // }
                         } else {
                             // ✅ AJOUTER AUSSI POUR LES DONNÉES DEPUIS LE CACHE :
                             $cachedResult = $submissionData['result'] ?? [];
