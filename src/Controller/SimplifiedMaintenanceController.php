@@ -3006,8 +3006,8 @@ class SimplifiedMaintenanceController extends AbstractController
             $entityManager->rollback();
             $managerRegistry->resetManager();
 
-            $equipement->isErroneous();
-            $equipement->setErrorMessage($exception->getMessage());
+            // $equipement->isErroneous();
+            // $equipement->setErrorMessage($exception->getMessage());
 
             $entityManager->persist($equipement);
             $entityManager->flush();
