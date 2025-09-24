@@ -3958,15 +3958,16 @@ class SimplifiedMaintenanceController extends AbstractController
         ini_set('memory_limit', '1G');
         ini_set('max_execution_time', 300);
         
-        $validAgencies = ['S10', 'S40', 'S50', 'S60', 'S70', 'S80', 'S100', 'S120', 'S130', 'S140', 'S150', 'S160', 'S170'];
+        // $validAgencies = ['S10', 'S40', 'S50', 'S60', 'S70', 'S80', 'S100', 'S120', 'S130', 'S140', 'S150', 'S160', 'S170'];
+        $validAgencies = ['S170'];
         
         if (!in_array($agencyCode, $validAgencies)) {
             return new JsonResponse(['error' => 'Code agence non valide: ' . $agencyCode], 400);
         }
 
         $formId = $request->query->get('form_id');
-        $chunkSize = (int) $request->query->get('chunk_size', 5);
-        $maxSubmissions = (int) $request->query->get('max_submissions', 10);
+        $chunkSize = (int) $request->query->get('chunk_size', 50);
+        $maxSubmissions = (int) $request->query->get('max_submissions', 1000);
         $useCache = $request->query->get('use_cache', 'true') === 'true';
         $refreshCache = $request->query->get('refresh_cache', 'false') === 'true';
         
