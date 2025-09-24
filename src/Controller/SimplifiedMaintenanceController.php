@@ -19,6 +19,7 @@ use App\Entity\Form;
 use App\Repository\FormRepository;
 use App\Service\ImageStorageService;
 use App\Service\MaintenanceCacheService;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -2971,6 +2972,7 @@ class SimplifiedMaintenanceController extends AbstractController
         string $entryId, 
         string $entityClass,
         EntityManagerInterface $entityManager,
+        ManagerRegistry $managerRegistry,
         string $idSociete,
         string $idContact
     ): bool {
@@ -2996,6 +2998,22 @@ class SimplifiedMaintenanceController extends AbstractController
         // Remplir les autres données de l'équipement
         $this->fillContractEquipmentData($equipement, $equipmentContrat);
         
+        try {
+            $entityManager->persist($equipement);
+            $entityManager->flush();
+            $entityManager->commit();
+        } catch (\Throwable $exception) {
+            $entityManager->rollback();
+            $managerRegistry->resetManager();
+
+            $equipement->isErroneous();
+            $equipement->setErrorMessage($exception->getMessage());
+
+            $entityManager->persist($equipement);
+            $entityManager->flush();
+            $entityManager->commit();
+        }
+
         // NOUVELLE PARTIE: Téléchargement et sauvegarde des photos en local
         $agence = $fields['code_agence']['value'] ?? '';
         $raisonSociale = $fields['nom_client']['value'] ?? '';
@@ -3135,8 +3153,9 @@ class SimplifiedMaintenanceController extends AbstractController
         array $submission, 
         string $agencyCode, 
         string $entityClass, 
-        int $chunkSize, 
-        EntityManagerInterface $entityManager
+        int $chunkSize,
+        EntityManagerInterface $entityManager,
+        ManagerRegistry $managerRegistry
     ): array {
         
         $equipmentsProcessed = 0;
@@ -3198,7 +3217,7 @@ class SimplifiedMaintenanceController extends AbstractController
                             // dump("Traitement équipement sous contrat " . ($equipmentIndex + 1) . "/" . count($chunk));
                             
                             $equipement = new $entityClass();
-                            
+                            $entityManager->beginTransaction();
                             // Étape 1: Données communes
                             $this->setRealCommonDataFixed($equipement, $fields);
                             // dump("Données communes définies pour équipement sous contrat");
@@ -3212,15 +3231,17 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $submission['entry_id'], 
                                 $entityClass,
                                 $entityManager,
+                                $managerRegistry,
                                 $idSociete,
                                 $idContact
                             );
                             
                             if ($wasProcessed) {
-                                $entityManager->persist($equipement);
-                                $entityManager->flush();
+                                // $entityManager->persist($equipement);
+                                // $entityManager->flush();
                                 $equipmentsProcessed++;
                                 $photosSaved++;
+                                gc_collect_cycles();
                                 // dump("Équipement sous contrat persisté");
                             } else {
                                 $equipmentsSkipped++;
@@ -3229,19 +3250,8 @@ class SimplifiedMaintenanceController extends AbstractController
                             
                         } catch (\Exception $e) {
                             $errors++;
-                            // dump("Erreur traitement équipement sous contrat: " . $e->getMessage());
+                            dump("Erreur traitement équipement sous contrat: " . $e->getMessage());
                         }
-                    }
-                    
-                    // Sauvegarder après chaque chunk
-                    try {
-                        // $entityManager->flush();
-                        // $entityManager->clear();
-                        gc_collect_cycles();
-                      // dump("Chunk sous contrat " . ($chunkIndex + 1) . " sauvegardé");
-                    } catch (\Exception $e) {
-                        $errors++;
-                        // dump("Erreur flush/clear sous contrat: " . $e->getMessage());
                     }
                 }
                 // dump("--- FIN TRAITEMENT SOUS CONTRAT ---");
@@ -3263,7 +3273,7 @@ class SimplifiedMaintenanceController extends AbstractController
                             
                             $equipement = new $entityClass();
                             // dump("Nouvel objet équipement créé");
-                            
+                            $entityManager->beginTransaction();
                             // Étape 1: Données communes SANS setEnMaintenance
                             $this->setRealCommonDataFixed($equipement, $fields);
                             // dump("Données communes définies pour équipement hors contrat");
@@ -3310,9 +3320,6 @@ class SimplifiedMaintenanceController extends AbstractController
                     
                     // Sauvegarder après chaque chunk
                     try {
-                        // dump("Sauvegarde chunk hors contrat " . ($chunkIndex + 1));
-                        // $entityManager->flush();
-                        // $entityManager->clear();
                         gc_collect_cycles();
                         // dump("Chunk hors contrat " . ($chunkIndex + 1) . " sauvegardé");
                     } catch (\Exception $e) {
@@ -3336,7 +3343,7 @@ class SimplifiedMaintenanceController extends AbstractController
             'errors' => $errors
         ];
     }
-    
+
     /**
      * Modifiée: Sauvegarde des photos avec téléchargement local pour équipements hors contrat
      */
@@ -4071,7 +4078,8 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $agencyCode,
                                 $entityClass,
                                 $chunkSize,
-                                $entityManager
+                                $entityManager,
+                                $doctrine
                             );
                             
                             // ✅ AJOUTER CES LIGNES POUR COMPTER LES ÉQUIPEMENTS :
@@ -4105,8 +4113,6 @@ class SimplifiedMaintenanceController extends AbstractController
                         // Flush périodique pour libérer la mémoire
                         if ($processedCount % 3 == 0) {
                             try {
-                                $entityManager->flush();
-                                // $entityManager->clear();
                                 gc_collect_cycles();
                             } catch (\Exception $e) {
                                 // Vérifier si c'est une erreur d'EntityManager fermé
@@ -4128,8 +4134,6 @@ class SimplifiedMaintenanceController extends AbstractController
                 
                 // Sauvegarde après chaque chunk
                 try {
-                    $entityManager->flush();
-                    // $entityManager->clear();
                     gc_collect_cycles();
                 } catch (\Exception $e) {
                     if (strpos($e->getMessage(), 'EntityManager is closed') !== false) {
