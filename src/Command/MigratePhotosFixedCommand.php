@@ -271,7 +271,7 @@ Exemples:
 
         // MODIFICATION CRITIQUE: Utiliser id_contact au lieu de raison_sociale
         $idContact = $equipment->getIdContact();
-        $anneeVisite = date('Y', strtotime($equipment->getDateDerniereVisite()));
+        $anneeVisite = date('Y', strtotime($equipment->getDerniereVisite()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
 
