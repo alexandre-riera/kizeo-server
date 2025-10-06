@@ -2910,90 +2910,6 @@ class SimplifiedMaintenanceController extends AbstractController
             return false;
         }
     }
-
-    /**
-     * Setters avec vérification de doublons
-     */
-    // private function setRealContractDataWithFormPhotosAndDeduplication(
-    //     $equipement, 
-    //     array $equipmentContrat, 
-    //     array $fields, 
-    //     string $formId, 
-    //     string $entryId, 
-    //     string $entityClass,
-    //     EntityManagerInterface $entityManager
-    // ): bool {
-    //     // 1. Données de base
-    //     $numeroEquipement = $equipmentContrat['equipement']['value'] ?? '';
-    //     $idClient = $fields['id_client_']['value'] ?? '';
-        
-    //     // // 2. Vérifier si l'équipement existe déjà
-    //     if ($this->equipmentExistsForSameVisit($numeroEquipement, $idClient, $fields['date_et_heure1']['value'] ?? '', $entityClass, $entityManager)) {
-    //         return false; // Skip seulement si même visite
-    //     }
-        
-    //     // 3. Continuer avec le traitement normal
-    //     $equipementPath = $equipmentContrat['equipement']['path'] ?? '';
-    //     $visite = $this->extractVisitTypeFromPath($equipementPath);
-    //     $equipement->setVisite($visite);
-        
-    //     $equipement->setNumeroEquipement($numeroEquipement);
-        
-    //     $idSociete =  $fields['id_societe']['value'] ?? '';
-    //     $equipement->setCodeSociete($idSociete);
-        
-    //     $dateDerniereVisite =  $fields['date_et_heure1']['value'] ?? '';
-    //     $equipement->setDerniereVisite($dateDerniereVisite);
-        
-    //     $isTest =  $fields['test_']['value'] ?? '';
-    //     $equipement->setTest($isTest);
-
-    //     $libelle = $equipmentContrat['reference7']['value'] ?? '';
-    //     $equipement->setLibelleEquipement($libelle);
-        
-    //     $miseEnService = $equipmentContrat['reference2']['value'] ?? '';
-    //     $equipement->setMiseEnService($miseEnService);
-        
-    //     $numeroSerie = $equipmentContrat['reference6']['value'] ?? '';
-    //     $equipement->setNumeroDeSerie($numeroSerie);
-        
-    //     $marque = $equipmentContrat['reference5']['value'] ?? '';
-    //     $equipement->setMarque($marque);
-        
-    //     $hauteur = $equipmentContrat['reference1']['value'] ?? '';
-    //     $equipement->setHauteur($hauteur);
-        
-    //     $largeur = $equipmentContrat['reference3']['value'] ?? '';
-    //     $equipement->setLargeur($largeur);
-        
-    //     $localisation = $equipmentContrat['localisation_site_client']['value'] ?? '';
-    //     $equipement->setRepereSiteClient($localisation);
-        
-    //     $modeFonctionnement = $equipmentContrat['mode_fonctionnement_2']['value'] ?? '';
-    //     $equipement->setModeFonctionnement($modeFonctionnement);
-        
-    //     $plaqueSignaletique = $equipmentContrat['plaque_signaletique']['value'] ?? '';
-    //     $equipement->setPlaqueSignaletique($plaqueSignaletique);
-        
-    //     $etat = $equipmentContrat['etat']['value'] ?? '';
-    //     $equipement->setEtat($etat);
-        
-    //     $longueur = $equipmentContrat['longueur']['value'] ?? '';
-    //     $equipement->setLongueur($longueur);
-        
-    //     $statut = $this->getMaintenanceStatusFromEtatFixed($etat);
-    //     $equipement->setStatutDeMaintenance($statut);
-        
-    //     $equipement->setEnMaintenance(true);
-        
-    //     // 4. Sauvegarder les photos SEULEMENT si pas de doublon
-    //     $this->savePhotosToFormEntityWithDeduplication($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager);
-    //   // dump("=== PHOTOS SAUVÉES AVEC SUCCÈS pour équipement au contrat ===");
-    //     // NOUVELLE PARTIE: Extraction et définition des anomalies
-    //     $this->setSimpleEquipmentAnomalies($equipement, $equipmentContrat);
-
-    //     return true; // Équipement traité avec succès
-    // }
     /**
      * Modifiée: Sauvegarde des photos avec téléchargement local pour équipements au contrat
      */
@@ -3278,7 +3194,7 @@ class SimplifiedMaintenanceController extends AbstractController
                     // Sauvegarder après chaque chunk
                     try {
                         $entityManager->flush();
-                        $entityManager->clear();
+                        // $entityManager->clear();
                         gc_collect_cycles();
                       // dump("Chunk sous contrat " . ($chunkIndex + 1) . " sauvegardé");
                     } catch (\Exception $e) {
@@ -3904,9 +3820,14 @@ class SimplifiedMaintenanceController extends AbstractController
         MaintenanceCacheService $cacheService // Utilisation du service dédié 
     ): JsonResponse {
         
+        // AJOUTER EN TOUT PREMIER avant même ini_set
+        if ($this->container->has('profiler')) {
+            $this->container->get('profiler')->disable();
+        }
         // Configuration conservative
-        ini_set('memory_limit', '1G');
-        ini_set('max_execution_time', 300);
+        // ajustement du timeout a 30 minutes au lieu de 10 ici et dans le script migration_debug.sh
+        ini_set('memory_limit', '3G');
+        ini_set('max_execution_time', 600);
         
         $validAgencies = ['S10', 'S40', 'S50', 'S60', 'S70', 'S80', 'S100', 'S120', 'S130', 'S140', 'S150', 'S160', 'S170'];
         
@@ -3919,6 +3840,7 @@ class SimplifiedMaintenanceController extends AbstractController
         $maxSubmissions = (int) $request->query->get('max_submissions', 10);
         $useCache = $request->query->get('use_cache', 'true') === 'true';
         $refreshCache = $request->query->get('refresh_cache', 'false') === 'true';
+        $offset = (int) $request->query->get('offset', 0);
         
         if (!$formId) {
             $agencyMapping = $this->getAgencyFormMapping();
@@ -3954,7 +3876,7 @@ class SimplifiedMaintenanceController extends AbstractController
             
             // Si pas en cache ou cache forcé à refresh, récupérer depuis la DB
             if (empty($submissions)) {
-                $submissions = $this->getFormSubmissionsFixed($formId, $agencyCode, $maxSubmissions);
+                $submissions = $this->getFormSubmissionsFixed($formId, $agencyCode, $maxSubmissions, $offset);
                 
                 // Sauvegarder en cache si service disponible
                 if ($useCache && $cacheService && !empty($submissions)) {
@@ -3996,10 +3918,10 @@ class SimplifiedMaintenanceController extends AbstractController
             $chunks = array_chunk($submissions, $chunkSize);
             
             foreach ($chunks as $chunkIndex => $chunk) {
-                // Vérification timeout
-                if (time() - $startTime > 250) { // 4 minutes max
-                    break;
-                }
+                // Vérification timeout commenté car il y a déjà les 600 secondes qui protègent dans le script
+                // if (time() - $startTime > 250) { // 4 minutes max
+                //     break;
+                // }
                 
                 foreach ($chunk as $submissionIndex => $submission) {
                     try {
@@ -4055,7 +3977,7 @@ class SimplifiedMaintenanceController extends AbstractController
                         // Flush périodique pour libérer la mémoire
                         if ($processedCount % 3 == 0) {
                             $entityManager->flush();
-                            $entityManager->clear();
+                            // $entityManager->clear(); 
                             gc_collect_cycles();
                         }
                         
@@ -4071,7 +3993,7 @@ class SimplifiedMaintenanceController extends AbstractController
                 // Sauvegarde après chaque chunk
                 try {
                     $entityManager->flush();
-                    $entityManager->clear();
+                    // $entityManager->clear();
                     gc_collect_cycles();
                 } catch (\Exception $e) {
                   // dump("Erreur sauvegarde chunk {$chunkIndex}: " . $e->getMessage());
@@ -4131,64 +4053,46 @@ class SimplifiedMaintenanceController extends AbstractController
         }
     }
 
-    private function getFormSubmissionsFixed(string $formId, string $agencyCode, int $maxSubmissions = 20): array
+    private function getFormSubmissionsFixed(
+        string $formId,
+        string $agencyCode,
+        int $maxSubmissions = 1000,
+        int $startOffset = 0
+    ): array
     {
+        // Si offset > 0, on a déjà tout récupéré au 1er appel
+        if ($startOffset > 0) {
+            return [];
+        }
+        
         try {
-            $validSubmissions = [];
-            $offset = 0;
-            $batchSize = 20; // Taille raisonnable
+            $response = $this->client->request(
+                'GET',
+                "https://forms.kizeo.com/rest/v3/forms/{$formId}/data",
+                [
+                    'headers' => [
+                        'Accept' => 'application/json',
+                        'Authorization' => $_ENV["KIZEO_API_TOKEN"],
+                    ],
+                    'timeout' => 90
+                ]
+            );
+
+            $formData = $response->toArray();
+            $allSubmissions = $formData['data'] ?? [];
             
-            // Avec 20 résultats par page × 10 pages = maximum 200 formulaires traités, même si l'agence
-            // while (count($validSubmissions) < $maxSubmissions && $offset < 200) { 
-
-            // Avec 20 résultats par page × 75 pages = maximum 1500 formulaires traités
-            // Sur KIZEO le formulaire avec le plus de soumissions est PORTLAND avec 399, on est large
-            while (count($validSubmissions) < $maxSubmissions && $offset < 5000) { 
-                
-                // UTILISER L'ENDPOINT SIMPLE qui fonctionne
-                $response = $this->client->request(
-                    'GET',
-                    "https://forms.kizeo.com/rest/v3/forms/{$formId}/data",
-                    [
-                        'headers' => [
-                            'Accept' => 'application/json',
-                            'Authorization' => $_ENV["KIZEO_API_TOKEN"],
-                        ],
-                        'query' => [
-                            'limit' => $batchSize,
-                            'offset' => $offset
-                        ],
-                        'timeout' => 90
-                    ]
-                );
-
-                $formData = $response->toArray();
-                $batchSubmissions = $formData['data'] ?? [];
-                
-                if (empty($batchSubmissions)) {
-                    break; // Plus de données
-                }
-                
-                // Traitement des soumissions SANS filtrage d'agence strict
-                foreach ($batchSubmissions as $entry) {
-                    if (count($validSubmissions) >= $maxSubmissions) {
-                        break 2;
-                    }
-                    
-                    // Conversion au format attendu par le traitement
-                    $validSubmissions[] = [
-                        'form_id' => $entry['form_id'] ?? $formId,
-                        'entry_id' => $entry['id'], // ATTENTION : 'id' pas '_id' dans l'endpoint simple
-                        'client_name' => 'À déterminer lors du traitement',
-                        'date' => $entry['answer_time'] ?? 'N/A',
-                        'technician' => 'À déterminer lors du traitement'
-                    ];
-                }
-                
-                $offset += $batchSize;
-                
-                // Petite pause pour éviter de surcharger l'API
-                usleep(50000); // 0.05 seconde
+            // Limiter si nécessaire
+            $submissions = array_slice($allSubmissions, 0, min($maxSubmissions, count($allSubmissions)));
+            
+            $validSubmissions = [];
+            foreach ($submissions as $entry) {
+                $validSubmissions[] = [
+                    'form_id' => $entry['form_id'] ?? $formId,
+                    'entry_id' => $entry['id'],
+                    'client_name' => 'À déterminer lors du traitement',
+                    'date' => $entry['answer_time'] ?? 'N/A',
+                    'technician' => 'À déterminer lors du traitement'
+                ];
             }
             
             return $validSubmissions;

@@ -177,9 +177,9 @@ class EquipementPdfController extends AbstractController
     public function generateClientEquipementsPdf(Request $request, string $agence, string $id, EntityManagerInterface $entityManager): Response
     {
         // CONFIGURATION MÉMOIRE ET TEMPS D'EXÉCUTION OPTIMISÉE
-        ini_set('memory_limit', '512M');
-        ini_set('max_execution_time', 180);
-        set_time_limit(180);
+        ini_set('memory_limit', '1G'); // 1 Go
+        ini_set('max_execution_time', 600); // 10 minutes au lieu de 300 secondes avant
+        set_time_limit(600); // 10 minutes au lieu de 300 secondes avant
         
         // Activer le garbage collector agressif
         gc_enable();
@@ -202,10 +202,12 @@ class EquipementPdfController extends AbstractController
             // Récupérer les filtres depuis les paramètres de la requête
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
+            $withPhotos = $request->query->get('withPhotos', '');
             
             $maxEquipments = (int) $request->query->get('maxEquipments', 500);
             
             $this->customLog("=== GÉNÉRATION PDF CLIENT ===");
+            $this->customLog("Avec ou sans photo: {$withPhotos}");
             $this->customLog("Agence: {$agence}, Client: {$id}");
             $this->customLog("Filtres - Année: '{$clientAnneeFilter}', Visite: '{$clientVisiteFilter}'");
             $this->customLog("Limite d'équipements: {$maxEquipments}");
@@ -397,7 +399,7 @@ class EquipementPdfController extends AbstractController
                         continue;
                     }
 
-                    // ✅ NOUVELLE RÉCUPÉRATION DES PHOTOS AVEC SCAN DYNAMIQUE
+                    // ✅ ============================================= NOUVELLE RÉCUPÉRATION DES PHOTOS AVEC SCAN DYNAMIQUE
                     $picturesData = [];
                     try {
                         $this->customLog("🔍 Tentative scan dynamique pour {$numeroEquipement}");
@@ -643,6 +645,7 @@ class EquipementPdfController extends AbstractController
                 'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
                 'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
                 'equipementsNonPresents' => $this->convertStdClassToArray($equipementsNonPresents ?? []),
+                'withPhotos' => $withPhotos,
                 'clientId' => $id,
                 'agence' => $agence,
                 'imageUrl' => $imageUrl,
@@ -653,6 +656,7 @@ class EquipementPdfController extends AbstractController
                 'photoSourceStats' => $photoSourceStats,
                 'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
                 'dateDeDerniererVisite' => $dateDeDerniererVisite,
+                'derniereVisite' => $derniereVisite,
                 'filtrage_success' => true,
                 'total_equipements_bruts' => count($equipments),
                 'total_equipements_filtres' => count($equipmentsFiltered),
@@ -2355,7 +2359,7 @@ class EquipementPdfController extends AbstractController
     }
 
     /**
-     * Méthode simplifiée pour récupérer les équipements sans filtrage
+     * Méthode simplifiée pour récupérer les équipements EN BDD sans filtrage
      * CORRECTION: Ne plus appeler getEquipmentsByAgencyFixed avec des filtres
      */
     private function getEquipmentsByClientAndAgence(string $agence, string $clientId, EntityManagerInterface $entityManager): array
