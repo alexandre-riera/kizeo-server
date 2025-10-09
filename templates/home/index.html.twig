@@ -21,6 +21,7 @@
     <script src="/public/js/filterFunction.js"></script>
     <script src="/public/js/editEquipmentInModal.js"></script>
     <script src="/public/js/pdf-enhanced.js"></script>
+    <script src="/public/js/pdf-photo-option.js"></script>
 {% endblock %}
 {% block body %}
     <style>
@@ -784,7 +785,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-2">
+                {# <div class="col-sm-2">
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Filtres</h4>
@@ -812,7 +813,7 @@
                             </form>
                         </div>
                     </div>
-                </div>
+                </div> #}
                 <div class="col-sm-3">
                     <div class="card">
                         <div class="card-body">
@@ -835,7 +836,8 @@
                         </div>
                     </div>
                 {% endif %}
-                <div class="margin_top_30 col-sm-3">
+                <!-- Remettre margin-top:30px si les filtres sont remis -->
+                <div class=" col-sm-3">
                     <div class="card downloadPdf">
                         <div class="card-body">
                             <h4 class="card-title">CR tech KIZEO</h4>
@@ -855,12 +857,20 @@
                 </div>
                 <!-- Bouton pour générer le PDF de tous les équipements du client -->
                 <div class="margin_top_30 col-sm-3">
-                    <a id="pdf-button" href="{{ path('client_equipements_pdf', {
+                    <a id="pdf-button" 
+                    href="{{ path('client_equipements_pdf', {
+                        'agence': agenceSelected,
+                        'id': clientSelectedInformations.getIdContact(),
+                        'clientAnneeFilter': clientAnneeFilter,
+                        'clientVisiteFilter': clientVisiteFilter,
+                        'withPhotos': 'oui'
+                    }) }}"
+                    data-base-url="{{ path('client_equipements_pdf', {
                         'agence': agenceSelected,
                         'id': clientSelectedInformations.getIdContact(),
                         'clientAnneeFilter': clientAnneeFilter,
                         'clientVisiteFilter': clientVisiteFilter
-                    }) }}" 
+                    }) }}"
                     class="btn btn-success btn-lg" target="_blank">
                         <i class="fa-solid fa-file-pdf"></i> Générer PDF complet du client
                         {% if clientAnneeFilter or clientVisiteFilter %}
@@ -870,8 +880,25 @@
                         {% endif %}
                     </a>
                 </div>
+
+                <div class="margin_top_30 col-sm-3">
+                    <fieldset>
+                        <legend>Option photo sur CR client:</legend>
+
+                        <div>
+                            <input type="radio" id="photoYes" name="photoOption" value="oui" checked />
+                            <label for="photoYes">✅ CR client avec photos</label>
+                        </div>
+
+                        <div>
+                            <input type="radio" id="photoNo" name="photoOption" value="non" />
+                            <label for="photoNo">❌ CR client sans photos</label>
+                        </div>
+                    </fieldset>
+                </div>
             </div>
         {% endif %}
+                
 
         
         {% block modal %}
@@ -1277,11 +1304,11 @@
             buttonSmall.textContent = '';
         }
 
-        addEmailButtonIfNeeded();
+        {# addEmailButtonIfNeeded(); #}
     }
 
     // ===== AJOUTER LE BOUTON EMAIL =====
-    function addEmailButtonIfNeeded() {
+    {# function addEmailButtonIfNeeded() {
         const pdfButton = document.getElementById('pdf-button');
         const pdfContainer = pdfButton ? pdfButton.parentElement : null;
         if (!pdfContainer || pdfContainer.querySelector('#email-button')) return;
@@ -1294,7 +1321,7 @@
         emailButton.addEventListener('click', showEmailModal);
         
         pdfButton.parentNode.insertBefore(emailButton, pdfButton.nextSibling);
-    }
+    } #}
 
     // ===== INITIALISATION =====
     $(document).ready(function() {
