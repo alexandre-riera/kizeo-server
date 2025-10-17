@@ -622,7 +622,7 @@ class EquipementPdfController extends AbstractController
                 $equipmentsSupplementairesOnly = array_map(function($item) {
                     return $item['equipment'];
                 }, $equipementsSupplementaires);
-                $statistiquesSupplementaires = $this->calculateEquipmentStatisticsImproved($equipmentsSupplementairesOnly);
+                $statistiquesSupplementaires = $this->calculateEquipmentOffContractStatisticsImproved($equipmentsSupplementairesOnly);
             }
             
             // 10. GÉNÉRATION DU PDF AVEC MESSAGE D'AVERTISSEMENT
@@ -641,6 +641,8 @@ class EquipementPdfController extends AbstractController
             $villep = trim($clientSelectedInformations->getVillep());
             $this->customLog("DEBUG - Client Address: {$nomClient}, {$adressep1} {$adressep2} {$cpostalp} {$villep}");
 
+            $nombreEquipementsAuContrat = $statistiques['total'] - $statistiquesSupplementaires['total'];
+
             $templateVars = [
                 'equipmentsWithPictures' => $this->convertStdClassToArray($equipmentsWithPictures),
                 'equipementsSupplementaires' => $this->convertStdClassToArray($equipementsSupplementaires ?? []),
@@ -653,6 +655,7 @@ class EquipementPdfController extends AbstractController
                 'clientVisiteFilter' => $clientVisiteFilter ?: '',
                 'statistiques' => $statistiques,
                 'statistiquesSupplementaires' => $statistiquesSupplementaires,
+                'nombreEquipementsAuContrat' => $nombreEquipementsAuContrat,
                 'photoSourceStats' => $photoSourceStats,
                 'isFiltered' => !empty($clientAnneeFilter) || !empty($clientVisiteFilter),
                 'dateDeDerniererVisite' => $dateDeDerniererVisite,
@@ -719,47 +722,69 @@ class EquipementPdfController extends AbstractController
         $numeroEquipement = $equipment->getNumeroEquipement();
         $agence = $equipment->getCodeAgence() ?? 'S40';
         
-        // Scanner tous les dossiers clients pour trouver les photos
-        $baseAgencePath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/";
-        
-        if (!is_dir($baseAgencePath)) {
-            $this->customLog("❌ Répertoire agence n'existe pas: {$baseAgencePath}");
-            return ['photos' => [], 'photos_indexed' => [], 'source' => 'no_agency_dir', 'count' => 0];
+        // 🔧 CORRECTION 1 : Récupérer l'id_contact de l'équipement
+        $idContact = $equipment->getIdContact();
+        if (!$idContact) {
+            $this->customLog("❌ Pas d'id_contact pour l'équipement {$numeroEquipement}");
+            return ['photos' => [], 'photos_indexed' => [], 'source' => 'no_id_contact', 'count' => 0];
         }
         
-        $this->customLog("🔍 Scanning agence directory: {$baseAgencePath}");
+        // 🔧 CORRECTION 2 : Déterminer si l'équipement est au contrat ou hors contrat
+        $isEnMaintenance = method_exists($equipment, 'isEnMaintenance') ? $equipment->isEnMaintenance() : true;
         
-        $clientDirs = scandir($baseAgencePath);
-        foreach ($clientDirs as $clientDir) {
-            if ($clientDir === '.' || $clientDir === '..') continue;
-            
-            $clientPath = $baseAgencePath . $clientDir . "/2025/CE1/";
-            if (!is_dir($clientPath)) continue;
-            
-            $photoPath = $clientPath . $numeroEquipement . '_generale.jpg';
+        // 🔧 CORRECTION 3 : Construire le chemin SPÉCIFIQUE pour ce client
+        $clientPath = $_SERVER['DOCUMENT_ROOT'] . "/public/img/{$agence}/{$idContact}/2025/CE1/";
+        
+        if (!is_dir($clientPath)) {
+            $this->customLog("❌ Répertoire client n'existe pas: {$clientPath}");
+            return ['photos' => [], 'photos_indexed' => [], 'source' => 'no_client_dir', 'count' => 0];
+        }
+        
+        $this->customLog("🔍 Recherche photo pour équipement {$numeroEquipement} (id_contact: {$idContact}) dans {$clientPath}");
+        
+        // 🔧 CORRECTION 4 : Chercher selon le type d'équipement avec fallback
+        // Pour équipements AU CONTRAT : d'abord _generale.jpg, puis _compte_rendu.jpg
+        // Pour équipements HORS CONTRAT : d'abord _compte_rendu.jpg, puis _generale.jpg
+        $photoTypes = $isEnMaintenance 
+            ? ['_generale.jpg', '_compte_rendu.jpg'] 
+            : ['_compte_rendu.jpg', '_generale.jpg'];
+        
+        foreach ($photoTypes as $photoType) {
+            $photoPath = $clientPath . $numeroEquipement . $photoType;
             
             if (file_exists($photoPath) && is_readable($photoPath)) {
-                $this->customLog("✅ Photo trouvée: {$photoPath} (dossier: {$clientDir})");
+                $this->customLog("✅ Photo trouvée: {$photoPath}");
                 
                 $photoContent = file_get_contents($photoPath);
                 $photoEncoded = base64_encode($photoContent);
+                
+                $photoTypeName = str_replace(['_', '.jpg'], '', $photoType);
                 
                 return [
                     'photos' => [[
                         'picture' => $photoEncoded,
                         'update_time' => date('Y-m-d H:i:s', filemtime($photoPath)),
-                        'photo_type' => 'generale_locale'
+                        'photo_type' => $photoTypeName . '_locale'
                     ]],
                     'photos_indexed' => [$photoEncoded],
-                    'source' => 'local_scan_found',
+                    'source' => 'local_client_dir',
                     'count' => 1,
-                    'client_folder_found' => $clientDir
+                    'client_folder_found' => $idContact,
+                    'photo_type_found' => $photoTypeName
                 ];
+            } else {
+                $this->customLog("⚠️ Photo non trouvée: {$photoPath}");
             }
         }
         
-        $this->customLog("❌ Aucune photo trouvée pour {$numeroEquipement} dans {$agence}");
-        return ['photos' => [], 'photos_indexed' => [], 'source' => 'not_found_after_scan', 'count' => 0];
+        $this->customLog("❌ Aucune photo trouvée pour {$numeroEquipement} dans le dossier client {$idContact}");
+        return [
+            'photos' => [], 
+            'photos_indexed' => [], 
+            'source' => 'not_found_in_client_dir', 
+            'count' => 0, 
+            'searched_path' => $clientPath
+        ];
     }
     // 🔧 SOLUTION 1: Convertir tous les objets stdClass en tableaux
     private function convertStdClassToArray($data)
@@ -2463,42 +2488,98 @@ class EquipementPdfController extends AbstractController
         $visitedCount = 0;
         
         foreach ($equipments as $equipment) {
-            // Compter les équipements visités (avec photos ou état)
-            if ($equipment->getEtat() || $equipment->getDerniereVisite()) {
-                $visitedCount++;
-            }
-            
-            // Compter par état
-            $etat = $equipment->getEtat();
-            switch ($etat) {
-                case 'Bon état':
-                case 'A':
-                    $statusCounts['green']++;
-                    break;
-                case 'Travaux à prévoir':
-                case 'B':
-                    $statusCounts['orange']++;
-                    break;
-                case 'Travaux curatifs urgents':
-                case 'Travaux urgent ou à l\'arrêt':
-                case 'C':
-                case 'D':
-                case 'E':
-                case 'F':
-                    $statusCounts['red']++;
-                    break;
-                case 'Equipement à l\'arrêt':
-                case 'Equipement à l\'arrêt le jour de la visite':
-                case 'Equipement non présent sur site':
-                case 'Equipement inaccessible':
-                case 'G':
-                case 'D':
-                    $statusCounts['black']++;
-                    break;
-                default:
-                    $statusCounts['unknown']++;
-                    break;
-            }
+            if ($equipment->isEnMaintenance() == true) {
+                // Compter les équipements visités (avec photos ou état)
+                if ($equipment->getEtat() || $equipment->getDerniereVisite()) {
+                    $visitedCount++;
+                }
+                // Compter par état
+                $etat = $equipment->getEtat();
+                switch ($etat) {
+                    case 'Bon état':
+                    case 'A':
+                        $statusCounts['green']++;
+                        break;
+                    case 'Travaux à prévoir':
+                    case 'B':
+                        $statusCounts['orange']++;
+                        break;
+                    case 'Travaux curatifs urgents':
+                    case 'Travaux urgent ou à l\'arrêt':
+                    case 'C':
+                    case 'E':
+                    case 'F':
+                        $statusCounts['red']++;
+                        break;
+                    case 'Equipement à l\'arrêt':
+                    case 'Equipement à l\'arrêt le jour de la visite':
+                    case 'Equipement non présent sur site':
+                    case 'G':
+                    case 'D':
+                    case 'Equipement inaccessible':
+                        $statusCounts['black']++;
+                        break;
+                    default:
+                        $statusCounts['unknown']++;
+                        break;
+                }
+            }    
+        }
+        
+        return [
+            'total' => $total,
+            'visitedCount' => $visitedCount,
+            'status_counts' => $statusCounts
+        ];
+    }
+    /**
+     * Méthode améliorée pour calculer les statistiques avec gestion d'erreurs
+     */
+    private function calculateEquipmentOffContractStatisticsImproved(array $equipments): array
+    {
+        $total = count($equipments);
+        $statusCounts = [
+            'green' => 0,
+            'orange' => 0, 
+            'red' => 0,
+            'black' => 0,
+            'unknown' => 0
+        ];
+        
+        $visitedCount = 0;
+        
+        foreach ($equipments as $equipment) {
+            if ($equipment->isEnMaintenance() == false) {
+                // Compter les équipements visités (avec photos ou état)
+                if ($equipment->getEtat() || $equipment->getDerniereVisite()) {
+                    $visitedCount++;
+                }
+                // Compter par état
+                $etat = $equipment->getEtat();
+                switch ($etat) {
+                    case 'Bon état':
+                    case 'A':
+                        $statusCounts['green']++;
+                        break;
+                    case 'Travaux à prévoir':
+                    case 'B':
+                        $statusCounts['orange']++;
+                        break;
+                    case 'Travaux curatifs urgents':
+                    case 'Travaux urgent ou à l\'arrêt':
+                    case 'C':
+                    case 'D':
+                    case 'E':
+                        $statusCounts['red']++;
+                        break;
+                    case 'Equipement inaccessible':
+                        $statusCounts['black']++;
+                        break;
+                    default:
+                        $statusCounts['unknown']++;
+                        break;
+                }
+            }    
         }
         
         return [

@@ -308,12 +308,11 @@ class SimplifiedMaintenanceController extends AbstractController
 
     private function extractVisitTypeFromPath(string $path): string
     {
-        if (str_contains($path, 'CE1')) return 'CE1';
-        if (str_contains($path, 'CE2')) return 'CE2';
-        if (str_contains($path, 'CE3')) return 'CE3';
-        if (str_contains($path, 'CE4')) return 'CE4';
-        if (str_contains($path, 'CEA')) return 'CEA';
-        return 'CE1';
+         // Exemple de path : "CE1\BPO01" ou "CE2\SEC03"
+        $parts = explode('\\', $path);
+        
+        // Retourner la première partie qui contient la visite complète
+        return $parts[0] ?? 'CE1';  // ← S'assurer de retourner CE1, CE2, etc. et pas juste CE
     }
 
     private function parseEquipmentInfo(string $equipmentValue): array
@@ -1759,58 +1758,94 @@ class SimplifiedMaintenanceController extends AbstractController
     }
 
     /**
-     * Récupération du prochain numéro - VERSION FINALE
+     * ✅ MISE À JOUR : Génération de numéro avec vérification UnitOfWork
+     * 
+     * Génère le prochain numéro d'équipement disponible en vérifiant :
+     * - Les équipements déjà en base de données
+     * - Les équipements en attente de flush (UnitOfWork)
+     * 
+     * Cela évite les collisions de numéros dans le même batch de traitement.
+     * 
+     * @param string $typeCode Le code type (ex: RID, SEC, NIV)
+     * @param string $idClient L'identifiant du client
+     * @param string $entityClass La classe de l'entité (ex: EquipementS40::class)
+     * @param EntityManagerInterface $entityManager Le gestionnaire d'entités Doctrine
+     * @return int Le prochain numéro disponible (ex: si RID05 existe, retourne 6)
      */
-    private function getNextEquipmentNumberReal(string $typeCode, string $idClient, string $entityClass, EntityManagerInterface $entityManager): int
-    {
-      // dump("=== RECHERCHE PROCHAIN NUMÉRO ===");
-      // dump("Type code: {$typeCode}");
-      // dump("ID Client: {$idClient}");
-      // dump("Entity class: {$entityClass}"); // ✅ Maintenant $entityClass est défini
+    private function getNextEquipmentNumberReal(
+        string $typeCode,
+        string $idClient,
+        string $entityClass,
+        EntityManagerInterface $entityManager
+    ): int {
+        $repository = $entityManager->getRepository($entityClass);
         
-        $repository = $entityManager->getRepository($entityClass); // ✅ Utilisation correcte
-        
-        // Requête pour trouver tous les équipements du même type et client
+        // ============================================
+        // 1. TROUVER LE PLUS GRAND NUMÉRO EN BASE
+        // ============================================
         $qb = $repository->createQueryBuilder('e')
             ->where('e.id_contact = :idClient')
             ->andWhere('e.numero_equipement LIKE :typePattern')
             ->setParameter('idClient', $idClient)
             ->setParameter('typePattern', $typeCode . '%');
         
-        // DÉBOGAGE : Afficher la requête SQL générée
-        $query = $qb->getQuery();
-      // dump("SQL généré: " . $query->getSQL());
-      // dump("Paramètres: idClient=" . $idClient . ", typePattern=" . $typeCode . '%');
-        
-        $equipements = $query->getResult();
-        
-      // dump("Nombre d'équipements trouvés: " . count($equipements));
+        $equipements = $qb->getQuery()->getResult();
         
         $dernierNumero = 0;
         
+        // Parser tous les numéros d'équipements pour trouver le plus grand
         foreach ($equipements as $equipement) {
             $numeroEquipement = $equipement->getNumeroEquipement();
-          // dump("Numéro équipement analysé: " . $numeroEquipement);
             
-            // Pattern pour extraire le numéro (ex: PPV01 -> 01, PPV02 -> 02)
+            // Extraire le numéro depuis le format "XXX##" (ex: RID05 -> 5)
             if (preg_match('/^' . preg_quote($typeCode) . '(\d+)$/', $numeroEquipement, $matches)) {
                 $numero = (int)$matches[1];
-              // dump("Numéro extrait: " . $numero);
-                
                 if ($numero > $dernierNumero) {
                     $dernierNumero = $numero;
-                  // dump("Nouveau dernier numéro: " . $dernierNumero);
                 }
-            } else {
-              // dump("Pattern non reconnu pour: " . $numeroEquipement);
             }
         }
         
-        $prochainNumero = $dernierNumero + 1;
-      // dump("Prochain numéro calculé: " . $prochainNumero);
+        // ============================================
+        // 2. ✅ VÉRIFIER AUSSI DANS L'UNITOFWORK
+        //    (objets en attente de flush)
+        // ============================================
+        $uow = $entityManager->getUnitOfWork();
+        $scheduledInserts = $uow->getScheduledEntityInsertions();
         
-        return $prochainNumero;
+        foreach ($scheduledInserts as $entity) {
+            // Vérifier que c'est la bonne classe et le bon client
+            if (get_class($entity) === $entityClass && $entity->getIdContact() === $idClient) {
+                $numeroEquipement = $entity->getNumeroEquipement();
+                
+                // Extraire et comparer le numéro
+                if ($numeroEquipement && preg_match('/^' . preg_quote($typeCode) . '(\d+)$/', $numeroEquipement, $matches)) {
+                    $numero = (int)$matches[1];
+                    if ($numero > $dernierNumero) {
+                        $dernierNumero = $numero;
+                    }
+                }
+            }
+        }
+        
+        // ============================================
+        // 3. RETOURNER LE PROCHAIN NUMÉRO DISPONIBLE
+        // ============================================
+        return $dernierNumero + 1;
     }
+
+    /**
+     * EXEMPLE D'UTILISATION :
+     * 
+     * // Contexte : Client 126 a déjà RID01, RID02, RID03 en base
+     * //           RID04 est en attente de flush dans l'UnitOfWork
+     * 
+     * $nextNumber = $this->getNextEquipmentNumberReal('RID', '126', EquipementS40::class, $em);
+     * // Retourne : 5
+     * 
+     * $numeroEquipement = 'RID' . str_pad($nextNumber, 2, '0', STR_PAD_LEFT);
+     * // Résultat : "RID05" ✅
+     */
 
     /**
      * Route pour traiter TOUS les formulaires S140 trouvés
@@ -2610,7 +2645,7 @@ class SimplifiedMaintenanceController extends AbstractController
       // dump("=== setRealCommonDataFixed START ===");
 
         // CORRECTION : Utiliser les vrais noms de champs
-        $equipement->setCodeAgence($fields['code_agence']['value'] ?? '');
+        $equipement->setCodeSociete($fields['id_societe']['value'] ?? '');
         $equipement->setIdContact($fields['id_client_']['value'] ?? '');
         $equipement->setRaisonSociale($fields['nom_client']['value'] ?? ''); // CORRIGÉ
         $equipement->setTrigrammeTech($fields['trigramme']['value'] ?? ''); // CORRIGÉ
@@ -2911,7 +2946,7 @@ class SimplifiedMaintenanceController extends AbstractController
         }
     }
     /**
-     * Modifiée: Sauvegarde des photos avec téléchargement local pour équipements au contrat
+     * ✅ CORRECTION 2 : Version corrigée pour équipements au contrat
      */
     private function setRealContractDataWithFormPhotosAndDeduplication(
         $equipement, 
@@ -2923,9 +2958,8 @@ class SimplifiedMaintenanceController extends AbstractController
         EntityManagerInterface $entityManager
     ): bool {
         
-        // Données de base de l'équipement
-        $equipementPath = $equipmentContrat['equipement']['path'] ?? '';
-        $visite = $this->extractVisitTypeFromPath($equipementPath);
+        // ✅ Utiliser la nouvelle fonction pour récupérer la visite
+        $visite = $this->getVisiteFromFields($fields, $equipmentContrat);
         $numeroEquipement = $equipmentContrat['equipement']['value'] ?? '';
         
         $equipement->setVisite($visite);
@@ -2935,38 +2969,48 @@ class SimplifiedMaintenanceController extends AbstractController
         // Vérification doublon
         $idClient = $fields['id_client_']['value'] ?? '';
         $dateVisite = $fields['date_et_heure1']['value'] ?? '';
-        // dump("Vérification doublon pour équipement: " . $numeroEquipement . " - Client: " . $idClient . " - Date visite: " . $dateVisite);
+        
         if ($this->equipmentExistsForSameVisit($numeroEquipement, $idClient, $dateVisite, $entityClass, $entityManager)) {
-          // dump("Équipement doublon détecté - ignoré: " . $numeroEquipement);
             return false;
         }
 
         // Remplir les autres données de l'équipement
         $this->fillContractEquipmentData($equipement, $equipmentContrat);
         
-        // NOUVELLE PARTIE: Téléchargement et sauvegarde des photos en local
+        // Téléchargement et sauvegarde des photos en local
         $agence = $fields['code_agence']['value'] ?? '';
         $raisonSociale = $fields['nom_client']['value'] ?? '';
         $anneeVisite = date('Y', strtotime($dateVisite));
+        $idContact = $fields['id_client_']['value'] ?? '';
         
+        // ✅ Passer la bonne visite pour le stockage local
         $savedPhotos = $this->downloadAndSavePhotosLocally(
             $equipmentContrat,
             $formId,
             $entryId,
             $agence,
-            $raisonSociale,
+            $idContact,
             $anneeVisite,
-            $visite,
+            $visite,  // ✅ Utiliser la visite extraite correctement
             $numeroEquipement
         );
         
-        // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos);
+        // ✅ Sauvegarder dans Form avec la bonne raison_sociale_visite
+        $this->savePhotosToFormEntityWithLocalPathsFixed(
+            $raisonSociale,
+            $visite,  // ✅ Passer la visite séparément
+            $equipmentContrat,
+            $formId,
+            $entryId,
+            $numeroEquipement,
+            $entityManager,
+            $savedPhotos,
+            $fields
+        );
         
         // Définir les anomalies
         $this->setSimpleEquipmentAnomalies($equipement, $equipmentContrat);
 
-      // dump("Équipement au contrat traité avec photos locales: " . $numeroEquipement);
         return true;
     }
 
@@ -3296,74 +3340,9 @@ class SimplifiedMaintenanceController extends AbstractController
     }
 
     /**
-     * Version mise à jour de setOffContractDataWithFormPhotosAndDeduplication avec numérotation sécurisée
-     */
-    // private function setOffContractDataWithFormPhotosAndDeduplication(
-    //     $equipement, 
-    //     array $equipmentHorsContrat, 
-    //     array $fields, 
-    //     string $formId, 
-    //     string $entryId, 
-    //     string $entityClass,
-    //     EntityManagerInterface $entityManager,
-    //     string $idSociete,
-    //     string $dateDerniereVisite
-    // ): bool {
-        
-    //   // dump("=== DÉBUT TRAITEMENT HORS CONTRAT (DÉBOGAGE PPV) dans la fonction setOffContractDataWithFormPhotosAndDeduplication ===");
-    //   // dump("Entry ID: " . $entryId);
-    //   // dump("Entity class passée: " . $entityClass); // ✅ Log pour vérifier
-
-    //     // 1. Générer le numéro d'équipement
-    //     $typeLibelle = $equipmentHorsContrat['nature']['value'] ?? '';
-    //     $typeCode = $this->getTypeCodeFromLibelle($typeLibelle);
-    //     $idClient = $fields['id_client_']['value'] ?? '';
-        
-    //     // $nouveauNumero = $this->getNextEquipmentNumber($typeCode, $idClient, $entityClass, $entityManager);
-    //     // $numeroFormate = $typeCode . str_pad($nouveauNumero, 2, '0', STR_PAD_LEFT);
-    //     // ✅ APPEL AVEC TOUS LES PARAMÈTRES Y COMPRIS $entityClass
-    //     $numeroFormate = $this->generateUniqueEquipmentNumber($typeCode, $idClient, $entityClass, $entityManager);
-    //   // dump("Numéro formaté final: '" . $numeroFormate . "'");
-        
-    //     // 2. Vérifier si l'équipement existe déjà (même si c'est un nouveau numéro, vérifier par autres critères)
-    //     if ($this->offContractEquipmentExists($equipmentHorsContrat, $idClient, $entityClass, $entityManager)) {
-    //         return false; // Skip car déjà existe
-    //     }
-        
-    //     // 3. Définir les données de l'équipement hors contrat
-    //     $equipement->setNumeroEquipement($numeroFormate);
-    //     $equipement->setCodeSociete($idSociete);
-    //     $equipement->setDerniereVisite($dateDerniereVisite);
-    //     $equipement->setLibelleEquipement($typeLibelle);
-    //     $equipement->setModeFonctionnement($equipmentHorsContrat['mode_fonctionnement_']['value'] ?? '');
-    //     $equipement->setRepereSiteClient($equipmentHorsContrat['localisation_site_client1']['value'] ?? '');
-    //     $equipement->setMiseEnService($equipmentHorsContrat['annee']['value'] ?? '');
-    //     $equipement->setNumeroDeSerie($equipmentHorsContrat['n_de_serie']['value'] ?? '');
-    //     $equipement->setMarque($equipmentHorsContrat['marque']['value'] ?? '');
-    //     $equipement->setLargeur($equipmentHorsContrat['largeur']['value'] ?? '');
-    //     $equipement->setHauteur($equipmentHorsContrat['hauteur']['value'] ?? '');
-    //     $equipement->setPlaqueSignaletique($equipmentHorsContrat['plaque_signaletique1']['value'] ?? '');
-    //     $equipement->setEtat($equipmentHorsContrat['etat1']['value'] ?? '');
-        
-    //     $equipement->setVisite($this->getDefaultVisitType($fields));
-    //     $equipement->setStatutDeMaintenance($this->getMaintenanceStatusFromEtat($equipmentHorsContrat['etat1']['value'] ?? ''));
-        
-    //     // IMPORTANT: Équipements hors contrat ne sont PAS en maintenance
-    //     $equipement->setEnMaintenance(false);
-    //     $equipement->setIsArchive(false);
-        
-    //     // 4. Sauvegarder les photos SEULEMENT si pas de doublon
-    //     $this->savePhotosToFormEntityWithDeduplication($fields['contrat_de_maintenance']['value'][0]['equipement']['path'], $equipmentHorsContrat, $formId, $entryId, $numeroFormate, $entityManager);
-    //     // NOUVELLE PARTIE: Extraction et définition des anomalies
-    //   // dump("=== DÉBOGAGE PPV: Avant d'appeler setSimpleEquipmentAnomalies dans la fonction setOffContractDataWithFormPhotosAndDeduplication ===");
-    //     $this->setSimpleEquipmentAnomalies($equipement, $equipmentHorsContrat);
-
-
-
-    //     return true; // Équipement traité avec succès
-    // }
-    /**
      * Modifiée: Sauvegarde des photos avec téléchargement local pour équipements hors contrat
+     * 
+     * ✅ CORRECTION FINALE : Version corrigée basée sur numero_equipement + id_contact
      */
     private function setOffContractDataWithFormPhotosAndDeduplication(
         $equipement, 
@@ -3372,52 +3351,474 @@ class SimplifiedMaintenanceController extends AbstractController
         string $formId, 
         string $entryId, 
         string $entityClass,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        $idSociete,
+        $dateDerniereVisite
     ): bool {
+        // DEBUG: Afficher la structure complète de l'équipement
+        dump("=== STRUCTURE EQUIPEMENT HORS CONTRAT ===");
+        dump(array_keys($equipmentHorsContrat));
+        foreach ($equipmentHorsContrat as $key => $data) {
+            if (isset($data['value']) && !empty($data['value'])) {
+                dump("$key => " . $data['value']);
+            }
+        }
+        dump("=== FIN STRUCTURE ===");
         
-        // Données de base de l'équipement
-        $equipementPath = $equipmentHorsContrat['equipement_supplementaire']['path'] ?? '';
-        $visite = $this->extractVisitTypeFromPath($equipementPath);
-        $numeroEquipement = $equipmentHorsContrat['equipement_supplementaire']['value'] ?? '';
+        // ✅ NOUVEAUX DUMPS ICI
+        dump("=== EXTRACTION DES DONNÉES ===");
         
-        $equipement->setVisite($visite);
-        $equipement->setNumeroEquipement($numeroEquipement);
-        
-        // Vérification doublon
-        $idClient = $fields['id_client_']['value'] ?? '';
-        $dateVisite = $fields['date_et_heure1']['value'] ?? '';
-        
-        if ($this->equipmentExistsForSameVisit($numeroEquipement, $idClient, $dateVisite, $entityClass, $entityManager)) {
-            // dump("Équipement hors contrat doublon détecté - ignoré: " . $numeroEquipement);
+        try {
+            $visite = $this->getVisiteFromFields($fields, $equipmentHorsContrat);
+            dump("✅ Visite extraite: " . ($visite ?? 'NULL'));
+        } catch (\Exception $e) {
+            dump("❌ ERREUR getVisiteFromFields: " . $e->getMessage());
             return false;
         }
-
-        // Remplir les autres données de l'équipement
-        $this->fillOffContractEquipmentData($equipement, $equipmentHorsContrat, $fields);
         
-        // NOUVELLE PARTIE: Téléchargement et sauvegarde des photos en local
+        $typeLibelle = $equipmentHorsContrat['nature']['value'] ?? '';
+        dump("Type libellé brut: '$typeLibelle'");
+        
+        try {
+            $typeCode = $this->getTypeCodeFromLibelle($typeLibelle);
+            dump("✅ Type code: '$typeCode'");
+        } catch (\Exception $e) {
+            dump("❌ ERREUR getTypeCodeFromLibelle: " . $e->getMessage());
+            return false;
+        }
+        
+        if (empty($typeCode)) {
+            dump("❌ ERREUR: typeCode est vide pour libellé '$typeLibelle'");
+            return false;
+        }
+        
+        $idClient = $fields['id_client_']['value'] ?? '';
+        dump("ID Client: '$idClient'");
+        
+        $repereSiteClient = $equipmentHorsContrat['localisation_site_client1']['value'] ?? '';
+        dump("Repère site: '$repereSiteClient'");
+        
+        dump("=== APPEL VÉRIFICATION DOUBLON ===");
+        
+        // ✅ 1. VÉRIFIER D'ABORD avec les critères métiers (SANS le numéro)
+        if ($this->offContractEquipmentExistsByBusinessCriteria(
+            $typeCode,
+            $idClient,
+            $repereSiteClient,
+            $visite,
+            $entityClass,
+            $entityManager
+        )) {
+            dump("❌ SKIP: Équipement déjà traité");
+            return false;
+        }
+        
+        dump("✅ Pas de doublon, génération du numéro...");
+        
+        // ✅ Générer le numéro avec vérification dans UnitOfWork
+        $nouveauNumero = $this->getNextEquipmentNumberReal($typeCode, $idClient, $entityClass, $entityManager);
+        dump("Nouveau numéro: $nouveauNumero");
+        
+        $numeroEquipement = $typeCode . str_pad($nouveauNumero, 2, '0', STR_PAD_LEFT);
+        dump("Numéro formaté: $numeroEquipement");
+
+        // Définir les propriétés de base
+        $equipement->setVisite($visite);
+        $equipement->setNumeroEquipement($numeroEquipement);
+        $equipement->setDerniereVisite($fields['date_et_heure1']['value'] ?? '');
+        $equipement->setCodeSociete($idSociete);
+        $equipement->setDateEnregistrement($dateDerniereVisite);
+        
+        dump("✅ Propriétés de base définies");
+        
+        // Remplir les données
+        $this->fillOffContractEquipmentDataFixed($equipement, $equipmentHorsContrat, $fields);
+        
+        dump("✅ Données remplies, prêt à sauvegarder");
+        
+        // Téléchargement et sauvegarde des photos
         $agence = $fields['code_agence']['value'] ?? '';
         $raisonSociale = $fields['nom_client']['value'] ?? '';
+        $dateVisite = $fields['date_et_heure1']['value'] ?? '';
         $anneeVisite = date('Y', strtotime($dateVisite));
+        $idContact = $fields['id_contact']['value'] ?? '';
         
         $savedPhotos = $this->downloadAndSavePhotosLocally(
             $equipmentHorsContrat,
             $formId,
             $entryId,
             $agence,
-            $raisonSociale,
+            $idContact,
             $anneeVisite,
             $visite,
             $numeroEquipement
         );
         
-        // Sauvegarder les photos dans la table Form (pour compatibilité avec l'existant)
-        $this->savePhotosToFormEntityWithLocalPaths($equipementPath, $equipmentHorsContrat, $formId, $entryId, $numeroEquipement, $entityManager, $savedPhotos);
+        $this->savePhotosToFormEntityWithLocalPathsFixed(
+            $raisonSociale,
+            $visite,
+            $equipmentHorsContrat,
+            $formId,
+            $entryId,
+            $numeroEquipement,
+            $entityManager,
+            $savedPhotos,
+            $fields
+        );
         
-        // dump("Équipement hors contrat traité avec photos locales: " . $numeroEquipement);
+        $this->setSimpleEquipmentAnomalies($equipement, $equipmentHorsContrat);
+
+        dump("=== RETURN TRUE ===");
         return true;
     }
 
+    /**
+     * Vérifie si un équipement hors contrat existe déjà selon les critères métier :
+     * - Type d'équipement (RID, SEC, etc.)
+     * - Client (id_contact)
+     * - Localisation (repere_site_client)
+     * - Visite
+     * 
+     * Vérifie à la fois en base ET dans l'UnitOfWork (équipements en attente de flush)
+     */
+    private function offContractEquipmentExistsByBusinessCriteria(
+        string $typeCode,
+        string $idClient,
+        string $repereSiteClient,
+        string $visite,
+        string $entityClass,
+        EntityManagerInterface $entityManager
+    ): bool {
+        dump("=== VÉRIFICATION DOUBLON ===");
+        dump("Type: $typeCode, Client: $idClient, Repere: $repereSiteClient, Visite: $visite");
+        
+        try {
+            $repository = $entityManager->getRepository($entityClass);
+            dump("✅ Repository OK");
+            
+            $qb = $repository->createQueryBuilder('e')
+                ->where('e.numero_equipement LIKE :typePattern')
+                ->andWhere('e.id_contact = :idClient')
+                ->andWhere('e.repere_site_client = :repere')
+                ->andWhere('e.visite = :visite')
+                ->andWhere('e.en_maintenance = false')
+                ->setParameter('typePattern', $typeCode . '%')
+                ->setParameter('idClient', $idClient)
+                ->setParameter('repere', $repereSiteClient)
+                ->setParameter('visite', $visite)
+                ->setMaxResults(1);
+            
+            dump("✅ QueryBuilder OK");
+            
+            $existingInDb = $qb->getQuery()->getOneOrNullResult();
+            dump("✅ Query exécutée");
+            
+            if ($existingInDb !== null) {
+                dump("✅ Trouvé en base: " . $existingInDb->getNumeroEquipement());
+                return true;
+            }
+            
+            dump("❌ Pas trouvé en base, vérification UnitOfWork...");
+            
+            $uow = $entityManager->getUnitOfWork();
+            $scheduledInserts = $uow->getScheduledEntityInsertions();
+            
+            dump("Objets en attente: " . count($scheduledInserts));
+            
+            foreach ($scheduledInserts as $entity) {
+                if (get_class($entity) === $entityClass) {
+                    $numeroEquipement = $entity->getNumeroEquipement() ?? '';
+                    
+                    if (str_starts_with($numeroEquipement, $typeCode) &&
+                        $entity->getIdContact() === $idClient &&
+                        $entity->getRepereSiteClient() === $repereSiteClient &&
+                        $entity->getVisite() === $visite &&
+                        !$entity->isEnMaintenance()) {
+                        dump("✅ Trouvé dans UnitOfWork: $numeroEquipement");
+                        return true;
+                    }
+                }
+            }
+            
+            dump("❌ Aucun doublon trouvé");
+            return false;
+            
+        } catch (\Exception $e) {
+            dump("❌ ERREUR DANS offContractEquipmentExistsByBusinessCriteria: " . $e->getMessage());
+            dump("Trace: " . $e->getTraceAsString());
+            return false; // En cas d'erreur, on laisse passer pour ne pas bloquer
+        }
+    }
+
+    private function offContractEquipmentTypeExistsForClientVisit(
+        string $typeCode,      // "RID", "SEC", etc.
+        string $idClient,
+        string $visite,
+        string $entityClass,
+        EntityManagerInterface $entityManager
+    ): bool {
+        $repository = $entityManager->getRepository($entityClass);
+        
+        // Cherche en base
+        $qb = $repository->createQueryBuilder('e')
+            ->where('e.numero_equipement LIKE :typePattern')
+            ->andWhere('e.id_contact = :idClient')
+            ->andWhere('e.visite = :visite')
+            ->andWhere('e.en_maintenance = false')
+            ->setParameter('typePattern', $typeCode . '%') // RID%
+            ->setParameter('idClient', $idClient)
+            ->setParameter('visite', $visite)
+            ->setMaxResults(1);
+        
+        if ($qb->getQuery()->getOneOrNullResult() !== null) {
+            return true;
+        }
+        
+        // Cherche aussi dans l'UnitOfWork
+        $uow = $entityManager->getUnitOfWork();
+        foreach ($uow->getScheduledEntityInsertions() as $entity) {
+            if (get_class($entity) === $entityClass 
+                && str_starts_with($entity->getNumeroEquipement() ?? '', $typeCode)
+                && $entity->getIdContact() === $idClient
+                && $entity->getVisite() === $visite
+                && !$entity->isEnMaintenance()) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * ✅ MISE À JOUR : Vérification doublon avec UnitOfWork
+     * 
+     * Vérifie si un équipement hors contrat existe déjà en se basant sur :
+     * - numero_equipement + id_contact (combinaison unique et toujours présente)
+     * - Recherche en base de données ET dans l'UnitOfWork (objets en attente de flush)
+     * 
+     * @param string $numeroEquipement Le numéro d'équipement généré (ex: RID01)
+     * @param string $idClient L'identifiant du client
+     * @param string $entityClass La classe de l'entité (ex: EquipementS40::class)
+     * @param EntityManagerInterface $entityManager Le gestionnaire d'entités Doctrine
+     * @return bool true si l'équipement existe déjà, false sinon
+     */
+    private function offContractEquipmentExistsForSameVisit(
+        string $numeroEquipement,
+        string $idClient,
+        string $entityClass,
+        EntityManagerInterface $entityManager
+    ): bool {
+        try {
+            $repository = $entityManager->getRepository($entityClass);
+            
+            // ============================================
+            // 1. VÉRIFICATION EN BASE DE DONNÉES
+            // ============================================
+            $qb = $repository->createQueryBuilder('e')
+                ->where('e.numero_equipement = :numero')
+                ->andWhere('e.id_contact = :idClient')
+                ->andWhere('e.en_maintenance = false')  // Uniquement les équipements hors contrat
+                ->setParameter('numero', $numeroEquipement)
+                ->setParameter('idClient', $idClient)
+                ->setMaxResults(1);
+            
+            $existingInDb = $qb->getQuery()->getOneOrNullResult();
+            
+            if ($existingInDb !== null) {
+                // dump("✅ Doublon détecté en base : " . $numeroEquipement . " pour client " . $idClient);
+                return true;
+            }
+            
+            // ============================================
+            // 2. ✅ VÉRIFICATION DANS L'UNITOFWORK
+            //    (objets en attente de flush)
+            // ============================================
+            $uow = $entityManager->getUnitOfWork();
+            $scheduledInserts = $uow->getScheduledEntityInsertions();
+            
+            foreach ($scheduledInserts as $entity) {
+                // Vérifier que c'est bien la même classe d'entité
+                if (get_class($entity) === $entityClass) {
+                    // Vérifier les critères d'unicité
+                    if ($entity->getNumeroEquipement() === $numeroEquipement && 
+                        $entity->getIdContact() === $idClient &&
+                        !$entity->isEnMaintenance()) {  // Uniquement hors contrat
+                        
+                        // dump("✅ Doublon détecté dans UnitOfWork : " . $numeroEquipement . " pour client " . $idClient);
+                        return true;
+                    }
+                }
+            }
+            
+            // Aucun doublon trouvé
+            return false;
+            
+        } catch (\Exception $e) {
+            // En cas d'erreur, logger mais ne pas bloquer le traitement
+            // dump("❌ Erreur vérification doublon: " . $e->getMessage());
+            
+            // Par sécurité, retourner false pour ne pas bloquer la création
+            // (mieux vaut un doublon qu'un équipement manquant)
+            return false;
+        }
+    }
+
+    /**
+     * ✅ CORRECTION 5 : Nouvelle version de savePhotosToFormEntityWithLocalPaths
+     */
+    private function savePhotosToFormEntityWithLocalPathsFixed(
+        string $raisonSociale,
+        string $visite,  // ✅ Recevoir directement la visite
+        array $equipmentData,
+        string $formId, 
+        string $entryId, 
+        string $equipmentCode, 
+        EntityManagerInterface $entityManager,
+        array $savedPhotos = [],
+        array $fields = []
+    ): void {
+        try {
+            $existingForm = $entityManager->getRepository(Form::class)->findOneBy([
+                'form_id' => $formId,
+                'data_id' => $entryId,
+                'equipment_id' => $equipmentCode
+            ]);
+            
+            if ($existingForm) {
+                $form = $existingForm;
+            } else {
+                $form = new Form();
+                $form->setFormId($formId);
+                $form->setDataId($entryId);
+                $form->setEquipmentId($equipmentCode);
+            }
+            
+            // ✅ Utiliser directement les valeurs passées en paramètre
+            $form->setCodeEquipement($equipmentCode);
+            $form->setUpdateTime(date('Y-m-d H:i:s'));
+            
+            // ✅ Construction correcte de raison_sociale_visite
+            $raisonSocialeVisite = $raisonSociale . '\\' . $visite;
+            
+            $form->setRaisonSocialeVisite($raisonSocialeVisite);
+            $form->setIdContact($fields['id_client_']['value'] ?? '');
+            $form->setIdSociete($fields['id_societe']['value'] ?? '');
+            
+            // ✅ Mapper les photos avec gestion de photo2 et photo3
+            $this->mapPhotosToFormEntityFixed($form, $equipmentData, $savedPhotos);
+            
+            $entityManager->persist($form);
+            
+        } catch (\Exception $e) {
+            $this->logger->error("Erreur sauvegarde Form: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * ✅ CORRECTION 6 : Version corrigée du mapping des photos
+     */
+    private function mapPhotosToFormEntityFixed(Form $form, array $equipmentData, array $savedPhotos): void
+    {
+        // ✅ Mapping avec gestion des variantes de noms
+        $photoMapping = [
+            // Photos principales - GERER LES 2 VARIANTES
+            'photo3' => 'setPhotoCompteRendu',
+            'photo_3' => 'setPhotoCompteRendu',  // ✅ Variante avec underscore
+            'photo_compte_rendu' => 'setPhotoCompteRendu',  // ✅ Autre variante possible
+            
+            'photo2' => 'setPhoto2',
+            'photo_2' => 'setPhoto2',  // ✅ Variante avec underscore
+            'photo_generale' => 'setPhoto2',  // ✅ Autre variante possible
+            
+            'photo_complementaire_equipeme' => 'setPhotoEnvironnementEquipement1',
+            'photo_plaque' => 'setPhotoPlaque',
+            'photo_etiquette_somafi' => 'setPhotoEtiquetteSomafi',
+            
+            // Photos techniques
+            'photo_choc' => 'setPhotoChoc',
+            'photo_choc_montant' => 'setPhotoChocMontant',
+            'photo_choc_tablier' => 'setPhotoChocTablier',
+            'photo_choc_tablier_porte' => 'setPhotoChocTablierPorte',
+            'photo_moteur' => 'setPhotoMoteur',
+            'photo_carte' => 'setPhotoCarte',
+            'photo_coffret_de_commande' => 'setPhotoCoffretDeCommande',
+            'photo_rail' => 'setPhotoRail',
+            'photo_equerre_rail' => 'setPhotoEquerreRail',
+            'photo_fixation_coulisse' => 'setPhotoFixationCoulisse',
+            'photo_axe' => 'setPhotoAxe',
+            'photo_serrure' => 'setPhotoSerrure',
+            'photo_serrure1' => 'setPhotoSerrure1',
+            'photo_feux' => 'setPhotoFeux',
+            
+            // Photos structure
+            'photo_panneau_intermediaire_i' => 'setPhotosPanneauIntermediaireI',
+            'photo_panneau_bas_inter_ext' => 'setPhotosPanneauBasInterExt',
+            'photo_lame_basse__int_ext' => 'setPhotoLameBasseIntExt',
+            'photo_lame_intermediaire_int_' => 'setPhotoLameIntermediaireInt',
+            'photo_deformation_plateau' => 'setPhotoDeformationPlateau',
+            'photo_deformation_plaque' => 'setPhotoDeformationPlaque',
+            'photo_deformation_structure' => 'setPhotoDeformationStructure',
+            'photo_deformation_chassis' => 'setPhotoDeformationChassis',
+            'photo_deformation_levre' => 'setPhotoDeformationLevre',
+            'photo_fissure_cordon' => 'setPhotoFissureCordon',
+            
+            // Photos environnement
+            'photo_envirronement_eclairage' => 'setPhotoEnvirronementEclairage',
+            'photo_bache' => 'setPhotoBache',
+            'photo_marquage_au_sol' => 'setPhotoMarquageAuSol',
+            'photo_marquage_au_sol_' => 'setPhotoMarquageAuSol',
+            'photo_marquage_au_sol_2' => 'setPhotoMarquageAuSol2',
+            'photo_environnement_equipement1' => 'setPhotoEnvironnementEquipement1',
+            
+            // Photos éléments
+            'photo_joue' => 'setPhotoJoue',
+            'photo_butoir' => 'setPhotoButoir',
+            'photo_vantail' => 'setPhotoVantail',
+            'photo_linteau' => 'setPhotoLinteau',
+            'photo_barriere' => 'setPhotoBarriere',
+            'photo_tourniquet' => 'setPhotoTourniquet',
+            'photo_sas' => 'setPhotoSas'
+        ];
+        
+        foreach ($photoMapping as $fieldKey => $formMethod) {
+            if (isset($equipmentData[$fieldKey]['value']) && !empty($equipmentData[$fieldKey]['value'])) {
+                $photoValue = $equipmentData[$fieldKey]['value'];
+                
+                // Stocker le nom original de la photo Kizeo
+                if (method_exists($form, $formMethod)) {
+                    $form->$formMethod($photoValue);
+                }
+            }
+        }
+    }
+
+    /**
+     * ✅ CORRECTION 4 : Version corrigée de fillOffContractEquipmentData
+     */
+    private function fillOffContractEquipmentDataFixed($equipement, array $equipmentHorsContrat, array $fields): void
+    {
+        // ✅ CORRECTION : Utiliser les bonnes clés du formulaire
+        $typeLibelle = $equipmentHorsContrat['nature']['value'] ?? '';
+        $equipement->setLibelleEquipement($typeLibelle);
+        
+        $equipement->setModeFonctionnement($equipmentHorsContrat['mode_fonctionnement_']['value'] ?? '');
+        $equipement->setRepereSiteClient($equipmentHorsContrat['localisation_site_client1']['value'] ?? '');
+        $equipement->setMiseEnService($equipmentHorsContrat['annee']['value'] ?? 'nc');
+        $equipement->setNumeroDeSerie($equipmentHorsContrat['n_de_serie']['value'] ?? '');
+        $equipement->setMarque($equipmentHorsContrat['marque']['value'] ?? '');
+        $equipement->setLargeur($equipmentHorsContrat['largeur']['value'] ?? '');
+        $equipement->setHauteur($equipmentHorsContrat['hauteur']['value'] ?? '');
+        $equipement->setPlaqueSignaletique($equipmentHorsContrat['plaque_signaletique1']['value'] ?? '');
+        $equipement->setEtat($equipmentHorsContrat['etat1']['value'] ?? '');
+        $equipement->setLongueur(''); // Pas de champ longueur dans tableau2
+        
+        $statut = $this->getMaintenanceStatusFromEtat($equipmentHorsContrat['etat1']['value'] ?? '');
+        $equipement->setStatutDeMaintenance($statut);
+        
+        $equipement->setEnMaintenance(false);
+        $equipement->setIsArchive(false);
+    }
     /**
      * Sauvegarde les photos dans la table Form avec les chemins locaux comme métadonnées
      */
@@ -3428,11 +3829,10 @@ class SimplifiedMaintenanceController extends AbstractController
         string $entryId, 
         string $equipmentCode, 
         EntityManagerInterface $entityManager,
-        array $savedPhotos = []
+        array $savedPhotos = [],
+        array $fields = []
     ): void {
-        
         try {
-            // Vérifier si l'entité Form existe déjà
             $existingForm = $entityManager->getRepository(Form::class)->findOneBy([
                 'form_id' => $formId,
                 'data_id' => $entryId,
@@ -3440,7 +3840,6 @@ class SimplifiedMaintenanceController extends AbstractController
             ]);
             
             if ($existingForm) {
-              // dump("Entité Form existante trouvée pour {$equipmentCode} - mise à jour");
                 $form = $existingForm;
             } else {
                 $form = new Form();
@@ -3449,16 +3848,28 @@ class SimplifiedMaintenanceController extends AbstractController
                 $form->setEquipmentId($equipmentCode);
             }
             
-            // Définir les métadonnées de base
+            // ✅ CORRECTION 1 : Définir les métadonnées de base
             $form->setCodeEquipement($equipmentCode);
             $form->setUpdateTime(date('Y-m-d H:i:s'));
             
-            // Mapper toutes les photos disponibles vers les champs de la table Form
+            // ✅ CORRECTION 2 : Remplir les champs manquants CRITIQUES
+            // Extraire la visite depuis le path (ex: "CE1\BPO01" → "CE1")
+            $visite = $this->extractVisitTypeFromPath($equipementPath);
+            $raisonSociale = $fields['nom_client']['value'] ?? '';
+            $idContact = $fields['id_client_']['value'] ?? '';
+            $idSociete = $fields['id_societe']['value'] ?? '';
+            
+            // Construction correcte de raison_sociale_visite
+            $raisonSocialeVisite = $raisonSociale . '\\' . $visite;
+            
+            $form->setRaisonSocialeVisite($raisonSocialeVisite);
+            $form->setIdContact($idContact);
+            $form->setIdSociete($idSociete);
+            
+            // Mapper les photos
             $this->mapPhotosToFormEntity($form, $equipmentData, $savedPhotos);
             
-            // Persister l'entité
             $entityManager->persist($form);
-            // dump("Entité Form mise à jour avec chemins locaux pour équipement: " . $equipmentCode);
             
         } catch (\Exception $e) {
             $this->logger->error("Erreur sauvegarde Form avec chemins locaux: " . $e->getMessage());
@@ -3535,7 +3946,7 @@ class SimplifiedMaintenanceController extends AbstractController
      */
     public function getLocalPhotosForEquipment(
         string $agence,
-        string $raisonSociale,
+        string $idContact,
         string $anneeVisite,
         string $typeVisite,
         string $codeEquipement
@@ -3545,12 +3956,12 @@ class SimplifiedMaintenanceController extends AbstractController
         
         foreach ($photoTypes as $photoType) {
             $filename = $codeEquipement . '_' . $photoType;
-            $imagePath = $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename);
+            $imagePath = $this->imageStorageService->getImagePath($agence, $idContact, $anneeVisite, $typeVisite, $filename);
             
             if ($imagePath && file_exists($imagePath)) {
                 $localPhotos[$photoType] = [
                     'path' => $imagePath,
-                    'url' => $this->imageStorageService->getImageUrl($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename),
+                    'url' => $this->imageStorageService->getImageUrl($agence, $idContact, $anneeVisite, $typeVisite, $filename),
                     'base64' => base64_encode(file_get_contents($imagePath))
                 ];
             }
@@ -3601,7 +4012,7 @@ class SimplifiedMaintenanceController extends AbstractController
                             $formData->getFormId(),
                             $formData->getDataId(),
                             $equipment->getCodeAgence(),
-                            explode('\\', $equipment->getRaisonSociale())[0],
+                            $equipment->getIdContact(),
                             date('Y', strtotime($equipment->getDateEnregistrement())),
                             $equipment->getVisite(),
                             $equipment->getNumeroEquipement()
@@ -4829,7 +5240,7 @@ class SimplifiedMaintenanceController extends AbstractController
         string $formId,
         string $entryId,
         string $agence,
-        string $raisonSociale,
+        string $idContact,
         string $anneeVisite,
         string $typeVisite,
         string $codeEquipement
@@ -4852,7 +5263,7 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $formId,
                                 $entryId,
                                 $agence,
-                                $raisonSociale,
+                                $idContact,
                                 $anneeVisite,
                                 $typeVisite,
                                 $codeEquipement,
@@ -4870,7 +5281,7 @@ class SimplifiedMaintenanceController extends AbstractController
                         $formId,
                         $entryId,
                         $agence,
-                        $raisonSociale,
+                        $idContact,
                         $anneeVisite,
                         $typeVisite,
                         $codeEquipement,
@@ -4894,7 +5305,7 @@ class SimplifiedMaintenanceController extends AbstractController
         string $formId,
         string $entryId,
         string $agence,
-        string $raisonSociale,
+        string $idContact,
         string $anneeVisite,
         string $typeVisite,
         string $codeEquipement,
@@ -4905,9 +5316,9 @@ class SimplifiedMaintenanceController extends AbstractController
             $filename = $codeEquipement . '_' . $photoType;
             
             // Vérifier si la photo existe déjà localement
-            if ($this->imageStorageService->imageExists($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename)) {
+            if ($this->imageStorageService->imageExists($agence, $idContact, $anneeVisite, $typeVisite, $filename)) {
                 $this->logger->info("Photo déjà existante localement: {$filename}");
-                return $this->imageStorageService->getImagePath($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename);
+                return $this->imageStorageService->getImagePath($agence, $idContact, $anneeVisite, $typeVisite, $filename);
             }
 
             // Télécharger la photo depuis l'API Kizeo
@@ -4933,7 +5344,7 @@ class SimplifiedMaintenanceController extends AbstractController
             // Sauvegarder la photo localement
             $localPath = $this->imageStorageService->storeImage(
                 $agence,
-                $raisonSociale,
+                $idContact,
                 $anneeVisite,
                 $typeVisite,
                 $filename,
@@ -4957,6 +5368,9 @@ class SimplifiedMaintenanceController extends AbstractController
         return [
             // Photos principales
             'photo3' => 'compte_rendu',
+            'photo_3' => 'compte_rendu',  // ✅ Variante avec underscore
+            'photo_compte_rendu' => 'compte_rendu',  // ✅ Autre variante possible
+
             'photo_complementaire_equipeme' => 'environnement',
             'photo_plaque' => 'plaque',
             'photo_etiquette_somafi' => 'etiquette_somafi',
@@ -5007,7 +5421,9 @@ class SimplifiedMaintenanceController extends AbstractController
             'photo_sas' => 'sas',
             
             // Photo générale
-            'photo_2' => 'generale'
+            'photo2' => 'generale',
+            'photo_2' => 'generale',  // ✅ Variante avec underscore
+            'photo_generale' => 'generale',  // ✅ Autre variante possible
         ];
     }
 
@@ -5224,7 +5640,7 @@ public function migrateEquipmentPhotos(
 #[Route('/api/maintenance/download-photo/{agencyCode}/{raisonSociale}/{annee}/{typeVisite}/{filename}', name: 'app_download_photo', methods: ['GET'])]
 public function downloadPhoto(
     string $agencyCode,
-    string $raisonSociale,
+    string $idContact,
     string $annee,
     string $typeVisite,
     string $filename
@@ -5233,7 +5649,7 @@ public function downloadPhoto(
     try {
         $imagePath = $this->imageStorageService->getImagePath(
             $agencyCode,
-            $raisonSociale,
+            $idContact,
             $annee,
             $typeVisite,
             $filename
@@ -5280,10 +5696,11 @@ public function listEquipmentPhotos(
         $raisonSociale = explode('\\', $equipment->getRaisonSociale())[0] ?? $equipment->getRaisonSociale();
         $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
         $typeVisite = $equipment->getVisite();
+        $idContact = $equipment->getIdContact();
         
         $photos = $this->imageStorageService->getAllImagesForEquipment(
             $agencyCode,
-            $raisonSociale,
+            $idContact,
             $anneeVisite,
             $typeVisite,
             $equipmentId
@@ -5335,7 +5752,7 @@ public function batchMigratePhotos(
     
     // Configuration pour les gros traitements
     ini_set('memory_limit', '2G');
-    ini_set('max_execution_time', 1800); // 30 minutes
+    ini_set('max_execution_time', 600); // 10 minutes
     
     try {
         $results = $entityManager->getRepository(Form::class)->migrateAllEquipmentsToLocalStorage(
@@ -5506,6 +5923,7 @@ private function migratePhotosForSingleEquipment($equipment, Form $formData): bo
         $anneeVisite = date('Y', strtotime($equipment->getDateEnregistrement()));
         $typeVisite = $equipment->getVisite();
         $codeEquipement = $equipment->getNumeroEquipement();
+        $idContact = $equipment->getIdContact();
         
         // Photos à migrer avec leurs types
         $photosToMigrate = [
@@ -5527,7 +5945,7 @@ private function migratePhotosForSingleEquipment($equipment, Form $formData): bo
                     $formData->getFormId(),
                     $formData->getDataId(),
                     $agence,
-                    $raisonSociale,
+                    $idContact,
                     $anneeVisite,
                     $typeVisite,
                     $codeEquipement . '_' . $photoType
@@ -5720,14 +6138,14 @@ private function downloadAndStorePhotoFromKizeo(
     string $formId,
     string $dataId,
     string $agence,
-    string $raisonSociale,
+    string $idContact,
     string $anneeVisite,
     string $typeVisite,
     string $filename
 ): bool {
     try {
         // Vérifier si la photo existe déjà localement
-        if ($this->imageStorageService->imageExists($agence, $raisonSociale, $anneeVisite, $typeVisite, $filename)) {
+        if ($this->imageStorageService->imageExists($agence, $idContact, $anneeVisite, $typeVisite, $filename)) {
             return true; // Déjà présente
         }
         
@@ -5765,7 +6183,7 @@ private function downloadAndStorePhotoFromKizeo(
                 // Sauvegarder localement
                 $this->imageStorageService->storeImage(
                     $agence,
-                    $raisonSociale,
+                    $idContact,
                     $anneeVisite,
                     $typeVisite,
                     $finalFilename,
@@ -5806,5 +6224,46 @@ private function extractLibelleFromPath(string $equipementPath): string
     
     return 'Équipement supplémentaire';
 }
+
+    /**
+     * ✅ CORRECTION 1 : Récupérer la visite depuis les fields au lieu du path
+     */
+    private function getVisiteFromFields(array $fields, array $equipmentData = []): string
+    {
+        // Essayer plusieurs sources pour trouver la visite
+        
+        // 1. Depuis le tableau contrat_de_maintenance (équipements au contrat)
+        if (isset($fields['contrat_de_maintenance']['value']) && 
+            !empty($fields['contrat_de_maintenance']['value']) &&
+            isset($fields['contrat_de_maintenance']['value'][0]['equipement']['path'])) {
+            
+            $path = $fields['contrat_de_maintenance']['value'][0]['equipement']['path'];
+            $parts = explode('\\', $path);
+            if (!empty($parts[0]) && preg_match('/^CE\d+$/', $parts[0])) {
+                return $parts[0];
+            }
+        }
+        
+        // 2. Depuis un champ dédié type_visite ou visite
+        if (isset($fields['type_visite']['value']) && !empty($fields['type_visite']['value'])) {
+            return $fields['type_visite']['value'];
+        }
+        
+        if (isset($fields['visite']['value']) && !empty($fields['visite']['value'])) {
+            return $fields['visite']['value'];
+        }
+        
+        // 3. Depuis le path de l'équipement spécifique
+        if (isset($equipmentData['equipement']['path'])) {
+            $path = $equipmentData['equipement']['path'];
+            $parts = explode('\\', $path);
+            if (!empty($parts[0]) && preg_match('/^CE\d+$/', $parts[0])) {
+                return $parts[0];
+            }
+        }
+        
+        // 4. Par défaut CE1
+        return 'CE1';
+    }
 
 }
