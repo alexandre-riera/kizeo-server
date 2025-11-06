@@ -1963,7 +1963,6 @@ class EquipementPdfController extends AbstractController
                     case 'Travaux à prévoir':
                     case 'B':
                         $statusCounts['orange']++;
-                        dd($equipment, $etat);
                         break;
                     case 'Travaux curatifs urgents':
                     case 'Travaux urgent ou à l\'arrêt':
