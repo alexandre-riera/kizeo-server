@@ -680,8 +680,6 @@ class EquipementPdfController extends AbstractController
                     ? "Mode optimisé : Affichage des photos générales uniquement - " . count($equipmentsWithPictures) . " équipement(s) traité(s) sur " . count($equipmentsFiltered) . " total(aux)"
                     : null
             ];
-            dd($templateVars);
-            dd($templateVars['equipmentsWithPictures'][0]);
             // Vérifier que imageUrl est bien définie
             if (empty($templateVars['imageUrl'])) {
                 $templateVars['imageUrl'] = 'https://www.pdf.somafi-group.fr/background/group.jpg';
@@ -1965,6 +1963,7 @@ class EquipementPdfController extends AbstractController
                     case 'Travaux à prévoir':
                     case 'B':
                         $statusCounts['orange']++;
+                        dd($equipment, $etat);
                         break;
                     case 'Travaux curatifs urgents':
                     case 'Travaux urgent ou à l\'arrêt':
