@@ -896,6 +896,37 @@
                         </div>
                     </fieldset>
                 </div>
+                <script>
+                    // Fonction pour mettre à jour l'URL du bouton PDF avec le paramètre withPhotos
+                    function updatePdfButtonWithPhotos() {
+                        const pdfButton = document.getElementById('pdf-button');
+                        if (!pdfButton) return;
+                        
+                        const url = new URL(pdfButton.href);
+                        const photoOption = document.querySelector('input[name="photoOption"]:checked');
+                        
+                        if (photoOption) {
+                            url.searchParams.set('withPhotos', photoOption.value);
+                        } else {
+                            // Par défaut: sans photos
+                            url.searchParams.set('withPhotos', 'non');
+                        }
+                        
+                        pdfButton.href = url.toString();
+                    }
+
+                    // Initialiser au chargement de la page
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Initialiser l'URL avec le paramètre par défaut
+                        updatePdfButtonWithPhotos();
+                        
+                        // Écouter les changements sur les radio buttons
+                        const photoOptions = document.querySelectorAll('input[name="photoOption"]');
+                        photoOptions.forEach(option => {
+                            option.addEventListener('change', updatePdfButtonWithPhotos);
+                        });
+                    });
+                </script>
             </div>
         {% endif %}
                 
