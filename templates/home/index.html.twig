@@ -1303,6 +1303,21 @@
 
     // ===== FONCTION POUR LE BOUTON PDF =====
     function updatePdfButton() {
+        // const pdfButton = document.getElementById('pdf-button');
+        // if (!pdfButton) return;
+        
+        // const baseUrl = pdfButton.href.split('?')[0];
+        // const url = new URL(baseUrl);
+        
+        // const anneeSelect = document.getElementById('clientAnneeFilter');
+        // const visiteSelect = document.getElementById('clientVisiteFilter');
+        // const anneeValue = anneeSelect ? anneeSelect.value : '';
+        // const visiteValue = visiteSelect ? visiteSelect.value : '';
+        
+        // if (anneeValue) url.searchParams.set('clientAnneeFilter', anneeValue);
+        // if (visiteValue) url.searchParams.set('clientVisiteFilter', visiteValue);
+        
+        // pdfButton.href = url.toString();
         const pdfButton = document.getElementById('pdf-button');
         if (!pdfButton) return;
         
@@ -1311,11 +1326,20 @@
         
         const anneeSelect = document.getElementById('clientAnneeFilter');
         const visiteSelect = document.getElementById('clientVisiteFilter');
+        const photoOption = document.querySelector('input[name="photoOption"]:checked');
+        
         const anneeValue = anneeSelect ? anneeSelect.value : '';
         const visiteValue = visiteSelect ? visiteSelect.value : '';
         
         if (anneeValue) url.searchParams.set('clientAnneeFilter', anneeValue);
         if (visiteValue) url.searchParams.set('clientVisiteFilter', visiteValue);
+        
+        // Ajouter le paramètre withPhotos
+        if (photoOption) {
+            url.searchParams.set('withPhotos', photoOption.value);
+        } else {
+            url.searchParams.set('withPhotos', 'non'); // Par défaut: sans photos
+        }
         
         pdfButton.href = url.toString();
         
