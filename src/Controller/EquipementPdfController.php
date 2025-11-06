@@ -202,7 +202,7 @@ class EquipementPdfController extends AbstractController
             // Récupérer les filtres depuis les paramètres de la requête
             $clientAnneeFilter = $request->query->get('clientAnneeFilter', '');
             $clientVisiteFilter = $request->query->get('clientVisiteFilter', '');
-            $withPhotos = $request->query->get('withPhotos', '');
+            $withPhotos = $request->query->get('withPhotos', 'non');
             
             $maxEquipments = (int) $request->query->get('maxEquipments', 500);
             
