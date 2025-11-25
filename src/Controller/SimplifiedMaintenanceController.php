@@ -110,7 +110,9 @@ class SimplifiedMaintenanceController extends AbstractController
         array $equipmentHorsContrat, 
         array $fields, 
         string $entityClass, 
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        $agencyCode,
+        $dateDerniereVisite
     ): bool {  // ✅ MAINTENANT RETOURNE UN BOOLÉEN
         try {
             // 1. ID CLIENT (utiliser id_client_ pas id_contact)
@@ -124,6 +126,7 @@ class SimplifiedMaintenanceController extends AbstractController
             $visite = $this->extractVisiteFromGlobalFields($fields);
             
             if (empty($visite)) {
+                error_log("❌ SKIP: idClient vide");
                 return false;
             }
             
@@ -131,16 +134,19 @@ class SimplifiedMaintenanceController extends AbstractController
             $typeLibelle = strtolower($equipmentHorsContrat['nature']['value'] ?? '');
             
             if (empty($typeLibelle)) {
+                error_log("❌ SKIP: libelle vide");
                 return false;
             }
             
             $typeCode = $this->getTypeCodeFromLibelle($typeLibelle);
             
             if (empty($typeCode)) {
+                error_log("❌ SKIP: typecode vide");
                 return false;
             }
             
-            // 4. VÉRIFICATION DÉDUPLICATION (optionnel)
+            // 4. VÉRIFICATION DÉDUPLICATION
+            error_log("Vérification déduplication...");
             if ($this->equipmentOffContractExists(
                 $typeLibelle,
                 $equipmentHorsContrat['localisation_site_client1']['value'] ?? '',
@@ -151,8 +157,10 @@ class SimplifiedMaintenanceController extends AbstractController
                 $entityClass,
                 $entityManager
             )) {
+                error_log("❌ SKIP: Équipement existe déjà (doublon détecté)");
                 return false;
             }
+            error_log("✅ Pas de doublon, création autorisée");
             
             // 5. GÉNÉRER LE NUMÉRO
             $nouveauNumero = $this->getNextEquipmentNumber($typeCode, $idClient, $entityClass, $entityManager);
@@ -167,11 +175,13 @@ class SimplifiedMaintenanceController extends AbstractController
             $equipement->setModeFonctionnement($equipmentHorsContrat['mode_fonctionnement_']['value'] ?? '');
             $equipement->setRepereSiteClient($equipmentHorsContrat['localisation_site_client1']['value'] ?? '');
             $equipement->setMiseEnService($equipmentHorsContrat['annee']['value'] ?? '');
+            $equipement->setDerniereVisite($dateDerniereVisite ?? '');
             $equipement->setNumeroDeSerie($equipmentHorsContrat['n_de_serie']['value'] ?? '');
             $equipement->setMarque($equipmentHorsContrat['marque']['value'] ?? '');
             $equipement->setLargeur($equipmentHorsContrat['largeur']['value'] ?? '');
             $equipement->setHauteur($equipmentHorsContrat['hauteur']['value'] ?? '');
             $equipement->setLongueur($equipmentHorsContrat['longueur']['value'] ?? '');
+            $equipement->setCodeAgence($agencyCode ?? '');
             
             // ✅ ATTENTION: plaque_signaletique1 et etat1 (pas plaque_signaletique et etat)
             $equipement->setPlaqueSignaletique($equipmentHorsContrat['plaque_signaletique1']['value'] ?? '');
@@ -751,7 +761,9 @@ class SimplifiedMaintenanceController extends AbstractController
                                             $equipmentHorsContrat, 
                                             $fields, 
                                             $entityClass, 
-                                            $entityManager
+                                            $entityManager,
+                                            $agencyCode,
+                                            $fields['date_et_heure1']['value'] ?? ''
                                         );
                                         
                                         if ($shouldPersist) {
@@ -1025,7 +1037,9 @@ class SimplifiedMaintenanceController extends AbstractController
                         $equipmentHorsContrat, 
                         $fields, 
                         $entityClass, 
-                        $entityManager
+                        $entityManager,
+                        $agencyCode,
+                        $fields['date_et_heure1']['value'] ?? ''
                     );
                     
                     if ($shouldPersist) {
@@ -1371,6 +1385,7 @@ class SimplifiedMaintenanceController extends AbstractController
         $equipement->setRaisonSociale($fields['nom_client']['value'] ?? ''); // CORRIGÉ
         $equipement->setTrigrammeTech($fields['trigramme']['value'] ?? ''); // CORRIGÉ
         $equipement->setDateEnregistrement($fields['date_et_heure1']['value'] ?? ''); // CORRIGÉ
+        $equipement->setDerniereVisite($fields['date_et_heure1']['value'] ?? ''); // CORRIGÉ
         
         // Valeurs par défaut SANS setEnMaintenance (sera défini spécifiquement)
         $equipement->setEtatDesLieuxFait(false);
@@ -1540,9 +1555,10 @@ class SimplifiedMaintenanceController extends AbstractController
                 // Format: "KUEHNE + NAGEL 78\\CE1"
                 // On extrait "CE1"
                 $parts = explode('\\', $path);
-                if (count($parts) > 1) {
-                    $visite = $parts[count($parts) - 1];
-                    dump("Visite extraite du path: '$visite'");
+                // Le path est "SOCIETE\\CE1", donc la visite est dans $parts[1]
+                if (count($parts) >= 2 && preg_match('/^CE[A\d]+$/i', $parts[1])) {
+                    $visite = $parts[1];
+                    error_log("✅ Visite extraite du path: '$visite'");
                     return $visite;
                 }
             }
@@ -1691,7 +1707,9 @@ class SimplifiedMaintenanceController extends AbstractController
                                 $equipmentHorsContrat, 
                                 $fields, 
                                 $entityClass, 
-                                $entityManager
+                                $entityManager,
+                                $agencyCode,
+                                $dateDerniereVisite
                             );
                             
                             if ($shouldPersist) {
@@ -2418,20 +2436,35 @@ class SimplifiedMaintenanceController extends AbstractController
                             FROM {$tableName}
                             GROUP BY 
                                 mode_fonctionnement, repere_site_client, 
-                                mise_en_service, numero_de_serie, marque, hauteur, largeur,
-                                plaque_signaletique, anomalies, etat, derniere_visite,
-                                trigramme_tech, id_contact, code_societe, signature_tech,
-                                if_exist_db, code_agence, hauteur_nacelle, modele_nacelle,
-                                raison_sociale, test, statut_de_maintenance, date_enregistrement,
-                                presence_carnet_entretien, statut_conformite,
-                                date_mise_en_conformite, longueur, is_etat_des_lieux_fait,
-                                is_en_maintenance, visite, contrat_{$agencyCode}_id, remplace_par,
-                                numero_identification, is_archive
+                                mise_en_service, numero_de_serie, marque, hauteur, largeur
                         ) AS tmp
                     )
                 ";
-                
                 $deletedDuplicatesCount = $connection->executeStatement($sql);
+                
+                // LA SUPPRESSION APRES LA PREMIERE EXECUTION SUPPRIME TOUS LES EQUIPEMENTS HORS CONTRAT
+                // IL FAUT DONC LAISSER COMMENTEE ET REVOIR LA LOGIQUE
+                // // Requête pour supprimer les doublons en gardant le MIN(id)
+                // $sql = "
+                //     DELETE FROM {$tableName}
+                //     WHERE id NOT IN (
+                //         SELECT id_a_garder FROM (
+                //             SELECT MIN(id) as id_a_garder
+                //             FROM {$tableName}
+                //             GROUP BY 
+                //                 numero_equipement, mode_fonctionnement,
+                //                 mise_en_service, numero_de_serie, marque, hauteur, largeur,
+                //                 plaque_signaletique, anomalies, etat, derniere_visite,
+                //                 trigramme_tech, id_contact, code_societe, signature_tech, code_agence, 
+                //                 raison_sociale, test, statut_de_maintenance, date_enregistrement,
+                //                 presence_carnet_entretien,
+                //                 longueur,
+                //                 is_en_maintenance, visite
+                //         ) AS tmp
+                //     )
+                // ";
+                
+                // $deletedDuplicatesCount = $connection->executeStatement($sql);
             } catch (\Exception $e) {
                 // dump("Erreur suppression doublons: " . $e->getMessage());
                 // On ne bloque pas le processus si la suppression échoue
