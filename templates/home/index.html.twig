@@ -22,6 +22,7 @@
     <script src="/public/js/editEquipmentInModal.js"></script>
     <script src="/public/js/pdf-enhanced.js"></script>
     <script src="/public/js/pdf-photo-option.js"></script>
+    <script src="/public/js/saveEquipmentAjax.js"></script>
 {% endblock %}
 {% block body %}
     <style>
@@ -942,7 +943,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form action="/save/modal/equipement" method="post" class="row g-12">
+                            <form id="editEquipmentForm" action="/save/modal/equipement" method="post" class="row g-12">
                                 <input type="hidden" class="form-control" id="modal_libelle" value="" name="libelle" />
                                 <input type="hidden" class="form-control" id="modal_idContact" value="" name="idContact" />
                                 <input type="hidden" class="form-control" id="modal_idSociete" value="" name="idSociete" />
@@ -970,7 +971,7 @@
                                     <label for="trigramme" class="form-label">Équipement cible</label>
                                     <input type="text" class="form-control" placeholder="" id="modal_trigramme" value="" name="trigramme" />
                                     <label for="codeAgence" class="form-label">Code Agence</label>
-                                    <input type="text" class="form-control" placeholder="" id="modal_codeAgence" value="" name="codeAgence" />
+                                    <input type="hidden" class="form-control" id="modal_codeAgence" value="{{ agenceSelected }}" name="codeAgence" />
                                 </div>
                                 <div class="col-md-6">
                                     <label for="modeFonctionnement" class="form-label">Mode de fonctionnement</label>
@@ -1525,4 +1526,5 @@
             });
         });
     </script>
+
 {% endblock %}
